@@ -67,7 +67,7 @@ export function SettingsPage() {
           title="Nekotify"
           description="Lightweight local-first desktop music player."
         >
-          <span className="settings-version">v0.1.0 · Phase 1</span>
+          <span className="settings-version">v0.1.0</span>
         </SettingRow>
       </SettingsSection>
     </div>
