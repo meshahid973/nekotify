@@ -1,0 +1,33 @@
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-micro: 0ms;
+    --motion-fast: 0ms;
+    --motion-panel: 0ms;
+    --motion-artwork: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+:root[data-motion='reduced'] {
+  --motion-micro: 0ms;
+  --motion-fast: 0ms;
+  --motion-panel: 0ms;
+  --motion-artwork: 0ms;
+}
+
+:root[data-motion='reduced'] *,
+:root[data-motion='reduced'] *::before,
+:root[data-motion='reduced'] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}

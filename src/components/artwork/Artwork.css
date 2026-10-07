@@ -1,0 +1,37 @@
+.artwork {
+  display: block;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  background: var(--color-surface-raised);
+}
+
+.artwork--sm {
+  width: 48px;
+  height: 48px;
+}
+
+.artwork--md {
+  width: 96px;
+  height: 96px;
+}
+
+.artwork--lg {
+  width: 176px;
+  height: 176px;
+  border-radius: var(--radius-lg);
+}
+
+.artwork--placeholder {
+  display: grid;
+  place-items: center;
+  color: rgb(255 255 255 / 0.42);
+  background: #101114;
+}
+
+.artwork--placeholder svg {
+  width: 34%;
+  height: 34%;
+}

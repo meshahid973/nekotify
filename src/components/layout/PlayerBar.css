@@ -1,0 +1,109 @@
+.player-bar {
+  position: relative;
+  z-index: 20;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(360px, 1.35fr) minmax(180px, 1fr);
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  padding: 11px 16px;
+  border-top: 1px solid var(--color-border);
+  background: #000;
+}
+
+.app-shell[data-theme='ambience'] .player-bar {
+  background: rgb(4 4 5 / 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.player-bar__track {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+}
+
+.player-bar__track-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.player-bar__track-copy strong,
+.player-bar__track-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-bar__track-copy strong {
+  color: rgb(255 255 255 / 0.9);
+  font-size: 0.76rem;
+  font-weight: 730;
+}
+
+.player-bar__track-copy span {
+  color: rgb(255 255 255 / 0.32);
+  font-size: 0.65rem;
+  font-weight: 550;
+}
+
+.player-bar__transport {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 1px;
+}
+
+.player-bar__buttons {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.player-bar__play {
+  border-color: var(--color-border-strong);
+  color: white;
+  background: rgb(255 255 255 / 0.08);
+}
+
+.player-bar__timeline {
+  display: grid;
+  width: min(100%, 600px);
+  grid-template-columns: 34px minmax(80px, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+  color: rgb(255 255 255 / 0.28);
+  font-size: 0.59rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.player-bar__timeline span:last-child {
+  text-align: right;
+}
+
+.player-bar__utilities {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.player-bar__volume {
+  width: 96px;
+}
+
+@media (max-width: 1050px) {
+  .player-bar {
+    grid-template-columns: minmax(180px, 1fr) minmax(280px, 1.2fr) auto;
+  }
+
+  .player-bar__track-copy span,
+  .player-bar__volume {
+    display: none;
+  }
+}

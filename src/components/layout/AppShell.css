@@ -1,0 +1,55 @@
+.app-shell {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) var(--player-height);
+  width: 100%;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+.app-shell__ambience {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--motion-artwork) var(--ease-standard);
+}
+
+.app-shell[data-theme='ambience'][data-has-ambience='true']
+  .app-shell__ambience {
+  opacity: 1;
+}
+
+.app-shell__ambience-image {
+  position: absolute;
+  inset: -12%;
+  background-position: center;
+  background-size: cover;
+  filter: blur(72px) saturate(1.08) brightness(0.5);
+  transform: scale(1.08);
+}
+
+.app-shell__ambience::after {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgb(0 0 0 / 0.48), rgb(0 0 0 / 0.74)),
+    linear-gradient(90deg, rgb(0 0 0 / 0.42), transparent 48%);
+  content: '';
+}
+
+.app-shell__content {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}

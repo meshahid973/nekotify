@@ -1,75 +1,64 @@
-# React + TypeScript + Vite
+# Nekotify
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Nekotify is a lightweight, local-first desktop music player built with React, TypeScript, Vite, and Tauri.
 
-Currently, two official plugins are available:
+The interface uses a persistent left library panel, full-width route content, a compact bottom player, pure-black OLED surfaces, and an optional artwork ambience mode.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Current features
 
-## React Compiler
+- local music folder import
+- recursive native audio scanning
+- title, artist, album, duration, and cover metadata
+- embedded artwork cache
+- imported artwork folders and individual cover images
+- randomized fallback artwork for tracks without a real cover
+- wide artwork-led Home hero
+- songs, albums, and artists views
+- local search
+- persistent playback and queue
+- OLED and Ambience themes
+- comfortable and compact density
+- reduced-motion support
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Stack
 
-## Expanding the ESLint configuration
+- React 19 + TypeScript
+- Vite
+- Tauri 2 + Rust
+- React Router
+- Zustand
+- Lofty
+- TanStack Virtual
+- Lucide React
+- plain CSS motion and layout
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Development
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```powershell
+npm install
+npm run tauri dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Run the complete local gate with:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```powershell
+npm run verify
 ```
+
+The one project-specific guard is:
+
+```powershell
+npm run check
+```
+
+See `docs/ARCHITECTURE.md`, `docs/PERFORMANCE.md`, and `docs/DEVELOPMENT.md`.
+
+## Principles
+
+1. React does not own the audio element.
+2. Route changes do not recreate playback.
+3. Filesystem and metadata work stay native.
+4. UI state and domain state stay separate.
+5. Real artwork drives visual atmosphere.
+6. Motion stays CSS-first and lightweight.
+7. Verification stays focused on important contracts.

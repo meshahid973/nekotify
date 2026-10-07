@@ -1,0 +1,130 @@
+.settings-page {
+  width: min(100%, 1080px);
+}
+
+.settings-section + .settings-section {
+  margin-top: 38px;
+}
+
+.settings-section h2 {
+  margin: 0 0 10px;
+  color: rgb(255 255 255 / 0.52);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.settings-section__rows {
+  border-top: 1px solid var(--color-border);
+}
+
+.setting-row {
+  display: grid;
+  min-height: 64px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.setting-row > strong {
+  min-width: 0;
+  overflow: hidden;
+  color: rgb(255 255 255 / 0.78);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setting-row__control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.choice-group {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.018);
+}
+
+.choice-group__option {
+  min-height: 29px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  color: rgb(255 255 255 / 0.32);
+  background: transparent;
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard);
+}
+
+.choice-group__option:hover {
+  color: rgb(255 255 255 / 0.62);
+}
+
+.choice-group__option:focus-visible,
+.settings-remove:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+.choice-group__option--active {
+  color: white;
+  background: rgb(255 255 255 / 0.09);
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.settings-actions > span {
+  margin-right: 4px;
+  color: rgb(255 255 255 / 0.32);
+  font-size: 0.65rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-remove {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: rgb(255 255 255 / 0.36);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard);
+}
+
+.settings-remove:hover:not(:disabled) {
+  color: white;
+  background: rgb(255 255 255 / 0.06);
+}
+
+.settings-remove:disabled {
+  opacity: 0.4;
+  cursor: wait;
+}
+
+.settings-version {
+  color: rgb(255 255 255 / 0.36);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}

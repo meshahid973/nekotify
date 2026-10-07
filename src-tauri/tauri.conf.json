@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "nekotify",
+  "productName": "Nekotify",
   "version": "0.1.0",
-  "identifier": "com.tauri.dev",
+  "identifier": "xyz.nekowatch.nekotify",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -12,15 +12,32 @@
   "app": {
     "windows": [
       {
-        "title": "nekotify",
-        "width": 800,
-        "height": 600,
+        "label": "main",
+        "title": "Nekotify",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 620,
+        "center": true,
         "resizable": true,
         "fullscreen": false
       }
     ],
     "security": {
-      "csp": null
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$APPCACHE/**/*"
+        ]
+      },
+      "csp": {
+        "default-src": "'self'",
+        "connect-src": "ipc: http://ipc.localhost",
+        "img-src": "'self' asset: http://asset.localhost data: blob:",
+        "media-src": "'self' asset: http://asset.localhost data: blob:",
+        "style-src": "'self' 'unsafe-inline'"
+      },
+      "devCsp": null
     }
   },
   "bundle": {
@@ -38,4 +55,3 @@
     }
   }
 }
-
