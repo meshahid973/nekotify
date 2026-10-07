@@ -16,38 +16,58 @@ button {
 }
 
 .page {
-  width: min(100%, 1500px);
+  width: min(100%, 1680px);
   min-height: 100%;
   margin-inline: auto;
-  padding: var(--page-block) var(--page-inline) calc(var(--page-block) + 8px);
+  padding:
+    calc(var(--header-safe) + var(--page-block))
+    var(--page-inline)
+    calc(var(--page-block) + 12px);
 }
 
 .eyebrow {
   margin: 0;
-  color: var(--color-accent);
-  font-size: 0.67rem;
-  font-weight: 740;
-  letter-spacing: 0.14em;
+  color: var(--color-text-subtle);
+  font-size: 0.61rem;
+  font-weight: 800;
+  letter-spacing: 0.17em;
   text-transform: uppercase;
 }
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+.section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+.section-heading__title {
+  margin: 4px 0 0;
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.05em;
 }
 
-::-webkit-scrollbar-thumb {
-  border: 3px solid transparent;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.12);
-  background-clip: padding-box;
+.section-heading__meta {
+  color: var(--color-text-subtle);
+  font-size: 0.67rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgb(255 255 255 / 0.18);
-  background-clip: padding-box;
+html,
+body,
+body * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+body *::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }

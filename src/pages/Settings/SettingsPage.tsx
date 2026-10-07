@@ -1,9 +1,7 @@
-import { MonitorCog, PanelLeftClose, Sparkles } from 'lucide-react'
+import { MonitorCog, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Button } from '@/components/primitives/Button'
-import { Surface } from '@/components/primitives/Surface'
 import {
   type MotionPreference,
   type UiDensity,
@@ -15,27 +13,25 @@ import './SettingsPage.css'
 export function SettingsPage() {
   const density = useUiStore((state) => state.density)
   const motionPreference = useUiStore((state) => state.motionPreference)
-  const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed)
   const setDensity = useUiStore((state) => state.setDensity)
   const setMotionPreference = useUiStore((state) => state.setMotionPreference)
-  const setSidebarCollapsed = useUiStore((state) => state.setSidebarCollapsed)
 
   return (
     <div className="page settings-page">
       <PageHeader
         eyebrow="Nekotify"
-        title="Settings"
-        description="Only settings that already affect the application live here."
+        title="settings"
+        description="A small set of controls for things that already work."
       />
 
       <SettingsSection
-        icon={<Sparkles size={18} />}
+        icon={<Sparkles size={17} />}
         title="Appearance"
-        description="Tune the interface without turning it into a different app."
+        description="Keep the interface dense and quiet, or give it a little more room."
       >
         <SettingRow
           title="Interface density"
-          description="Comfortable is spacious; compact trims page and control spacing."
+          description="Compact fits more library tiles without changing the information shown."
         >
           <ChoiceGroup<UiDensity>
             value={density}
@@ -60,26 +56,12 @@ export function SettingsPage() {
             ]}
           />
         </SettingRow>
-
-        <SettingRow
-          title="Sidebar"
-          description="Keep navigation wide or collapse it to the icon rail."
-        >
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          >
-            <PanelLeftClose size={15} />
-            {sidebarCollapsed ? 'Expand' : 'Collapse'}
-          </Button>
-        </SettingRow>
       </SettingsSection>
 
       <SettingsSection
-        icon={<MonitorCog size={18} />}
+        icon={<MonitorCog size={17} />}
         title="Application"
-        description="Current desktop foundation information."
+        description="Desktop foundation information."
       >
         <SettingRow
           title="Nekotify"
@@ -116,7 +98,7 @@ function SettingsSection({
           <p>{description}</p>
         </div>
       </div>
-      <Surface className="settings-section__surface">{children}</Surface>
+      <div className="settings-section__rows">{children}</div>
     </section>
   )
 }

@@ -1,8 +1,9 @@
-import { Disc3, Library, ListMusic, Mic2, Music } from 'lucide-react'
+import { Disc3, LayoutGrid, ListMusic, Mic2, Music } from 'lucide-react'
 import { useState } from 'react'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { Surface } from '@/components/primitives/Surface'
+import { Button } from '@/components/primitives/Button'
+import { useUiStore } from '@/stores/ui.store'
 
 import './LibraryPage.css'
 
@@ -19,43 +20,60 @@ const tabs: Array<{
     id: 'songs',
     label: 'Songs',
     icon: Music,
-    emptyTitle: 'No songs indexed yet',
-    emptyCopy: 'Local folder importing and metadata indexing arrive in Phase 2.',
+    emptyTitle: 'No songs yet',
+    emptyCopy: 'Choose local folders in Phase 2 and your tracks will appear here.',
   },
   {
     id: 'albums',
     label: 'Albums',
     icon: Disc3,
     emptyTitle: 'No albums yet',
-    emptyCopy: 'Albums will be assembled from your local metadata in Phase 2.',
+    emptyCopy: 'Albums will be grouped from your local metadata.',
   },
   {
     id: 'artists',
     label: 'Artists',
     icon: Mic2,
     emptyTitle: 'No artists yet',
-    emptyCopy: 'Artists will appear here after Nekotify indexes your library.',
+    emptyCopy: 'Artists will appear after the first library scan.',
   },
   {
     id: 'playlists',
     label: 'Playlists',
     icon: ListMusic,
     emptyTitle: 'No playlists yet',
-    emptyCopy: 'Playlist creation begins after the local library engine is in place.',
+    emptyCopy: 'Playlist tools arrive after the local library engine.',
   },
 ]
 
 export function LibraryPage() {
   const [activeTab, setActiveTab] = useState<LibraryTab>('songs')
+  const density = useUiStore((state) => state.density)
+  const setDensity = useUiStore((state) => state.setDensity)
   const active = tabs.find((tab) => tab.id === activeTab) ?? tabs[0]
   const ActiveIcon = active.icon
 
   return (
     <div className="page library-page">
       <PageHeader
-        eyebrow="Your collection"
-        title="Library"
-        description="One fast, local view for everything you choose to keep on this device."
+        eyebrow="Library"
+        title="quick library"
+        description="Artwork first, compact, and built to stay readable when your collection gets large."
+        actions={
+          <div className="library-page__summary">
+            <span>0 songs</span>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                setDensity(density === 'compact' ? 'comfortable' : 'compact')
+              }
+            >
+              <LayoutGrid size={14} aria-hidden="true" />
+              {density === 'compact' ? 'comfortable' : 'compact'}
+            </Button>
+          </div>
+        }
       />
 
       <div className="library-tabs" role="tablist" aria-label="Library views">
@@ -75,23 +93,20 @@ export function LibraryPage() {
               }
               onClick={() => setActiveTab(tab.id)}
             >
-              <Icon size={15} aria-hidden="true" />
+              <Icon size={14} aria-hidden="true" />
               {tab.label}
             </button>
           )
         })}
       </div>
 
-      <Surface className="library-empty" tone="subtle" role="tabpanel">
-        <div className="library-empty__art">
-          <Library size={46} strokeWidth={1.35} aria-hidden="true" />
-          <span className="library-empty__badge" aria-hidden="true">
-            <ActiveIcon size={15} />
-          </span>
+      <div className="library-canvas" role="tabpanel">
+        <div className="library-canvas__empty-icon" aria-hidden="true">
+          <ActiveIcon size={24} strokeWidth={1.5} />
         </div>
-        <h2>{active.emptyTitle}</h2>
+        <strong>{active.emptyTitle}</strong>
         <p>{active.emptyCopy}</p>
-      </Surface>
+      </div>
     </div>
   )
 }

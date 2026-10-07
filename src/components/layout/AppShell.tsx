@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 
+import { AppHeader } from '@/components/layout/AppHeader'
 import { PlayerBar } from '@/components/layout/PlayerBar'
-import { Sidebar } from '@/components/layout/Sidebar'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 import { useUiStore } from '@/stores/ui.store'
 
@@ -22,7 +22,6 @@ function isInteractiveTarget(target: EventTarget | null) {
 
 export function AppShell() {
   const navigate = useNavigate()
-  const sidebarCollapsed = useUiStore((state) => state.sidebarCollapsed)
   const density = useUiStore((state) => state.density)
   const motionPreference = useUiStore((state) => state.motionPreference)
 
@@ -76,11 +75,8 @@ export function AppShell() {
   }, [navigate])
 
   return (
-    <div
-      className="app-shell"
-      data-sidebar={sidebarCollapsed ? 'collapsed' : 'expanded'}
-    >
-      <Sidebar />
+    <div className="app-shell">
+      <AppHeader />
       <main className="app-shell__content">
         <Outlet />
       </main>

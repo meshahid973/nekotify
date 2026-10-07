@@ -1,8 +1,21 @@
+.library-page__summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.library-page__summary > span {
+  color: var(--color-text-subtle);
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 .library-tabs {
   display: flex;
   gap: var(--space-1);
-  margin: calc(var(--space-2) * -1) 0 var(--space-5);
-  padding-bottom: var(--space-3);
+  margin: -8px 0 22px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -10,15 +23,15 @@
   display: inline-flex;
   height: 34px;
   align-items: center;
-  gap: var(--space-2);
-  padding: 0 var(--space-3);
+  gap: 7px;
+  padding: 0 11px;
   border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   color: var(--color-text-subtle);
   background: transparent;
   font: inherit;
-  font-size: 0.75rem;
-  font-weight: 620;
+  font-size: 0.7rem;
+  font-weight: 700;
   cursor: pointer;
   transition:
     color var(--motion-fast) var(--ease-standard),
@@ -32,68 +45,59 @@
 }
 
 .library-tab:focus-visible {
-  outline: 2px solid rgb(var(--color-accent-rgb) / 0.7);
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
 .library-tab--active {
-  border-color: rgb(var(--color-accent-rgb) / 0.14);
-  color: var(--color-text);
-  background: rgb(var(--color-accent-rgb) / 0.09);
+  border-color: rgb(255 255 255 / 0.1);
+  color: white;
+  background: rgb(255 255 255 / 0.07);
 }
 
-.library-empty {
+.library-canvas {
   display: grid;
-  min-height: 360px;
+  min-height: 340px;
   place-items: center;
   align-content: center;
-  padding: var(--space-8);
   text-align: center;
 }
 
-.library-empty__art {
-  position: relative;
+.library-canvas__empty-icon {
   display: grid;
-  width: 94px;
-  height: 94px;
+  width: 62px;
+  height: 62px;
   place-items: center;
-  margin-bottom: var(--space-5);
-  border: 1px solid var(--color-border);
-  border-radius: 28px;
-  color: rgb(var(--color-accent-rgb) / 0.74);
-  background:
-    radial-gradient(
-      circle at 40% 28%,
-      rgb(var(--color-accent-secondary-rgb) / 0.12),
-      transparent 52%
-    ),
-    rgb(var(--color-accent-rgb) / 0.055);
+  margin-bottom: 15px;
+  border: 1px solid rgb(255 255 255 / 0.07);
+  border-radius: 18px;
+  color: rgb(var(--color-accent-rgb) / 0.78);
+  background: rgb(255 255 255 / 0.025);
 }
 
-.library-empty__badge {
-  position: absolute;
-  right: -7px;
-  bottom: -7px;
-  display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  border: 4px solid var(--color-bg);
-  border-radius: 999px;
-  color: var(--color-text);
-  background: var(--color-surface-raised);
+.library-canvas strong {
+  color: rgb(255 255 255 / 0.88);
+  font-size: 0.86rem;
+  font-weight: 750;
 }
 
-.library-empty h2 {
-  margin: 0;
-  font-size: 1.2rem;
-  letter-spacing: -0.035em;
-}
-
-.library-empty p {
+.library-canvas p {
   max-width: 430px;
-  margin: var(--space-2) 0 0;
-  color: var(--color-text-muted);
-  font-size: 0.8rem;
-  line-height: 1.6;
+  margin: 6px 0 0;
+  color: rgb(255 255 255 / 0.3);
+  font-size: 0.7rem;
+  line-height: 1.55;
+}
+
+/* Phase 2 fills this with the compact artwork-first tiles shown in the design
+   reference: image, title, artist, duration/actions, no dashboard panel. */
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(154px, 1fr));
+  gap: 18px 16px;
+}
+
+:root[data-density='compact'] .library-grid {
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: 15px 13px;
 }
