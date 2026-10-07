@@ -10,6 +10,7 @@ import {
   Search,
   Settings,
 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 
 import { useLibraryStore } from '@/features/library/library.store'
@@ -67,10 +68,7 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <SidebarSection
-        title="Folders"
-        count={folders.length}
-      >
+      <SidebarSection title="Folders" count={folders.length}>
         <div className="sidebar__folders">
           {folders.slice(0, 4).map((folder) => (
             <div className="sidebar-folder" key={folder.path} title={folder.path}>
@@ -97,11 +95,7 @@ export function Sidebar() {
         ) : null}
       </SidebarSection>
 
-      <SidebarSection
-        title="Artwork"
-        count={artworkPool.length}
-        compact
-      >
+      <SidebarSection title="Artwork" count={artworkPool.length} compact>
         <SidebarAction
           disabled={busy}
           icon={<Images size={15} />}
@@ -145,7 +139,7 @@ function SidebarSection({
   title: string
   count: number
   compact?: boolean
-  children: React.ReactNode
+  children: ReactNode
 }) {
   return (
     <section
@@ -170,7 +164,7 @@ function SidebarAction({
   disabled,
   onClick,
 }: {
-  icon: React.ReactNode
+  icon: ReactNode
   label: string
   disabled?: boolean
   onClick: () => void

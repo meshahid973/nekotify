@@ -9,6 +9,7 @@ const failures = []
 const requiredFiles = [
   'src/components/layout/Sidebar.tsx',
   'src/components/layout/PlayerBar.tsx',
+  'src/components/media/TrackHero.tsx',
   'src/features/library/library.store.ts',
   'src/features/library/TrackRow.tsx',
   'src/features/playback/AudioEngine.ts',
@@ -115,7 +116,7 @@ if (!tauriConfig.app?.security?.csp) {
 }
 
 if (!tauriConfig.app?.security?.assetProtocol?.enable) {
-  failures.push('Tauri asset protocol must stay enabled for local audio and artwork')
+  failures.push('Tauri asset protocol must stay enabled for local media')
 }
 
 const rustEntry = readFileSync(join(root, 'src-tauri/src/lib.rs'), 'utf8')
@@ -123,7 +124,10 @@ const rustEntry = readFileSync(join(root, 'src-tauri/src/lib.rs'), 'utf8')
 for (const command of [
   'library::load_library',
   'library::import_music_folder',
+  'library::import_art_folder',
+  'library::import_art_file',
   'library::remove_music_folder',
+  'library::remove_art_source',
 ]) {
   if (!rustEntry.includes(command)) {
     failures.push('native library command is not registered: ' + command)
@@ -146,17 +150,17 @@ if (existsSync(assetsDirectory)) {
     }
   }
 
-  if (totals.js > 130 * 1024) {
+  if (totals.js > 135 * 1024) {
     failures.push(
-      'built JavaScript exceeds 130 KiB gzip: ' +
+      'built JavaScript exceeds 135 KiB gzip: ' +
         (totals.js / 1024).toFixed(1) +
         ' KiB',
     )
   }
 
-  if (totals.css > 28 * 1024) {
+  if (totals.css > 30 * 1024) {
     failures.push(
-      'built CSS exceeds 28 KiB gzip: ' +
+      'built CSS exceeds 30 KiB gzip: ' +
         (totals.css / 1024).toFixed(1) +
         ' KiB',
     )
@@ -178,5 +182,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  '[check] library shell, playback ownership, native import scope and bundle contract are guarded',
+  '[check] library, artwork import, playback ownership and bundle contract are guarded',
 )

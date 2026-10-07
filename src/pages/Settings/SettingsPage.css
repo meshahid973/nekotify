@@ -1,9 +1,9 @@
 .settings-page {
-  max-width: 980px;
+  width: min(100%, 1080px);
 }
 
 .settings-section + .settings-section {
-  margin-top: 42px;
+  margin-top: 38px;
 }
 
 .settings-section h2 {
@@ -29,9 +29,13 @@
 }
 
 .setting-row > strong {
+  min-width: 0;
+  overflow: hidden;
   color: rgb(255 255 255 / 0.78);
   font-size: 0.74rem;
   font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .setting-row__control {
@@ -60,13 +64,17 @@
   font-size: 0.64rem;
   font-weight: 700;
   cursor: pointer;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard);
 }
 
 .choice-group__option:hover {
   color: rgb(255 255 255 / 0.62);
 }
 
-.choice-group__option:focus-visible {
+.choice-group__option:focus-visible,
+.settings-remove:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 1px;
 }
@@ -74,6 +82,45 @@
 .choice-group__option--active {
   color: white;
   background: rgb(255 255 255 / 0.09);
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.settings-actions > span {
+  margin-right: 4px;
+  color: rgb(255 255 255 / 0.32);
+  font-size: 0.65rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-remove {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: rgb(255 255 255 / 0.36);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard);
+}
+
+.settings-remove:hover:not(:disabled) {
+  color: white;
+  background: rgb(255 255 255 / 0.06);
+}
+
+.settings-remove:disabled {
+  opacity: 0.4;
+  cursor: wait;
 }
 
 .settings-version {
