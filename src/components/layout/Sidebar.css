@@ -10,7 +10,7 @@
   padding: 20px 14px 14px;
   overflow: hidden;
   border-right: 1px solid var(--color-border);
-  background: #050505;
+  background: #000;
 }
 
 .app-shell[data-theme='ambience'] .sidebar {
