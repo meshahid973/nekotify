@@ -2,12 +2,14 @@ export type TrackId = string
 
 export interface ArtworkRef {
   uri: string
+  path?: string
   alt?: string
 }
 
 export interface LocalTrackSource {
   kind: 'local'
   uri: string
+  path: string
 }
 
 export type TrackSource = LocalTrackSource

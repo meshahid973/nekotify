@@ -1,8 +1,10 @@
 import { useEffect } from 'react'
+import type { CSSProperties } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 
-import { AppHeader } from '@/components/layout/AppHeader'
 import { PlayerBar } from '@/components/layout/PlayerBar'
+import { Sidebar } from '@/components/layout/Sidebar'
+import { useLibraryStore } from '@/features/library/library.store'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 import { useUiStore } from '@/stores/ui.store'
 
@@ -24,16 +26,24 @@ export function AppShell() {
   const navigate = useNavigate()
   const density = useUiStore((state) => state.density)
   const motionPreference = useUiStore((state) => state.motionPreference)
+  const theme = useUiStore((state) => state.theme)
+  const artwork = usePlaybackStore((state) => state.track?.artwork?.uri)
 
   useEffect(() => {
     document.documentElement.dataset.density = density
     document.documentElement.dataset.motion = motionPreference
+    document.documentElement.dataset.theme = theme
 
     return () => {
       delete document.documentElement.dataset.density
       delete document.documentElement.dataset.motion
+      delete document.documentElement.dataset.theme
     }
-  }, [density, motionPreference])
+  }, [density, motionPreference, theme])
+
+  useEffect(() => {
+    void useLibraryStore.getState().refresh()
+  }, [])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -74,12 +84,26 @@ export function AppShell() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [navigate])
 
+  const ambienceStyle = artwork
+    ? ({ backgroundImage: 'url("' + artwork + '")' } as CSSProperties)
+    : undefined
+
   return (
-    <div className="app-shell">
-      <AppHeader />
+    <div
+      className="app-shell"
+      data-theme={theme}
+      data-has-ambience={artwork ? 'true' : 'false'}
+    >
+      <div className="app-shell__ambience" aria-hidden="true">
+        <div className="app-shell__ambience-image" style={ambienceStyle} />
+      </div>
+
+      <Sidebar />
+
       <main className="app-shell__content">
         <Outlet />
       </main>
+
       <PlayerBar />
     </div>
   )

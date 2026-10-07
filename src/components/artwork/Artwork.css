@@ -27,18 +27,8 @@
 .artwork--placeholder {
   display: grid;
   place-items: center;
-  color: rgb(var(--color-accent-rgb) / 0.82);
-  background:
-    radial-gradient(
-      circle at 28% 20%,
-      rgb(var(--color-accent-secondary-rgb) / 0.15),
-      transparent 48%
-    ),
-    linear-gradient(
-      145deg,
-      rgb(var(--color-accent-rgb) / 0.18),
-      rgb(255 255 255 / 0.018)
-    );
+  color: rgb(255 255 255 / 0.42);
+  background: #101114;
 }
 
 .artwork--placeholder svg {

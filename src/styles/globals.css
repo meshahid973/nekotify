@@ -1,7 +1,7 @@
 body {
   overflow: hidden;
   color: var(--color-text);
-  background: var(--color-bg);
+  background: #000;
   font-size: 16px;
 }
 
@@ -16,12 +16,10 @@ button {
 }
 
 .page {
-  width: min(100%, 1680px);
+  width: min(100%, 1560px);
   min-height: 100%;
   margin-inline: auto;
-  padding:
-    calc(var(--header-safe) + var(--page-block))
-    var(--page-inline)
+  padding: var(--page-block) var(--page-inline)
     calc(var(--page-block) + 12px);
 }
 
@@ -30,7 +28,7 @@ button {
   color: var(--color-text-subtle);
   font-size: 0.61rem;
   font-weight: 800;
-  letter-spacing: 0.17em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
 }
 
@@ -44,10 +42,10 @@ button {
 
 .section-heading__title {
   margin: 4px 0 0;
-  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
   font-weight: 800;
   line-height: 0.98;
-  letter-spacing: -0.05em;
+  letter-spacing: -0.045em;
 }
 
 .section-heading__meta {

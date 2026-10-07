@@ -2,12 +2,12 @@
   color-scheme: dark;
 
   --color-bg: #000000;
-  --color-surface: #0a0a0c;
-  --color-surface-raised: #111214;
-  --color-surface-soft: #151518;
+  --color-surface: #080808;
+  --color-surface-raised: #101010;
+  --color-surface-soft: #151515;
   --color-text: #ffffff;
-  --color-text-muted: rgb(255 255 255 / 0.48);
-  --color-text-subtle: rgb(255 255 255 / 0.29);
+  --color-text-muted: rgb(255 255 255 / 0.5);
+  --color-text-subtle: rgb(255 255 255 / 0.3);
   --color-border: rgb(255 255 255 / 0.075);
   --color-border-strong: rgb(255 255 255 / 0.13);
   --color-focus: rgb(255 255 255 / 0.72);
@@ -23,10 +23,9 @@
     "SFMono-Regular", Consolas, "Liberation Mono", ui-monospace, monospace;
 
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-window: 24px;
+  --radius-md: 11px;
+  --radius-lg: 15px;
+  --radius-xl: 18px;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -38,10 +37,10 @@
   --space-8: 48px;
   --space-9: 64px;
 
-  --player-height: 86px;
-  --header-safe: 86px;
-  --page-inline: clamp(36px, 4vw, 64px);
-  --page-block: clamp(28px, 3vw, 44px);
+  --sidebar-width: 232px;
+  --player-height: 88px;
+  --page-inline: clamp(28px, 3.5vw, 56px);
+  --page-block: clamp(28px, 3vw, 46px);
 
   --motion-micro: 120ms;
   --motion-fast: 180ms;
@@ -51,8 +50,8 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   --shadow-xs: 0 2px 8px rgb(0 0 0 / 0.16);
-  --shadow-sm: 0 10px 34px rgb(0 0 0 / 0.22);
-  --shadow-lg: 0 24px 72px rgb(0 0 0 / 0.42);
+  --shadow-sm: 0 10px 30px rgb(0 0 0 / 0.22);
+  --shadow-lg: 0 24px 68px rgb(0 0 0 / 0.38);
 
   font-family: var(--font-sans);
   font-synthesis: none;
@@ -62,7 +61,7 @@
 }
 
 :root[data-density='compact'] {
-  --player-height: 78px;
-  --page-inline: clamp(28px, 3.4vw, 52px);
-  --page-block: clamp(24px, 2.7vw, 36px);
+  --player-height: 80px;
+  --page-inline: clamp(24px, 3vw, 48px);
+  --page-block: clamp(24px, 2.6vw, 38px);
 }
