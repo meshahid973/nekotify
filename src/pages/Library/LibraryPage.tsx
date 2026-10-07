@@ -21,7 +21,7 @@ const tabs: Array<{
     label: 'Songs',
     icon: Music,
     emptyTitle: 'No songs yet',
-    emptyCopy: 'Choose local folders in Phase 2 and your tracks will appear here.',
+    emptyCopy: 'Your tracks will appear here once a music folder is connected.',
   },
   {
     id: 'albums',
@@ -42,7 +42,7 @@ const tabs: Array<{
     label: 'Playlists',
     icon: ListMusic,
     emptyTitle: 'No playlists yet',
-    emptyCopy: 'Playlist tools arrive after the local library engine.',
+    emptyCopy: 'Your playlists will live here alongside the rest of your local collection.',
   },
 ]
 
