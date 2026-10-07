@@ -68,3 +68,27 @@ export function moveQueueItem(items: Track[], from: number, to: number) {
 
   return next
 }
+
+export function moveQueueCursor(
+  currentIndex: number,
+  from: number,
+  to: number,
+) {
+  if (currentIndex < 0 || from === to) {
+    return currentIndex
+  }
+
+  if (currentIndex === from) {
+    return to
+  }
+
+  if (from < to && currentIndex > from && currentIndex <= to) {
+    return currentIndex - 1
+  }
+
+  if (from > to && currentIndex >= to && currentIndex < from) {
+    return currentIndex + 1
+  }
+
+  return currentIndex
+}

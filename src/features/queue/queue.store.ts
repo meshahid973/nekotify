@@ -2,6 +2,7 @@ import { create } from 'zustand'
 
 import {
   insertTrackNext,
+  moveQueueCursor,
   moveQueueItem,
   normalizeQueueIndex,
   removeQueueItem,
@@ -49,10 +50,7 @@ export const useQueueStore = create<QueueState>((set, get) => ({
   move: (from, to) =>
     set((state) => ({
       items: moveQueueItem(state.items, from, to),
-      currentIndex:
-        state.currentIndex === from
-          ? to
-          : state.currentIndex,
+      currentIndex: moveQueueCursor(state.currentIndex, from, to),
     })),
 
   clear: () => set({ items: [], currentIndex: -1 }),
