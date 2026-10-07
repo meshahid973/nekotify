@@ -10,13 +10,16 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "test": "node scripts/check-foundation.mjs",
+    "check:foundation": "node scripts/check-foundation.mjs",
+    "check:bundle": "node scripts/check-bundle-budget.mjs",
     "preview": "vite preview",
     "tauri": "tauri",
     "rust:fmt": "cargo fmt --manifest-path src-tauri/Cargo.toml -- --check",
     "rust:clippy": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
     "rust:test": "cargo test --manifest-path src-tauri/Cargo.toml",
     "rust:check": "cargo check --manifest-path src-tauri/Cargo.toml",
-    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run build && npm run rust:fmt && npm run rust:clippy && npm run rust:test && npm run rust:check"
+    "verify": "npm run check:foundation && npm run typecheck && npm run lint && npm run format:check && npm run build && npm run check:bundle && npm run rust:fmt && npm run rust:clippy && npm run rust:test && npm run rust:check"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.14.13",
