@@ -8,15 +8,15 @@ import { useUiStore } from '@/stores/ui.store'
 
 import './AppShell.css'
 
-function isTextEntryTarget(target: EventTarget | null) {
+function isInteractiveTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) {
     return false
   }
 
-  return (
-    target instanceof HTMLInputElement ||
-    target instanceof HTMLTextAreaElement ||
-    target.isContentEditable
+  return Boolean(
+    target.closest(
+      'button, a, input, textarea, select, [contenteditable="true"], [role="slider"]',
+    ),
   )
 }
 
@@ -55,7 +55,7 @@ export function AppShell() {
         return
       }
 
-      if (isTextEntryTarget(event.target) || modifier || event.altKey) {
+      if (isInteractiveTarget(event.target) || modifier || event.altKey) {
         return
       }
 
