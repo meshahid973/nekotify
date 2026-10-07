@@ -3,9 +3,22 @@ import { Outlet, useNavigate } from 'react-router-dom'
 
 import { PlayerBar } from '@/components/layout/PlayerBar'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { usePlaybackStore } from '@/features/playback/playback.store'
 import { useUiStore } from '@/stores/ui.store'
 
 import './AppShell.css'
+
+function isTextEntryTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+
+  return (
+    target instanceof HTMLInputElement ||
+    target instanceof HTMLTextAreaElement ||
+    target.isContentEditable
+  )
+}
 
 export function AppShell() {
   const navigate = useNavigate()
@@ -39,6 +52,22 @@ export function AppShell() {
       if (modifier && event.key.toLowerCase() === 'l') {
         event.preventDefault()
         navigate('/library')
+        return
+      }
+
+      if (isTextEntryTarget(event.target) || modifier || event.altKey) {
+        return
+      }
+
+      if (event.code === 'Space') {
+        event.preventDefault()
+        void usePlaybackStore.getState().togglePlayback()
+        return
+      }
+
+      if (event.key.toLowerCase() === 'm') {
+        event.preventDefault()
+        usePlaybackStore.getState().toggleMuted()
       }
     }
 

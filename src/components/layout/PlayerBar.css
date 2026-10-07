@@ -58,7 +58,7 @@
   display: grid;
   min-width: 0;
   justify-items: center;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .player-bar__buttons {
@@ -75,7 +75,7 @@
 .player-bar__timeline {
   display: grid;
   width: min(100%, 560px);
-  grid-template-columns: 32px minmax(80px, 1fr) 32px;
+  grid-template-columns: 34px minmax(80px, 1fr) 34px;
   align-items: center;
   gap: var(--space-2);
   color: var(--color-text-subtle);
@@ -87,17 +87,16 @@
   text-align: right;
 }
 
-.player-bar__timeline-track {
-  height: 3px;
-  border-radius: 999px;
-  background: rgb(255 255 255 / 0.09);
-}
-
 .player-bar__utilities {
   display: flex;
+  min-width: 0;
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-1);
+}
+
+.player-bar__volume {
+  width: 82px;
 }
 
 @media (max-width: 1050px) {
@@ -105,7 +104,8 @@
     grid-template-columns: minmax(180px, 1fr) minmax(300px, 1.2fr) auto;
   }
 
-  .player-bar__track-copy span {
+  .player-bar__track-copy span,
+  .player-bar__volume {
     display: none;
   }
 }
