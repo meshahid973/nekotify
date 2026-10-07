@@ -3,11 +3,13 @@ import {
   FolderPlus,
   LayoutGrid,
   Mic2,
+  Music,
   RefreshCw,
   Search,
   X,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { PageHeader } from '@/components/layout/PageHeader'
@@ -142,7 +144,7 @@ export function LibraryPage() {
       <div className="library-tabs" role="tablist" aria-label="Library views">
         <LibraryTabButton
           active={activeTab === 'songs'}
-          icon={<Disc3 size={14} />}
+          icon={<Music size={14} />}
           label="Songs"
           onClick={() => setActiveTab('songs')}
         />
@@ -167,6 +169,7 @@ export function LibraryPage() {
           {filteredTracks.length > 0 ? (
             filteredTracks.map((track) => {
               const active = currentTrack?.id === track.id
+
               return (
                 <TrackRow
                   key={track.id}
@@ -217,7 +220,7 @@ function LibraryTabButton({
   onClick,
 }: {
   active: boolean
-  icon: React.ReactNode
+  icon: ReactNode
   label: string
   onClick: () => void
 }) {
@@ -246,7 +249,9 @@ function LibraryEmpty({
 }) {
   return (
     <div className="library-empty">
-      <strong>{busy ? 'Scanning library…' : hasFolders ? 'No songs found' : 'No music yet'}</strong>
+      <strong>
+        {busy ? 'Scanning library…' : hasFolders ? 'No songs found' : 'No music yet'}
+      </strong>
       {!hasFolders ? (
         <Button size="sm" disabled={busy} onClick={onImport}>
           <FolderPlus size={14} />
@@ -267,7 +272,11 @@ function CollectionList({
   onPlay: (group: TrackGroup) => void
 }) {
   if (groups.length === 0) {
-    return <div className="library-empty"><strong>Nothing here</strong></div>
+    return (
+      <div className="library-empty">
+        <strong>Nothing here</strong>
+      </div>
+    )
   }
 
   return (
@@ -312,10 +321,9 @@ function groupTracks(
       mode === 'album'
         ? track.album || 'Unknown album'
         : track.artist || 'Unknown artist'
-    const key =
-      mode === 'album' ? label + '::' + track.artist : label
-
+    const key = mode === 'album' ? label + '::' + track.artist : label
     const group = groups.get(key) ?? []
+
     group.push(track)
     groups.set(key, group)
   })

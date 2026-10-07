@@ -7,41 +7,36 @@ const root = process.cwd()
 const failures = []
 
 const requiredFiles = [
-  'src/app/App.tsx',
-  'src/app/router.tsx',
-  'src/components/layout/AppHeader.tsx',
-  'src/components/layout/AppShell.tsx',
+  'src/components/layout/Sidebar.tsx',
   'src/components/layout/PlayerBar.tsx',
+  'src/features/library/library.store.ts',
+  'src/features/library/TrackRow.tsx',
   'src/features/playback/AudioEngine.ts',
   'src/features/playback/playback.store.ts',
   'src/features/queue/queue.store.ts',
-  'src/styles/tokens.css',
-  'src/stores/ui.store.ts',
+  'src-tauri/src/library.rs',
 ]
 
 const forbiddenFiles = [
   'src/App.tsx',
   'src/App.css',
   'src/index.css',
-  'src/components/layout/Sidebar.tsx',
-  'src/components/layout/Sidebar.css',
-  'src/components/primitives/Surface.tsx',
-  'src/components/primitives/Surface.css',
+  'src/components/layout/AppHeader.tsx',
+  'src/components/layout/AppHeader.css',
   'src/assets/hero.png',
   'src/assets/react.svg',
   'src/assets/vite.svg',
-  'public/icons.svg',
 ]
 
 for (const file of requiredFiles) {
   if (!existsSync(join(root, file))) {
-    failures.push(`required foundation file is missing: ${file}`)
+    failures.push('required file is missing: ' + file)
   }
 }
 
 for (const file of forbiddenFiles) {
   if (existsSync(join(root, file))) {
-    failures.push(`obsolete starter/foundation file should not exist: ${file}`)
+    failures.push('obsolete file should not exist: ' + file)
   }
 }
 
@@ -75,7 +70,7 @@ for (const file of walk(join(root, 'src')).filter((path) =>
     source.includes('new Audio(') &&
     path !== 'src/features/playback/AudioEngine.ts'
   ) {
-    failures.push(`audio element ownership escaped AudioEngine: ${path}`)
+    failures.push('audio element ownership escaped AudioEngine: ' + path)
   }
 }
 
@@ -94,7 +89,7 @@ for (const dependency of [
   'bootstrap',
 ]) {
   if (dependency in dependencies) {
-    failures.push(`heavy dependency is outside the Phase 1 contract: ${dependency}`)
+    failures.push('heavy dependency is outside the lightweight contract: ' + dependency)
   }
 }
 
@@ -104,7 +99,7 @@ const capabilities = readFileSync(
 )
 
 if (/allow-all|fs:allow-|shell:allow-/i.test(capabilities)) {
-  failures.push('Tauri default capability became broader than Phase 1 requires')
+  failures.push('Tauri default capability is broader than required')
 }
 
 const tauriConfig = JSON.parse(
@@ -112,11 +107,27 @@ const tauriConfig = JSON.parse(
 )
 
 if (tauriConfig.identifier !== 'xyz.nekowatch.nekotify') {
-  failures.push('Tauri bundle identifier drifted from xyz.nekowatch.nekotify')
+  failures.push('Tauri bundle identifier is incorrect')
 }
 
 if (!tauriConfig.app?.security?.csp) {
   failures.push('production Tauri CSP must remain enabled')
+}
+
+if (!tauriConfig.app?.security?.assetProtocol?.enable) {
+  failures.push('Tauri asset protocol must stay enabled for local audio and artwork')
+}
+
+const rustEntry = readFileSync(join(root, 'src-tauri/src/lib.rs'), 'utf8')
+
+for (const command of [
+  'library::load_library',
+  'library::import_music_folder',
+  'library::remove_music_folder',
+]) {
+  if (!rustEntry.includes(command)) {
+    failures.push('native library command is not registered: ' + command)
+  }
 }
 
 const assetsDirectory = join(root, 'dist', 'assets')
@@ -135,29 +146,37 @@ if (existsSync(assetsDirectory)) {
     }
   }
 
-  if (totals.js > 120 * 1024) {
+  if (totals.js > 130 * 1024) {
     failures.push(
-      `built JavaScript exceeds 120 KiB gzip: ${(totals.js / 1024).toFixed(1)} KiB`,
+      'built JavaScript exceeds 130 KiB gzip: ' +
+        (totals.js / 1024).toFixed(1) +
+        ' KiB',
     )
   }
 
-  if (totals.css > 24 * 1024) {
+  if (totals.css > 28 * 1024) {
     failures.push(
-      `built CSS exceeds 24 KiB gzip: ${(totals.css / 1024).toFixed(1)} KiB`,
+      'built CSS exceeds 28 KiB gzip: ' +
+        (totals.css / 1024).toFixed(1) +
+        ' KiB',
     )
   }
 
   console.log(
-    `[foundation] bundle: JS ${(totals.js / 1024).toFixed(1)} KiB gzip, CSS ${(totals.css / 1024).toFixed(1)} KiB gzip`,
+    '[check] bundle: JS ' +
+      (totals.js / 1024).toFixed(1) +
+      ' KiB gzip, CSS ' +
+      (totals.css / 1024).toFixed(1) +
+      ' KiB gzip',
   )
 }
 
 if (failures.length > 0) {
-  console.error('[foundation] failed')
-  failures.forEach((failure) => console.error(` - ${failure}`))
+  console.error('[check] failed')
+  failures.forEach((failure) => console.error(' - ' + failure))
   process.exit(1)
 }
 
 console.log(
-  '[foundation] architecture, playback ownership, capability scope and lightweight bundle contract are guarded',
+  '[check] library shell, playback ownership, native import scope and bundle contract are guarded',
 )

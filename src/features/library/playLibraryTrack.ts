@@ -6,6 +6,11 @@ export async function playLibraryTrack(track: Track, tracks: Track[]) {
   const index = tracks.findIndex((candidate) => candidate.id === track.id)
   const playback = usePlaybackStore.getState()
 
+  if (playback.track?.id === track.id && playback.status === 'playing') {
+    playback.pause()
+    return
+  }
+
   useQueueStore.getState().setQueue(tracks, index >= 0 ? index : 0)
 
   if (playback.track?.id !== track.id) {
@@ -15,6 +20,6 @@ export async function playLibraryTrack(track: Track, tracks: Track[]) {
   try {
     await playback.play()
   } catch {
-    // AudioEngine already publishes the playback error to the store.
+    // AudioEngine publishes playback errors to the store.
   }
 }

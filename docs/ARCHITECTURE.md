@@ -1,6 +1,6 @@
 # Nekotify Architecture
 
-This document describes ownership boundaries, not just folders. Phase 1 is intentionally small so later native library work can plug into the application instead of forcing a rewrite.
+Nekotify keeps presentation, playback, and native library work separate so the desktop app can stay small as the library grows.
 
 ## Runtime layers
 
@@ -9,75 +9,54 @@ React routes and presentation
         |
 focused Zustand stores
         |
-domain services / AudioEngine
+AudioEngine / library feature boundary
         |
-typed Tauri boundary
+Tauri commands
         |
-Rust native services (Phase 2+)
+Rust scanner and metadata reader
 ```
 
 ## Frontend ownership
 
-### `src/app`
+- `src/app` composes the router and application root.
+- `src/components` owns reusable UI and the persistent sidebar/player chrome.
+- `src/features/library` owns imported folders, mapped tracks, rows, and library playback actions.
+- `src/features/playback` owns the single browser audio engine and semantic playback state.
+- `src/features/queue` owns queue order and cursor rules.
+- `src/pages` composes routes and does not scan the filesystem.
+- `src/stores` is for small cross-cutting UI preferences such as theme and density.
 
-Application composition only: router, root providers, and error boundaries.
+## Local library
 
-It must not own playback, queue rules, library indexing, or page-specific behavior.
+Rust owns folder selection and filesystem scanning. Imported folder paths are stored in the app data directory and rescanned on startup.
 
-### `src/components`
+The scanner:
 
-Reusable presentation. Components here should be useful without knowing which song, playlist, or library implementation called them. Persistent chrome is intentionally small: one floating top header and one bottom player.
+- recursively finds audio formats supported by Lofty;
+- reads title, artist, album, duration, and embedded cover art when available;
+- falls back to filenames when metadata is missing;
+- caches embedded artwork in the app cache directory;
+- exposes only runtime-approved local media to the Tauri asset protocol.
 
-### `src/features`
+The React library store receives a serializable snapshot and maps native paths to asset URLs.
 
-Domain behavior. Playback and queue live here now. Library, playlists, lyrics, and search-specific behavior will join them when those features become real.
+## Playback
 
-### `src/pages`
+There is exactly one `AudioEngine` singleton and it is the only module allowed to construct an `HTMLAudioElement`.
 
-Route composition. Pages assemble components and feature APIs; they do not become service layers.
+React and Zustand do not own the audio element. Route changes do not recreate playback. Progress snapshots are bounded to four updates per second while playing.
 
-### `src/services`
+## Themes
 
-Long-lived infrastructure boundaries, especially Tauri/native integration. A service should exist because it owns real work, not because a folder diagram wants it.
+Nekotify has two visual modes:
 
-### `src/stores`
+- **OLED**: pure black application background with opaque dark chrome.
+- **Ambience**: the currently selected track artwork becomes a blurred, darkened application backdrop.
 
-Small cross-cutting UI state only. Domain stores remain next to their features.
+Ambience uses the actual playing artwork. It does not create decorative color orbs.
 
-### `src/styles`
+## Tauri
 
-Global tokens, reset, motion rules, and global application rules. Component-specific styles are colocated with components.
+The default capability remains narrow. Native folder selection runs in Rust through the dialog plugin; broad frontend filesystem or shell permissions are not granted.
 
-### `src/types`
-
-Small shared domain contracts. Avoid modeling metadata fields before the native library engine actually provides them.
-
-## Playback contract
-
-There is exactly one `AudioEngine` singleton. It is the only module allowed to construct an `HTMLAudioElement`.
-
-React does not own the audio element. The element is not stored in Zustand. Route changes do not recreate it.
-
-`AudioEngine` emits bounded snapshots. Playback progress is emitted four times per second while playing instead of driving a global 60 FPS render loop.
-
-The playback store contains semantic state such as the current track, status, time, volume, mute state, shuffle, and repeat mode.
-
-## Queue contract
-
-Queue state is separate from playback state. Queue transformations are kept in pure helpers where possible so they can be tested without audio or React.
-
-## Router contract
-
-Nekotify uses a hash router for the desktop bundle. `AppShell` owns the persistent NekoWatch-inspired floating header, route outlet, and player bar. The player stays mounted as Home, Search, Library, and Settings change.
-
-## Tauri contract
-
-Phase 1 keeps `core:default` only. Filesystem, dialog, shell, database, and other native permissions are added only alongside code that needs them.
-
-The production webview has an explicit CSP. Development uses `devCsp: null` so Vite HMR stays isolated to development without weakening the packaged policy.
-
-Rust modules are not created as empty placeholders. Phase 2 will introduce database, library, metadata, artwork, and watcher modules with actual implementations.
-
-## Dependency rule
-
-Prefer platform APIs and small focused packages. A new runtime dependency should solve a concrete problem that would otherwise produce worse code or performance.
+The packaged webview uses an explicit CSP and the Tauri asset protocol is enabled for local media and cached artwork.

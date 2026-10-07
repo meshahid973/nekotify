@@ -2,13 +2,20 @@
 
 Nekotify is a lightweight, local-first desktop music player built with React, TypeScript, Vite, and Tauri.
 
-Its visual direction borrows the strongest parts of NekoWatch's current design language: near-black surfaces, restrained glass chrome, wide editorial spacing, strong typography, subtle artwork atmosphere, and minimal filled panels. Music library tiles remain compact and conventional rather than copying anime-card layouts.
+The interface uses a persistent left library panel, a compact bottom player, pure-black OLED surfaces, and an optional artwork ambience mode.
 
-## Status
+## Current features
 
-Nekotify is currently in **Phase 1 — Foundation**.
-
-Phase 1 establishes the desktop shell, routing, visual system, playback and queue boundaries, native runtime configuration, accessibility rules, and performance contracts. Local library scanning and metadata indexing begin in Phase 2.
+- local music folder import
+- recursive native library scanning
+- title, artist, album, duration, and cover-art metadata
+- embedded artwork cache
+- songs, albums, and artists views
+- local search
+- persistent playback and queue
+- OLED and Ambience themes
+- comfortable and compact density
+- reduced-motion support
 
 ## Stack
 
@@ -17,9 +24,9 @@ Phase 1 establishes the desktop shell, routing, visual system, playback and queu
 - Tauri 2 + Rust
 - React Router
 - Zustand
+- Lofty
 - TanStack Virtual
 - Lucide React
-- Plain CSS with design tokens
 
 ## Development
 
@@ -28,42 +35,25 @@ npm install
 npm run tauri dev
 ```
 
-The normal full check is intentionally one command:
+Run the complete local gate with:
 
 ```powershell
 npm run verify
 ```
 
-For the lightweight Nekotify-specific architecture/bundle guard only:
+The one project-specific architecture/bundle guard is:
 
 ```powershell
 npm run check
 ```
-
-## Architecture
-
-- `src/app` — application composition and routing
-- `src/components` — reusable visual primitives and persistent chrome
-- `src/features` — playback and queue domain behavior
-- `src/pages` — route composition
-- `src/stores` — small cross-cutting UI preferences
-- `src/styles` — design tokens, reset, global rules, motion
-- `src/types` — shared domain contracts
-
-The Rust side remains intentionally small until native features have real ownership.
 
 See `docs/ARCHITECTURE.md`, `docs/PERFORMANCE.md`, and `docs/DEVELOPMENT.md`.
 
 ## Principles
 
 1. React does not own the audio element.
-2. Route changes never recreate playback.
-3. Stores stay domain-specific.
-4. Heavy native work belongs in Rust.
-5. Features are not exposed before they work.
-6. Visual richness should come from composition and artwork, not a heavy UI runtime.
-7. Testing stays focused on important contracts rather than growing into hundreds of bespoke scripts.
-
-## License
-
-MIT
+2. Route changes do not recreate playback.
+3. Filesystem scanning and metadata work stay native.
+4. UI state and domain state stay separate.
+5. Visual richness comes from real artwork, not a heavy animation runtime.
+6. Verification stays focused on important contracts.
