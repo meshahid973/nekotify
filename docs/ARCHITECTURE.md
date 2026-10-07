@@ -74,6 +74,8 @@ Nekotify uses a hash router for the desktop bundle. `AppShell` owns the persiste
 
 Phase 1 keeps `core:default` only. Filesystem, dialog, shell, database, and other native permissions are added only alongside code that needs them.
 
+The production webview has an explicit CSP. Development uses `devCsp: null` so Vite HMR stays isolated to development without weakening the packaged policy.
+
 Rust modules are not created as empty placeholders. Phase 2 will introduce database, library, metadata, artwork, and watcher modules with actual implementations.
 
 ## Dependency rule

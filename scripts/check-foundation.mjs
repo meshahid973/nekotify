@@ -102,6 +102,18 @@ if (/allow-all|fs:allow-|shell:allow-/i.test(capabilities)) {
   failures.push('Tauri default capability became broader than the Phase 1 contract')
 }
 
+const tauriConfig = JSON.parse(
+  readFileSync(join(root, 'src-tauri/tauri.conf.json'), 'utf8'),
+)
+
+if (tauriConfig.identifier !== 'xyz.nekowatch.nekotify') {
+  failures.push('Tauri bundle identifier drifted from xyz.nekowatch.nekotify')
+}
+
+if (!tauriConfig.app?.security?.csp) {
+  failures.push('production Tauri CSP must remain enabled')
+}
+
 if (failures.length > 0) {
   console.error('[foundation] failed')
   failures.forEach((failure) => console.error(` - ${failure}`))
@@ -109,5 +121,5 @@ if (failures.length > 0) {
 }
 
 console.log(
-  '[foundation] architecture ownership, starter cleanup, dependency budget and Tauri capability boundaries are guarded',
+  '[foundation] architecture ownership, starter cleanup, dependency budget, CSP and Tauri capability boundaries are guarded',
 )
