@@ -19,12 +19,20 @@ export function TrackHero({ track, playing, onToggle }: TrackHeroProps) {
       aria-label="Featured track"
     >
       {track.artwork ? (
-        <img
-          className="track-hero__image"
-          src={track.artwork.uri}
-          alt=""
-          aria-hidden="true"
-        />
+        <>
+          <img
+            className="track-hero__wash"
+            src={track.artwork.uri}
+            alt=""
+            aria-hidden="true"
+          />
+          <img
+            className="track-hero__image"
+            src={track.artwork.uri}
+            alt=""
+            aria-hidden="true"
+          />
+        </>
       ) : null}
 
       <div className="track-hero__overlay" aria-hidden="true" />
