@@ -38,7 +38,6 @@ export class ErrorBoundary extends Component<
 
     return (
       <main className="error-boundary">
-        <div className="error-boundary__glow" aria-hidden="true" />
         <section className="error-boundary__panel">
           <p className="eyebrow">Nekotify</p>
           <h1>Something interrupted the interface.</h1>
