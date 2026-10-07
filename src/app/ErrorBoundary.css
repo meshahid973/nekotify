@@ -8,15 +8,6 @@
   background: var(--color-bg);
 }
 
-.error-boundary__glow {
-  position: absolute;
-  width: min(54vw, 680px);
-  aspect-ratio: 1;
-  border-radius: 999px;
-  background: rgb(var(--color-accent-rgb) / 0.18);
-  filter: blur(110px);
-  pointer-events: none;
-}
 
 .error-boundary__panel {
   position: relative;
