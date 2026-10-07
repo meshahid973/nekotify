@@ -6,7 +6,7 @@ export async function playLibraryTrack(track: Track, tracks: Track[]) {
   const index = tracks.findIndex((candidate) => candidate.id === track.id)
   const playback = usePlaybackStore.getState()
 
-  if (playback.track?.id === track.id && playback.status === 'playing') {
+  if (playback.track?.id === track.id &&\n    (playback.status === 'playing' || playback.status === 'loading')) {
     playback.pause()
     return
   }
