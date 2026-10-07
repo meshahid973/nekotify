@@ -17,6 +17,22 @@ pub struct LibraryFolder {
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ArtworkSource {
+    path: String,
+    name: String,
+    kind: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LibraryArtwork {
+    id: String,
+    path: String,
+    name: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LibraryTrack {
     id: String,
     title: String,
@@ -31,12 +47,17 @@ pub struct LibraryTrack {
 #[serde(rename_all = "camelCase")]
 pub struct LibrarySnapshot {
     folders: Vec<LibraryFolder>,
+    art_sources: Vec<ArtworkSource>,
+    artwork_pool: Vec<LibraryArtwork>,
     tracks: Vec<LibraryTrack>,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
+#[serde(default)]
 struct StoredLibrary {
     folders: Vec<String>,
+    art_folders: Vec<String>,
+    art_files: Vec<String>,
 }
 
 #[tauri::command]
@@ -68,20 +89,74 @@ pub async fn import_music_folder(app: AppHandle) -> Result<Option<LibrarySnapsho
     }
 
     let mut stored = read_stored_library(&app)?;
-    let path_string = path.to_string_lossy().into_owned();
-
-    if !stored
-        .folders
-        .iter()
-        .any(|existing| paths_match(existing, &path_string))
-    {
-        stored.folders.push(path_string);
-        write_stored_library(&app, &stored)?;
-    }
+    push_unique_path(&mut stored.folders, &path);
+    write_stored_library(&app, &stored)?;
 
     tauri::async_runtime::spawn_blocking(move || build_snapshot(&app))
         .await
         .map_err(|error| format!("Library scan task failed: {error}"))?
+        .map(Some)
+}
+
+#[tauri::command]
+pub async fn import_art_folder(app: AppHandle) -> Result<Option<LibrarySnapshot>, String> {
+    let selected = app
+        .dialog()
+        .file()
+        .set_title("Add artwork folder")
+        .blocking_pick_folder();
+
+    let Some(selected) = selected else {
+        return Ok(None);
+    };
+
+    let path = selected
+        .simplified()
+        .into_path()
+        .map_err(|error| format!("Could not use the selected folder: {error}"))?;
+
+    if !path.is_dir() {
+        return Err("The selected path is not a folder.".to_string());
+    }
+
+    let mut stored = read_stored_library(&app)?;
+    push_unique_path(&mut stored.art_folders, &path);
+    write_stored_library(&app, &stored)?;
+
+    tauri::async_runtime::spawn_blocking(move || build_snapshot(&app))
+        .await
+        .map_err(|error| format!("Artwork scan task failed: {error}"))?
+        .map(Some)
+}
+
+#[tauri::command]
+pub async fn import_art_file(app: AppHandle) -> Result<Option<LibrarySnapshot>, String> {
+    let selected = app
+        .dialog()
+        .file()
+        .set_title("Add cover image")
+        .blocking_pick_file();
+
+    let Some(selected) = selected else {
+        return Ok(None);
+    };
+
+    let path = selected
+        .simplified()
+        .into_path()
+        .map_err(|error| format!("Could not use the selected image: {error}"))?;
+
+    if !path.is_file() || !is_supported_image(&path) {
+        return Err("Choose a JPG, PNG, WEBP, GIF, or BMP image.".to_string());
+    }
+
+    let mut stored = read_stored_library(&app)?;
+    push_unique_path(&mut stored.art_files, &path);
+    write_stored_library(&app, &stored)?;
+
+    tauri::async_runtime::spawn_blocking(move || build_snapshot(&app))
+        .await
+        .map_err(|error| format!("Artwork scan task failed: {error}"))?
         .map(Some)
 }
 
@@ -101,6 +176,25 @@ pub async fn remove_music_folder(
         .map_err(|error| format!("Library scan task failed: {error}"))?
 }
 
+#[tauri::command]
+pub async fn remove_art_source(
+    app: AppHandle,
+    path: String,
+) -> Result<LibrarySnapshot, String> {
+    let mut stored = read_stored_library(&app)?;
+    stored
+        .art_folders
+        .retain(|existing| !paths_match(existing, &path));
+    stored
+        .art_files
+        .retain(|existing| !paths_match(existing, &path));
+    write_stored_library(&app, &stored)?;
+
+    tauri::async_runtime::spawn_blocking(move || build_snapshot(&app))
+        .await
+        .map_err(|error| format!("Artwork scan task failed: {error}"))?
+}
+
 fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
     let stored = read_stored_library(app)?;
     let cache_dir = artwork_cache_dir(app)?;
@@ -116,8 +210,8 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
     let mut tracks = Vec::new();
     let mut seen_track_ids = HashSet::new();
 
-    for folder in stored.folders {
-        let path = PathBuf::from(&folder);
+    for folder in &stored.folders {
+        let path = PathBuf::from(folder);
 
         if !path.is_dir() {
             continue;
@@ -125,10 +219,10 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
 
         folders.push(LibraryFolder {
             name: folder_name(&path),
-            path: folder,
+            path: folder.clone(),
         });
 
-        scan_directory(
+        scan_music_directory(
             app,
             &cache_dir,
             &path,
@@ -137,20 +231,74 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
         );
     }
 
+    let (art_sources, artwork_pool) = build_artwork_pool(app, &stored);
+
     tracks.sort_by(|left, right| {
         left.artist
             .to_lowercase()
             .cmp(&right.artist.to_lowercase())
-            .then_with(|| left.album.as_deref().unwrap_or("").to_lowercase().cmp(
-                &right.album.as_deref().unwrap_or("").to_lowercase(),
-            ))
+            .then_with(|| {
+                left.album
+                    .as_deref()
+                    .unwrap_or("")
+                    .to_lowercase()
+                    .cmp(&right.album.as_deref().unwrap_or("").to_lowercase())
+            })
             .then_with(|| left.title.to_lowercase().cmp(&right.title.to_lowercase()))
     });
 
-    Ok(LibrarySnapshot { folders, tracks })
+    Ok(LibrarySnapshot {
+        folders,
+        art_sources,
+        artwork_pool,
+        tracks,
+    })
 }
 
-fn scan_directory(
+fn build_artwork_pool(
+    app: &AppHandle,
+    stored: &StoredLibrary,
+) -> (Vec<ArtworkSource>, Vec<LibraryArtwork>) {
+    let mut sources = Vec::new();
+    let mut pool = Vec::new();
+    let mut seen_paths = HashSet::new();
+
+    for folder in &stored.art_folders {
+        let path = PathBuf::from(folder);
+
+        if !path.is_dir() {
+            continue;
+        }
+
+        sources.push(ArtworkSource {
+            path: folder.clone(),
+            name: folder_name(&path),
+            kind: "folder".to_string(),
+        });
+
+        scan_art_directory(app, &path, &mut pool, &mut seen_paths);
+    }
+
+    for file in &stored.art_files {
+        let path = PathBuf::from(file);
+
+        if !path.is_file() || !is_supported_image(&path) {
+            continue;
+        }
+
+        sources.push(ArtworkSource {
+            path: file.clone(),
+            name: file_name(&path),
+            kind: "file".to_string(),
+        });
+
+        push_artwork(app, &path, &mut pool, &mut seen_paths);
+    }
+
+    (sources, pool)
+}
+
+fn scan_music_directory(
     app: &AppHandle,
     cache_dir: &Path,
     root: &Path,
@@ -195,6 +343,62 @@ fn scan_directory(
             }
         }
     }
+}
+
+fn scan_art_directory(
+    app: &AppHandle,
+    root: &Path,
+    pool: &mut Vec<LibraryArtwork>,
+    seen_paths: &mut HashSet<String>,
+) {
+    let mut pending = vec![root.to_path_buf()];
+
+    while let Some(directory) = pending.pop() {
+        let Ok(entries) = fs::read_dir(&directory) else {
+            continue;
+        };
+
+        for entry in entries.flatten() {
+            let Ok(file_type) = entry.file_type() else {
+                continue;
+            };
+
+            if file_type.is_symlink() {
+                continue;
+            }
+
+            let path = entry.path();
+
+            if file_type.is_dir() {
+                pending.push(path);
+            } else if file_type.is_file() && is_supported_image(&path) {
+                push_artwork(app, &path, pool, seen_paths);
+            }
+        }
+    }
+}
+
+fn push_artwork(
+    app: &AppHandle,
+    path: &Path,
+    pool: &mut Vec<LibraryArtwork>,
+    seen_paths: &mut HashSet<String>,
+) {
+    let path_string = path.to_string_lossy().into_owned();
+
+    if !seen_paths.insert(normalized_path_key(&path_string)) {
+        return;
+    }
+
+    if app.asset_protocol_scope().allow_file(path).is_err() {
+        return;
+    }
+
+    pool.push(LibraryArtwork {
+        id: format!("{:016x}", fnv1a(path_string.as_bytes())),
+        path: path_string,
+        name: file_name(path),
+    });
 }
 
 fn read_track(app: &AppHandle, cache_dir: &Path, path: &Path) -> LibraryTrack {
@@ -306,14 +510,12 @@ fn image_extension_from_bytes(bytes: &[u8]) -> Option<&'static str> {
 fn find_external_artwork(audio_path: &Path) -> Option<PathBuf> {
     let parent = audio_path.parent()?;
     let preferred_stems = ["cover", "folder", "front", "album", "artwork"];
-    let supported_extensions = ["jpg", "jpeg", "png", "webp", "gif", "bmp"];
-
     let entries = fs::read_dir(parent).ok()?;
 
     for entry in entries.flatten() {
         let path = entry.path();
 
-        if !path.is_file() {
+        if !path.is_file() || !is_supported_image(&path) {
             continue;
         }
 
@@ -321,22 +523,10 @@ fn find_external_artwork(audio_path: &Path) -> Option<PathBuf> {
             .file_stem()
             .and_then(|value| value.to_str())
             .map(str::to_ascii_lowercase);
-        let extension = path
-            .extension()
-            .and_then(|value| value.to_str())
-            .map(str::to_ascii_lowercase);
 
-        let Some(stem) = stem else {
-            continue;
-        };
-        let Some(extension) = extension else {
-            continue;
-        };
-
-        if preferred_stems.iter().any(|candidate| *candidate == stem)
-            && supported_extensions
-                .iter()
-                .any(|candidate| *candidate == extension)
+        if stem
+            .as_deref()
+            .is_some_and(|value| preferred_stems.contains(&value))
         {
             return Some(path);
         }
@@ -355,6 +545,27 @@ fn is_supported_audio(path: &Path) -> bool {
         .any(|candidate| candidate.eq_ignore_ascii_case(extension))
 }
 
+fn is_supported_image(path: &Path) -> bool {
+    let Some(extension) = path.extension().and_then(|value| value.to_str()) else {
+        return false;
+    };
+
+    ["jpg", "jpeg", "png", "webp", "gif", "bmp"]
+        .iter()
+        .any(|candidate| candidate.eq_ignore_ascii_case(extension))
+}
+
+fn push_unique_path(paths: &mut Vec<String>, path: &Path) {
+    let path_string = path.to_string_lossy().into_owned();
+
+    if !paths
+        .iter()
+        .any(|existing| paths_match(existing, &path_string))
+    {
+        paths.push(path_string);
+    }
+}
+
 fn folder_name(path: &Path) -> String {
     path.file_name()
         .and_then(|value| value.to_str())
@@ -363,12 +574,24 @@ fn folder_name(path: &Path) -> String {
         .unwrap_or_else(|| path.to_string_lossy().into_owned())
 }
 
-fn paths_match(left: &str, right: &str) -> bool {
+fn file_name(path: &Path) -> String {
+    path.file_name()
+        .and_then(|value| value.to_str())
+        .filter(|value| !value.is_empty())
+        .map(str::to_owned)
+        .unwrap_or_else(|| path.to_string_lossy().into_owned())
+}
+
+fn normalized_path_key(path: &str) -> String {
     if cfg!(windows) {
-        left.eq_ignore_ascii_case(right)
+        path.to_lowercase()
     } else {
-        left == right
+        path.to_string()
     }
+}
+
+fn paths_match(left: &str, right: &str) -> bool {
+    normalized_path_key(left) == normalized_path_key(right)
 }
 
 fn stored_library_path(app: &AppHandle) -> Result<PathBuf, String> {
