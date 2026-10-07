@@ -1,0 +1,122 @@
+.settings-page {
+  max-width: 1080px;
+}
+
+.settings-section + .settings-section {
+  margin-top: var(--space-7);
+}
+
+.settings-section__heading {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.settings-section__icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  place-items: center;
+  border: 1px solid rgb(var(--color-accent-rgb) / 0.12);
+  border-radius: 11px;
+  color: var(--color-accent);
+  background: rgb(var(--color-accent-rgb) / 0.07);
+}
+
+.settings-section__heading h2 {
+  margin: 1px 0 3px;
+  font-size: 0.95rem;
+  letter-spacing: -0.025em;
+}
+
+.settings-section__heading p {
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: 0.74rem;
+}
+
+.settings-section__surface {
+  overflow: hidden;
+}
+
+.setting-row {
+  display: grid;
+  min-height: 76px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+}
+
+.setting-row + .setting-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.setting-row__copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.setting-row__copy strong {
+  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 620;
+}
+
+.setting-row__copy span {
+  color: var(--color-text-subtle);
+  font-size: 0.71rem;
+  line-height: 1.5;
+}
+
+.setting-row__control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.choice-group {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.018);
+}
+
+.choice-group__option {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--color-text-subtle);
+  background: transparent;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 620;
+  cursor: pointer;
+}
+
+.choice-group__option:hover {
+  color: var(--color-text-muted);
+}
+
+.choice-group__option:focus-visible {
+  outline: 2px solid rgb(var(--color-accent-rgb) / 0.7);
+  outline-offset: 1px;
+}
+
+.choice-group__option--active {
+  color: var(--color-text);
+  background: var(--color-surface-raised);
+  box-shadow: var(--shadow-xs);
+}
+
+.settings-version {
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+}
