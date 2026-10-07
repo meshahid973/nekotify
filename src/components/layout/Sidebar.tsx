@@ -2,6 +2,8 @@ import {
   Folder,
   FolderPlus,
   Home,
+  ImagePlus,
+  Images,
   Library,
   Music2,
   RefreshCw,
@@ -22,9 +24,13 @@ const links = [
 
 export function Sidebar() {
   const folders = useLibraryStore((state) => state.folders)
+  const artSources = useLibraryStore((state) => state.artSources)
+  const artworkPool = useLibraryStore((state) => state.artworkPool)
   const tracks = useLibraryStore((state) => state.tracks)
   const status = useLibraryStore((state) => state.status)
   const importFolder = useLibraryStore((state) => state.importFolder)
+  const importArtFolder = useLibraryStore((state) => state.importArtFolder)
+  const importArtFile = useLibraryStore((state) => state.importArtFile)
   const refresh = useLibraryStore((state) => state.refresh)
   const busy = status === 'loading'
 
@@ -61,12 +67,10 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <section className="sidebar__section" aria-label="Music folders">
-        <div className="sidebar__section-heading">
-          <span>Folders</span>
-          {folders.length > 0 ? <small>{folders.length}</small> : null}
-        </div>
-
+      <SidebarSection
+        title="Folders"
+        count={folders.length}
+      >
         <div className="sidebar__folders">
           {folders.slice(0, 4).map((folder) => (
             <div className="sidebar-folder" key={folder.path} title={folder.path}>
@@ -76,28 +80,46 @@ export function Sidebar() {
           ))}
         </div>
 
-        <button
-          type="button"
-          className="sidebar-action"
+        <SidebarAction
           disabled={busy}
+          icon={<FolderPlus size={16} />}
+          label={busy ? 'Scanning…' : 'Add music'}
           onClick={() => void importFolder()}
-        >
-          <FolderPlus size={16} aria-hidden="true" />
-          <span>{busy ? 'Scanning…' : 'Add folder'}</span>
-        </button>
+        />
 
         {folders.length > 0 ? (
-          <button
-            type="button"
-            className="sidebar-action"
+          <SidebarAction
             disabled={busy}
+            icon={<RefreshCw size={15} />}
+            label="Rescan"
             onClick={() => void refresh()}
-          >
-            <RefreshCw size={15} aria-hidden="true" />
-            <span>Rescan</span>
-          </button>
+          />
         ) : null}
-      </section>
+      </SidebarSection>
+
+      <SidebarSection
+        title="Artwork"
+        count={artworkPool.length}
+        compact
+      >
+        <SidebarAction
+          disabled={busy}
+          icon={<Images size={15} />}
+          label="Add art folder"
+          onClick={() => void importArtFolder()}
+        />
+        <SidebarAction
+          disabled={busy}
+          icon={<ImagePlus size={15} />}
+          label="Add cover"
+          onClick={() => void importArtFile()}
+        />
+        {artSources.length > 0 ? (
+          <span className="sidebar__art-count">
+            {artSources.length} {artSources.length === 1 ? 'source' : 'sources'}
+          </span>
+        ) : null}
+      </SidebarSection>
 
       <NavLink
         to="/settings"
@@ -111,5 +133,57 @@ export function Sidebar() {
         <span>Settings</span>
       </NavLink>
     </aside>
+  )
+}
+
+function SidebarSection({
+  title,
+  count,
+  compact = false,
+  children,
+}: {
+  title: string
+  count: number
+  compact?: boolean
+  children: React.ReactNode
+}) {
+  return (
+    <section
+      className={
+        compact
+          ? 'sidebar__section sidebar__section--compact'
+          : 'sidebar__section'
+      }
+    >
+      <div className="sidebar__section-heading">
+        <span>{title}</span>
+        {count > 0 ? <small>{count}</small> : null}
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function SidebarAction({
+  icon,
+  label,
+  disabled,
+  onClick,
+}: {
+  icon: React.ReactNode
+  label: string
+  disabled?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      className="sidebar-action"
+      disabled={disabled}
+      onClick={onClick}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
   )
 }

@@ -3,6 +3,18 @@ export interface NativeLibraryFolder {
   name: string
 }
 
+export interface NativeArtworkSource {
+  path: string
+  name: string
+  kind: 'folder' | 'file'
+}
+
+export interface NativeLibraryArtwork {
+  id: string
+  path: string
+  name: string
+}
+
 export interface NativeLibraryTrack {
   id: string
   title: string
@@ -15,5 +27,7 @@ export interface NativeLibraryTrack {
 
 export interface NativeLibrarySnapshot {
   folders: NativeLibraryFolder[]
+  artSources: NativeArtworkSource[]
+  artworkPool: NativeLibraryArtwork[]
   tracks: NativeLibraryTrack[]
 }
