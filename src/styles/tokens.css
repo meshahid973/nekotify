@@ -1,0 +1,66 @@
+:root {
+  color-scheme: dark;
+
+  --color-bg: #08090d;
+  --color-sidebar: #090a0f;
+  --color-surface: rgb(16 18 27 / 0.84);
+  --color-surface-raised: #141722;
+  --color-text: #f4f5f8;
+  --color-text-muted: #a3a8b5;
+  --color-text-subtle: #6d7382;
+  --color-border: rgb(255 255 255 / 0.07);
+  --color-border-strong: rgb(255 255 255 / 0.11);
+  --color-accent: #9183ff;
+  --color-accent-rgb: 145 131 255;
+  --color-accent-secondary: #69dcff;
+  --color-accent-secondary-rgb: 105 220 255;
+
+  --font-sans:
+    Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono:
+    "SFMono-Regular", Consolas, "Liberation Mono", ui-monospace, monospace;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 48px;
+  --space-9: 64px;
+
+  --sidebar-width: 208px;
+  --sidebar-collapsed-width: 72px;
+  --player-height: 86px;
+  --page-inline: clamp(24px, 4vw, 56px);
+  --page-block: clamp(26px, 4vw, 48px);
+
+  --motion-micro: 130ms;
+  --motion-fast: 170ms;
+  --motion-panel: 230ms;
+  --motion-artwork: 420ms;
+  --ease-standard: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --shadow-xs: 0 2px 8px rgb(0 0 0 / 0.12);
+  --shadow-sm: 0 12px 34px rgb(0 0 0 / 0.16);
+  --shadow-lg: 0 34px 110px rgb(0 0 0 / 0.3);
+
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-density='compact'] {
+  --player-height: 78px;
+  --page-inline: clamp(20px, 3vw, 44px);
+  --page-block: clamp(22px, 3vw, 38px);
+}
