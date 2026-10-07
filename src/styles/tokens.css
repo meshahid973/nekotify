@@ -37,10 +37,10 @@
   --space-8: 48px;
   --space-9: 64px;
 
-  --sidebar-width: 232px;
+  --sidebar-width: clamp(198px, 13vw, 236px);
   --player-height: 88px;
-  --page-inline: clamp(28px, 3.5vw, 56px);
-  --page-block: clamp(28px, 3vw, 46px);
+  --page-inline: clamp(24px, 3vw, 54px);
+  --page-block: clamp(24px, 2.8vw, 44px);
 
   --motion-micro: 120ms;
   --motion-fast: 180ms;
@@ -62,6 +62,6 @@
 
 :root[data-density='compact'] {
   --player-height: 80px;
-  --page-inline: clamp(24px, 3vw, 48px);
-  --page-block: clamp(24px, 2.6vw, 38px);
+  --page-inline: clamp(20px, 2.5vw, 44px);
+  --page-block: clamp(20px, 2.3vw, 36px);
 }

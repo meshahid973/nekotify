@@ -2,6 +2,7 @@ import { FolderPlus, Library, Pause, Play } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import { Artwork } from '@/components/artwork/Artwork'
+import { TrackHero } from '@/components/media/TrackHero'
 import { Button } from '@/components/primitives/Button'
 import { useLibraryStore } from '@/features/library/library.store'
 import { playLibraryTrack } from '@/features/library/playLibraryTrack'
@@ -20,7 +21,7 @@ export function HomePage() {
   const featuredPlaying =
     featured?.id === currentTrack?.id &&
     (playbackStatus === 'playing' || playbackStatus === 'loading')
-  const listenNow = tracks.slice(0, 8)
+  const listenNow = tracks.slice(0, 10)
 
   return (
     <div className="page home-page">
@@ -30,30 +31,11 @@ export function HomePage() {
       </header>
 
       {featured ? (
-        <section className="home-feature" aria-label="Featured track">
-          <Artwork
-            size="lg"
-            src={featured.artwork?.uri}
-            alt={featured.artwork?.alt ?? ''}
-          />
-
-          <div className="home-feature__copy">
-            <p className="eyebrow">Listen now</p>
-            <h2>{featured.title}</h2>
-            <p>
-              {featured.artist}
-              {featured.album ? ' · ' + featured.album : ''}
-            </p>
-            <Button onClick={() => void playLibraryTrack(featured, tracks)}>
-              {featuredPlaying ? (
-                <Pause size={15} fill="currentColor" aria-hidden="true" />
-              ) : (
-                <Play size={15} fill="currentColor" aria-hidden="true" />
-              )}
-              {featuredPlaying ? 'Pause' : 'Play'}
-            </Button>
-          </div>
-        </section>
+        <TrackHero
+          track={featured}
+          playing={featuredPlaying}
+          onToggle={() => void playLibraryTrack(featured, tracks)}
+        />
       ) : (
         <section className="home-empty">
           <div>
@@ -83,7 +65,7 @@ export function HomePage() {
             className="home-section__link"
             onClick={() => navigate('/library')}
           >
-            Library
+            See all
           </button>
         </div>
 
