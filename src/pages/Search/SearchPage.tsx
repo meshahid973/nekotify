@@ -58,7 +58,7 @@ export function SearchPage() {
                   key={track.id}
                   track={track}
                   active={active}
-                  playing={active && playbackStatus === 'playing'}
+                  playing={\n                    active &&\n                    (playbackStatus === 'playing' || playbackStatus === 'loading')\n                  }
                   onPlay={() => void playLibraryTrack(track, results)}
                 />
               )
