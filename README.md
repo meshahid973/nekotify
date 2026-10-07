@@ -1,24 +1,6 @@
 # Nekotify
 
-Nekotify is a lightweight, local-first desktop music player built with React, TypeScript, Vite, and Tauri.
-
-The interface uses a persistent left library panel, full-width route content, a compact bottom player, pure-black OLED surfaces, and an optional artwork ambience mode.
-
-## Current features
-
-- local music folder import
-- recursive native audio scanning
-- title, artist, album, duration, and cover metadata
-- embedded artwork cache
-- imported artwork folders and individual cover images
-- randomized fallback artwork for tracks without a real cover
-- wide artwork-led Home hero
-- songs, albums, and artists views
-- local search
-- persistent playback and queue
-- OLED and Ambience themes
-- comfortable and compact density
-- reduced-motion support
+Nekotify is a lightweight, local desktop music player built with React, TypeScript, Vite, and Tauri.
 
 ## Stack
 
@@ -60,5 +42,5 @@ See `docs/ARCHITECTURE.md`, `docs/PERFORMANCE.md`, and `docs/DEVELOPMENT.md`.
 3. Filesystem and metadata work stay native.
 4. UI state and domain state stay separate.
 5. Real artwork drives visual atmosphere.
-6. Motion stays CSS-first and lightweight.
+6. Motion stays CSS and lightweight.
 7. Verification stays focused on important contracts.
