@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use std::{
     fs,
     path::{Path, PathBuf},
-    time::UNIX_EPOCH,
 };
 use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::DialogExt;
@@ -311,8 +310,8 @@ fn folder_name(path: &Path) -> String {
     path.file_name()
         .and_then(|value| value.to_str())
         .filter(|value| !value.is_empty())
-        .unwrap_or_else(|| path.to_string_lossy().as_ref())
-        .to_string()
+        .map(str::to_owned)
+        .unwrap_or_else(|| path.to_string_lossy().into_owned())
 }
 
 fn paths_match(left: &str, right: &str) -> bool {
@@ -376,13 +375,3 @@ fn fnv1a(bytes: &[u8]) -> u64 {
     hash
 }
 
-#[allow(dead_code)]
-fn modified_seconds(path: &Path) -> Option<u64> {
-    path.metadata()
-        .ok()?
-        .modified()
-        .ok()?
-        .duration_since(UNIX_EPOCH)
-        .ok()
-        .map(|duration| duration.as_secs())
-}
