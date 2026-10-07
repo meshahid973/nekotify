@@ -14,47 +14,27 @@
 }
 
 .home-feature {
-  position: relative;
   display: grid;
-  min-height: 300px;
-  grid-template-columns: 190px minmax(0, 1fr);
+  min-height: 260px;
+  grid-template-columns: 176px minmax(0, 1fr);
   align-items: center;
-  gap: 34px;
-  overflow: hidden;
-  padding: 34px 40px;
+  gap: 32px;
+  padding: 30px 32px;
   border: 1px solid var(--color-border);
   border-radius: 18px;
-  background: #0a0a0a;
+  background: rgb(255 255 255 / 0.018);
 }
 
-.home-feature__backdrop {
-  position: absolute;
-  inset: -8%;
-  width: 116%;
-  height: 116%;
-  object-fit: cover;
-  filter: blur(26px) saturate(0.9) brightness(0.54);
-  transform: scale(1.03);
+.app-shell[data-theme='ambience'] .home-feature {
+  background: rgb(0 0 0 / 0.34);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-.home-feature__shade {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, rgb(0 0 0 / 0.78), rgb(0 0 0 / 0.46) 58%, rgb(0 0 0 / 0.62)),
-    linear-gradient(to top, rgb(0 0 0 / 0.5), transparent 70%);
-}
-
-.home-feature__artwork,
-.home-feature__copy {
-  position: relative;
-  z-index: 1;
-}
-
-.home-feature__artwork .artwork {
+.home-feature > .artwork {
   width: 176px;
   height: 176px;
-  box-shadow: 0 20px 50px rgb(0 0 0 / 0.35);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 0.34);
 }
 
 .home-feature__copy h2 {
@@ -69,7 +49,7 @@
 
 .home-feature__copy > p:not(.eyebrow) {
   margin: 0 0 20px;
-  color: rgb(255 255 255 / 0.52);
+  color: rgb(255 255 255 / 0.5);
   font-size: 0.76rem;
   font-weight: 600;
 }
@@ -80,7 +60,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 28px 30px;
+  padding: 28px 4px;
   border-top: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
 }
@@ -130,7 +110,7 @@
   border: 1px solid var(--color-border);
   border-radius: 11px;
   color: white;
-  background: rgb(255 255 255 / 0.025);
+  background: rgb(255 255 255 / 0.022);
   text-align: left;
   cursor: pointer;
   transition:
@@ -138,7 +118,8 @@
     border-color var(--motion-fast) var(--ease-standard);
 }
 
-.home-track:hover {
+.home-track:hover,
+.home-track[data-active='true'] {
   border-color: var(--color-border-strong);
   background: rgb(255 255 255 / 0.05);
 }
