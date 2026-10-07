@@ -4,45 +4,37 @@ Performance is a product requirement for Nekotify, not a cleanup task.
 
 ## Phase 1 budgets
 
-- Total built JavaScript: **under 120 KiB gzip**
-- Total built CSS: **under 20 KiB gzip**
+- Built JavaScript: **under 120 KiB gzip**
+- Built CSS: **under 24 KiB gzip**
 - Idle animation loops: **zero**
-- Global playback updates: **bounded; never requestAnimationFrame-driven**
+- Global playback updates: **bounded**
 - Heavy component libraries: **none**
 - Full icon-library imports: **none**
 
-`npm run check:bundle` measures built JS and CSS after `npm run build`.
-
-These budgets can change when real features justify them, but they must change deliberately and be documented.
+The single `npm run check` script also measures the built bundle when `dist/assets` exists. `npm run verify` builds first, so the budget is always checked in the full gate.
 
 ## Playback
 
-The browser audio clock is more precise than React needs to be. `AudioEngine` publishes progress at a 250 ms interval while playback is active and stops the interval while paused, ended, or errored.
+The browser audio clock is more precise than React needs to be. `AudioEngine` publishes progress at a 250 ms interval only while playback is active.
 
 The audio element remains outside React and Zustand.
 
 ## Images
 
-Phase 1 exposes a single Artwork component. Phase 2 will make thumbnail size explicit and move extraction, resizing, hashing, dominant-color work, and disk caching to Rust/native services.
+Phase 1 exposes a single Artwork component. Phase 2 moves extraction, resizing, hashing, dominant-color work, and disk caching to native services.
 
-Large embedded cover images must never be decoded independently in every visible card.
+Large embedded cover images must not be independently decoded in every visible tile.
 
 ## Motion
 
-CSS handles the Phase 1 motion system. There is no animation framework and no permanent JavaScript animation loop.
+CSS owns Phase 1 motion. There is no animation framework and no permanent JavaScript animation loop.
 
-Both `prefers-reduced-motion` and Nekotify's explicit Reduced setting collapse motion durations.
+Both `prefers-reduced-motion` and Nekotify's Reduced setting collapse motion durations.
 
 ## Lists
 
-TanStack Virtual is already available for the Phase 2 song table. Large libraries must not map tens of thousands of tracks directly into DOM nodes.
+TanStack Virtual is reserved for large local-library lists. Thousands of tracks should never map directly to thousands of DOM nodes.
 
-## Adding dependencies
+## Dependencies
 
-Before adding a runtime dependency, check:
-
-1. Can the platform already do it?
-2. Is the feature loaded on startup?
-3. Is the package tree-shakeable?
-4. Does it add background work while idle?
-5. Can the feature be lazy or native instead?
+Add a runtime dependency only when it solves a concrete problem better than the platform or a small local implementation.

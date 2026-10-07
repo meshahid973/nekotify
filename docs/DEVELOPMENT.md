@@ -2,7 +2,7 @@
 
 ## Branches
 
-Use short scoped branches:
+Use short scoped branches and avoid substantial feature work directly on `main`.
 
 ```text
 feat/phase-1-foundation
@@ -10,45 +10,27 @@ feat/local-library
 fix/playback-resume
 ```
 
-Do not develop substantial features directly on `main`.
+## Keep verification small
 
-## Commit style
+Nekotify intentionally does not copy NekoWatch's large check-script collection.
 
-Use small conventional commits that leave the branch buildable:
-
-```text
-chore: harden project metadata
-refactor: establish application architecture
-feat: add persistent playback foundation
-fix: preserve queue cursor on reorder
-docs: document performance contract
-```
-
-## Required checks
-
-Before a Phase 1 merge:
+There is one project-specific guard:
 
 ```powershell
-npm run check:foundation
-npm run typecheck
-npm run lint
-npm run format:check
-npm run build
-npm run check:bundle
-
-npm run rust:fmt
-npm run rust:clippy
-npm run rust:test
-npm run rust:check
+npm run check
 ```
 
-Or run:
+It verifies the few Phase 1 contracts that are easy to accidentally break: one AudioEngine owner, no heavy UI framework, narrow Tauri permissions, correct app metadata, starter cleanup, and the built bundle budget when `dist` exists.
+
+For the full local gate:
 
 ```powershell
 npm run verify
 ```
 
-A production Tauri build should also be verified before release:
+That runs TypeScript, ESLint, a production frontend build, the single Nekotify guard, and the important Rust checks.
+
+Before a release, also verify the packaged desktop app:
 
 ```powershell
 npm run tauri build
@@ -56,15 +38,12 @@ npm run tauri build
 
 ## Adding frontend features
 
-1. Put domain behavior under `src/features/<feature>`.
-2. Keep route components under `src/pages` focused on composition.
-3. Reuse primitives before introducing new UI abstractions.
-4. Add global state only when multiple distant owners genuinely need it.
-5. Avoid creating barrel exports by default.
-6. Update architecture/performance checks when a new contract is introduced.
+1. Domain behavior belongs under `src/features/<feature>`.
+2. Pages compose features; they do not become service layers.
+3. Prefer existing primitives and CSS before adding dependencies.
+4. Add global state only when distant owners genuinely need it.
+5. Add a new project-specific check only when it protects a high-value architectural or safety boundary.
 
 ## Adding native features
 
-Add a Tauri capability only when its implementation lands. Prefer a narrow permission over a wildcard. Keep native work behind a typed frontend service rather than scattering `invoke` calls across pages.
-
-Phase 2 will establish the first real native commands for local library work.
+Add Tauri permissions only alongside the implementation that needs them. Prefer narrow permissions over wildcards and keep native calls behind a small typed service boundary.
