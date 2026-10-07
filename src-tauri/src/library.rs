@@ -1,6 +1,7 @@
 use lofty::{file::EXTENSIONS, picture::Picture, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::HashSet,
     fs,
     path::{Path, PathBuf},
 };
@@ -113,6 +114,7 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
 
     let mut folders = Vec::new();
     let mut tracks = Vec::new();
+    let mut seen_track_ids = HashSet::new();
 
     for folder in stored.folders {
         let path = PathBuf::from(&folder);
@@ -121,22 +123,27 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
             continue;
         }
 
-        app.asset_protocol_scope()
-            .allow_directory(&path, true)
-            .map_err(|error| format!("Could not expose music folder: {error}"))?;
-
         folders.push(LibraryFolder {
             name: folder_name(&path),
-            path: folder.clone(),
+            path: folder,
         });
 
-        scan_directory(app, &cache_dir, &path, &mut tracks);
+        scan_directory(
+            app,
+            &cache_dir,
+            &path,
+            &mut tracks,
+            &mut seen_track_ids,
+        );
     }
 
     tracks.sort_by(|left, right| {
         left.artist
             .to_lowercase()
             .cmp(&right.artist.to_lowercase())
+            .then_with(|| left.album.as_deref().unwrap_or("").to_lowercase().cmp(
+                &right.album.as_deref().unwrap_or("").to_lowercase(),
+            ))
             .then_with(|| left.title.to_lowercase().cmp(&right.title.to_lowercase()))
     });
 
@@ -146,31 +153,46 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
 fn scan_directory(
     app: &AppHandle,
     cache_dir: &Path,
-    directory: &Path,
+    root: &Path,
     tracks: &mut Vec<LibraryTrack>,
+    seen_track_ids: &mut HashSet<String>,
 ) {
-    let Ok(entries) = fs::read_dir(directory) else {
-        return;
-    };
+    let mut pending = vec![root.to_path_buf()];
 
-    for entry in entries.flatten() {
-        let Ok(file_type) = entry.file_type() else {
+    while let Some(directory) = pending.pop() {
+        let Ok(entries) = fs::read_dir(&directory) else {
             continue;
         };
 
-        if file_type.is_symlink() {
-            continue;
-        }
+        for entry in entries.flatten() {
+            let Ok(file_type) = entry.file_type() else {
+                continue;
+            };
 
-        let path = entry.path();
+            if file_type.is_symlink() {
+                continue;
+            }
 
-        if file_type.is_dir() {
-            scan_directory(app, cache_dir, &path, tracks);
-            continue;
-        }
+            let path = entry.path();
 
-        if file_type.is_file() && is_supported_audio(&path) {
-            tracks.push(read_track(app, cache_dir, &path));
+            if file_type.is_dir() {
+                pending.push(path);
+                continue;
+            }
+
+            if !file_type.is_file() || !is_supported_audio(&path) {
+                continue;
+            }
+
+            if app.asset_protocol_scope().allow_file(&path).is_err() {
+                continue;
+            }
+
+            let track = read_track(app, cache_dir, &path);
+
+            if seen_track_ids.insert(track.id.clone()) {
+                tracks.push(track);
+            }
         }
     }
 }
@@ -185,6 +207,13 @@ fn read_track(app: &AppHandle, cache_dir: &Path, path: &Path) -> LibraryTrack {
         .unwrap_or("Untitled")
         .to_string();
 
+    let external_artwork = find_external_artwork(path).and_then(|artwork_path| {
+        app.asset_protocol_scope()
+            .allow_file(&artwork_path)
+            .ok()
+            .map(|_| artwork_path.to_string_lossy().into_owned())
+    });
+
     let mut track = LibraryTrack {
         id,
         title: fallback_title,
@@ -192,7 +221,7 @@ fn read_track(app: &AppHandle, cache_dir: &Path, path: &Path) -> LibraryTrack {
         album: None,
         duration: 0.0,
         path: path_string,
-        artwork_path: find_external_artwork(path),
+        artwork_path: external_artwork,
     };
 
     let Ok(tagged_file) = lofty::read_from_path(path) else {
@@ -228,14 +257,14 @@ fn read_track(app: &AppHandle, cache_dir: &Path, path: &Path) -> LibraryTrack {
             .filter(|value| !value.is_empty());
 
         if let Some(picture) = tag.pictures().first() {
-            track.artwork_path = cache_picture(app, cache_dir, picture).or(track.artwork_path);
+            track.artwork_path = cache_picture(cache_dir, picture).or(track.artwork_path);
         }
     }
 
     track
 }
 
-fn cache_picture(app: &AppHandle, cache_dir: &Path, picture: &Picture) -> Option<String> {
+fn cache_picture(cache_dir: &Path, picture: &Picture) -> Option<String> {
     if picture.data().is_empty() {
         return None;
     }
@@ -252,10 +281,6 @@ fn cache_picture(app: &AppHandle, cache_dir: &Path, picture: &Picture) -> Option
         return None;
     }
 
-    if app.asset_protocol_scope().allow_file(&path).is_err() {
-        return None;
-    }
-
     Some(path.to_string_lossy().into_owned())
 }
 
@@ -268,28 +293,52 @@ fn image_extension_from_bytes(bytes: &[u8]) -> Option<&'static str> {
         Some("gif")
     } else if bytes.starts_with(b"BM") {
         Some("bmp")
+    } else if bytes.len() >= 12
+        && bytes.starts_with(b"RIFF")
+        && &bytes[8..12] == b"WEBP"
+    {
+        Some("webp")
     } else {
         None
     }
 }
 
-fn find_external_artwork(audio_path: &Path) -> Option<String> {
+fn find_external_artwork(audio_path: &Path) -> Option<PathBuf> {
     let parent = audio_path.parent()?;
+    let preferred_stems = ["cover", "folder", "front", "album", "artwork"];
+    let supported_extensions = ["jpg", "jpeg", "png", "webp", "gif", "bmp"];
 
-    for name in [
-        "cover.jpg",
-        "cover.jpeg",
-        "cover.png",
-        "folder.jpg",
-        "folder.jpeg",
-        "folder.png",
-        "front.jpg",
-        "front.jpeg",
-        "front.png",
-    ] {
-        let candidate = parent.join(name);
-        if candidate.is_file() {
-            return Some(candidate.to_string_lossy().into_owned());
+    let entries = fs::read_dir(parent).ok()?;
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+
+        if !path.is_file() {
+            continue;
+        }
+
+        let stem = path
+            .file_stem()
+            .and_then(|value| value.to_str())
+            .map(str::to_ascii_lowercase);
+        let extension = path
+            .extension()
+            .and_then(|value| value.to_str())
+            .map(str::to_ascii_lowercase);
+
+        let Some(stem) = stem else {
+            continue;
+        };
+        let Some(extension) = extension else {
+            continue;
+        };
+
+        if preferred_stems.iter().any(|candidate| *candidate == stem)
+            && supported_extensions
+                .iter()
+                .any(|candidate| *candidate == extension)
+        {
+            return Some(path);
         }
     }
 
@@ -374,4 +423,3 @@ fn fnv1a(bytes: &[u8]) -> u64 {
 
     hash
 }
-
