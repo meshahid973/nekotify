@@ -1,75 +1,78 @@
-# React + TypeScript + Vite
+# Nekotify
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Nekotify is a lightweight, local-first desktop music player built with React, TypeScript, Vite, and Tauri.
 
-Currently, two official plugins are available:
+The project is designed around a simple rule: the interface can feel rich without making the runtime heavy. React owns presentation, Tauri/Rust owns native work, and playback is kept outside route lifecycles so navigation never interrupts audio.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Status
 
-## React Compiler
+Nekotify is currently in **Phase 1 — Foundation**.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Phase 1 establishes the application shell, routing, design system, playback and queue boundaries, native runtime configuration, accessibility rules, and performance contracts. Local library scanning and metadata indexing begin in Phase 2.
 
-## Expanding the ESLint configuration
+## Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- React 19 + TypeScript
+- Vite
+- Tauri 2 + Rust
+- React Router
+- Zustand
+- TanStack Virtual
+- Lucide React
+- Plain CSS with design tokens
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Development
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```powershell
+npm install
+npm run tauri dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Useful checks:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```powershell
+npm run typecheck
+npm run lint
+npm run format:check
+npm run build
+npm run rust:fmt
+npm run rust:clippy
+npm run rust:test
+npm run rust:check
 ```
+
+Run the full verification set with:
+
+```powershell
+npm run verify
+```
+
+## Architecture
+
+The frontend is split by responsibility:
+
+- `src/app` — application composition, router, error boundaries
+- `src/components` — reusable presentation primitives and layout
+- `src/features` — domain behavior such as playback and queue
+- `src/pages` — route composition
+- `src/services` — long-lived infrastructure boundaries
+- `src/stores` — small cross-cutting UI stores
+- `src/styles` — tokens, reset, global styles, motion
+- `src/types` — shared domain types
+
+The Rust side remains intentionally small until native features have real ownership. Empty placeholder modules are not added just to make the tree look complete.
+
+See `docs/ARCHITECTURE.md`, `docs/PERFORMANCE.md`, and `docs/DEVELOPMENT.md` as Phase 1 lands.
+
+## Principles
+
+1. React does not own the audio element.
+2. Route changes must not recreate playback.
+3. Stores stay domain-specific.
+4. Heavy native work belongs in Rust.
+5. Features are not exposed before they work.
+6. Performance budgets are treated as product requirements.
+
+## License
+
+MIT
