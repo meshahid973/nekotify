@@ -26,7 +26,7 @@ It must not own playback, queue rules, library indexing, or page-specific behavi
 
 ### `src/components`
 
-Reusable presentation. Components here should be useful without knowing which song, playlist, or library implementation called them.
+Reusable presentation. Components here should be useful without knowing which song, playlist, or library implementation called them. Persistent chrome is intentionally small: one floating top header and one bottom player.
 
 ### `src/features`
 
@@ -68,7 +68,7 @@ Queue state is separate from playback state. Queue transformations are kept in p
 
 ## Router contract
 
-Nekotify uses a hash router for the desktop bundle. `AppShell` owns the persistent sidebar, route outlet, and player bar. The player stays mounted as Home, Search, Library, and Settings change.
+Nekotify uses a hash router for the desktop bundle. `AppShell` owns the persistent NekoWatch-inspired floating header, route outlet, and player bar. The player stays mounted as Home, Search, Library, and Settings change.
 
 ## Tauri contract
 
