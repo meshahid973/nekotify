@@ -10,7 +10,7 @@ export function SearchPage() {
       <PageHeader
         eyebrow="Discovery"
         title="find your music"
-        description="Search becomes instant and fully local when the library index lands in Phase 2."
+        description="Search songs, albums, and artists without sending your library anywhere."
         actions={<span className="key-hint">Ctrl K</span>}
       />
 
@@ -39,7 +39,7 @@ export function SearchPage() {
 
         <div className="search-empty">
           <Search size={17} aria-hidden="true" />
-          <span>Start typing once your first local library has been indexed.</span>
+          <span>Search becomes available as soon as a local music folder is connected.</span>
         </div>
       </section>
     </div>
