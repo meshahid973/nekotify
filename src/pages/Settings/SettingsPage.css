@@ -1,40 +1,18 @@
 .settings-page {
-  max-width: 1120px;
+  max-width: 980px;
 }
 
 .settings-section + .settings-section {
-  margin-top: 52px;
+  margin-top: 42px;
 }
 
-.settings-section__heading {
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  margin-bottom: 12px;
-}
-
-.settings-section__icon {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  place-items: center;
-  border-radius: 10px;
-  color: rgb(255 255 255 / 0.5);
-  background: rgb(255 255 255 / 0.04);
-}
-
-.settings-section__heading h2 {
-  margin: 1px 0 2px;
-  font-size: 0.86rem;
-  font-weight: 760;
-  letter-spacing: -0.025em;
-}
-
-.settings-section__heading p {
-  margin: 0;
-  color: rgb(255 255 255 / 0.28);
-  font-size: 0.67rem;
+.settings-section h2 {
+  margin: 0 0 10px;
+  color: rgb(255 255 255 / 0.52);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .settings-section__rows {
@@ -43,29 +21,17 @@
 
 .setting-row {
   display: grid;
-  min-height: 72px;
+  min-height: 64px;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--space-5);
+  gap: 20px;
   border-bottom: 1px solid var(--color-border);
 }
 
-.setting-row__copy {
-  display: grid;
-  min-width: 0;
-  gap: 3px;
-}
-
-.setting-row__copy strong {
-  color: rgb(255 255 255 / 0.84);
-  font-size: 0.75rem;
+.setting-row > strong {
+  color: rgb(255 255 255 / 0.78);
+  font-size: 0.74rem;
   font-weight: 700;
-}
-
-.setting-row__copy span {
-  color: rgb(255 255 255 / 0.28);
-  font-size: 0.66rem;
-  line-height: 1.45;
 }
 
 .setting-row__control {
@@ -84,11 +50,11 @@
 }
 
 .choice-group__option {
-  min-height: 28px;
+  min-height: 29px;
   padding: 0 10px;
   border: 0;
   border-radius: 7px;
-  color: rgb(255 255 255 / 0.3);
+  color: rgb(255 255 255 / 0.32);
   background: transparent;
   font: inherit;
   font-size: 0.64rem;
@@ -97,7 +63,7 @@
 }
 
 .choice-group__option:hover {
-  color: rgb(255 255 255 / 0.58);
+  color: rgb(255 255 255 / 0.62);
 }
 
 .choice-group__option:focus-visible {
@@ -107,12 +73,11 @@
 
 .choice-group__option--active {
   color: white;
-  background: rgb(255 255 255 / 0.08);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  background: rgb(255 255 255 / 0.09);
 }
 
 .settings-version {
-  color: rgb(255 255 255 / 0.34);
-  font-size: 0.67rem;
+  color: rgb(255 255 255 / 0.36);
+  font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
 }

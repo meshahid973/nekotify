@@ -1,0 +1,98 @@
+.track-row {
+  display: grid;
+  min-height: 66px;
+  grid-template-columns: 34px 48px minmax(160px, 1.25fr) minmax(120px, 0.8fr) 54px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-bottom-color: var(--color-border);
+  color: var(--color-text-muted);
+  transition:
+    background-color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard);
+}
+
+.track-row:hover {
+  background: rgb(255 255 255 / 0.025);
+}
+
+.track-row[data-active='true'] {
+  border-color: rgb(255 255 255 / 0.08);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 0.045);
+}
+
+.track-row__play {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  color: rgb(255 255 255 / 0.72);
+  background: rgb(255 255 255 / 0.035);
+  cursor: pointer;
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    background-color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-micro) var(--ease-out);
+}
+
+.track-row__play:hover {
+  color: white;
+  background: rgb(255 255 255 / 0.08);
+}
+
+.track-row__play:active {
+  transform: scale(0.94);
+}
+
+.track-row__play:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.track-row__identity {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.track-row__identity strong,
+.track-row__identity span,
+.track-row__album {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.track-row__identity strong {
+  color: rgb(255 255 255 / 0.9);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.track-row__identity span,
+.track-row__album,
+.track-row__duration {
+  color: rgb(255 255 255 / 0.34);
+  font-size: 0.68rem;
+  font-weight: 550;
+}
+
+.track-row__duration {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1050px) {
+  .track-row {
+    grid-template-columns: 34px 48px minmax(150px, 1fr) 54px;
+  }
+
+  .track-row__album {
+    display: none;
+  }
+}

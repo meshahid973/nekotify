@@ -1,5 +1,4 @@
 import {
-  ListMusic,
   Pause,
   Play,
   SkipBack,
@@ -49,7 +48,11 @@ export function PlayerBar() {
     }
 
     loadTrack(previousTrack)
-    await play()
+    try {
+      await play()
+    } catch {
+      // AudioEngine owns the error state.
+    }
   }
 
   const playNext = async () => {
@@ -60,7 +63,11 @@ export function PlayerBar() {
     }
 
     loadTrack(nextTrack)
-    await play()
+    try {
+      await play()
+    } catch {
+      // AudioEngine owns the error state.
+    }
   }
 
   return (
@@ -69,13 +76,11 @@ export function PlayerBar() {
         <Artwork
           size="sm"
           src={track?.artwork?.uri}
-          alt={track ? `${track.title} artwork` : ''}
+          alt={track?.artwork?.alt ?? ''}
         />
         <div className="player-bar__track-copy">
           <strong>{track?.title ?? 'Nothing playing'}</strong>
-          <span>
-            {track?.artist ?? 'Your music will stay here while you browse.'}
-          </span>
+          <span>{track?.artist ?? 'No track selected'}</span>
         </div>
       </div>
 
@@ -89,6 +94,7 @@ export function PlayerBar() {
           >
             <SkipBack size={17} />
           </IconButton>
+
           <IconButton
             className="player-bar__play"
             label={isPlaying ? 'Pause' : 'Play'}
@@ -102,6 +108,7 @@ export function PlayerBar() {
               <Play size={18} fill="currentColor" />
             )}
           </IconButton>
+
           <IconButton
             label="Next track"
             disabled={!canNext}
@@ -128,9 +135,6 @@ export function PlayerBar() {
       </div>
 
       <div className="player-bar__utilities">
-        <IconButton label="Queue" disabled size="sm">
-          <ListMusic size={17} />
-        </IconButton>
         <IconButton
           label={muted ? 'Unmute' : 'Mute'}
           size="sm"

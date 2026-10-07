@@ -1,8 +1,8 @@
-import { MonitorCog, Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import {
+  type AppTheme,
   type MotionPreference,
   type UiDensity,
   useUiStore,
@@ -13,109 +13,75 @@ import './SettingsPage.css'
 export function SettingsPage() {
   const density = useUiStore((state) => state.density)
   const motionPreference = useUiStore((state) => state.motionPreference)
+  const theme = useUiStore((state) => state.theme)
   const setDensity = useUiStore((state) => state.setDensity)
   const setMotionPreference = useUiStore((state) => state.setMotionPreference)
+  const setTheme = useUiStore((state) => state.setTheme)
 
   return (
     <div className="page settings-page">
-      <PageHeader
-        eyebrow="Nekotify"
-        title="settings"
-        description="A small set of controls for things that already work."
-      />
+      <PageHeader eyebrow="Nekotify" title="Settings" />
 
-      <SettingsSection
-        icon={<Sparkles size={17} />}
-        title="Appearance"
-        description="Keep the interface dense and quiet, or give it a little more room."
-      >
-        <SettingRow
-          title="Interface density"
-          description="Compact fits more library tiles without changing the information shown."
-        >
-          <ChoiceGroup<UiDensity>
-            value={density}
-            onChange={setDensity}
-            options={[
-              ['comfortable', 'Comfortable'],
-              ['compact', 'Compact'],
-            ]}
-          />
-        </SettingRow>
+      <section className="settings-section">
+        <h2>Appearance</h2>
+        <div className="settings-section__rows">
+          <SettingRow title="Theme">
+            <ChoiceGroup<AppTheme>
+              value={theme}
+              onChange={setTheme}
+              options={[
+                ['oled', 'OLED'],
+                ['ambience', 'Ambience'],
+              ]}
+            />
+          </SettingRow>
 
-        <SettingRow
-          title="Motion"
-          description="Follow the operating system or force reduced interface movement."
-        >
-          <ChoiceGroup<MotionPreference>
-            value={motionPreference}
-            onChange={setMotionPreference}
-            options={[
-              ['system', 'System'],
-              ['reduced', 'Reduced'],
-            ]}
-          />
-        </SettingRow>
-      </SettingsSection>
+          <SettingRow title="Density">
+            <ChoiceGroup<UiDensity>
+              value={density}
+              onChange={setDensity}
+              options={[
+                ['comfortable', 'Comfortable'],
+                ['compact', 'Compact'],
+              ]}
+            />
+          </SettingRow>
 
-      <SettingsSection
-        icon={<MonitorCog size={17} />}
-        title="Application"
-        description="Desktop foundation information."
-      >
-        <SettingRow
-          title="Nekotify"
-          description="Lightweight local-first desktop music player."
-        >
-          <span className="settings-version">v0.1.0</span>
-        </SettingRow>
-      </SettingsSection>
+          <SettingRow title="Motion">
+            <ChoiceGroup<MotionPreference>
+              value={motionPreference}
+              onChange={setMotionPreference}
+              options={[
+                ['system', 'System'],
+                ['reduced', 'Reduced'],
+              ]}
+            />
+          </SettingRow>
+        </div>
+      </section>
+
+      <section className="settings-section">
+        <h2>About</h2>
+        <div className="settings-section__rows">
+          <SettingRow title="Version">
+            <span className="settings-version">0.1.0</span>
+          </SettingRow>
+        </div>
+      </section>
     </div>
   )
 }
 
-interface SettingsSectionProps {
-  icon: ReactNode
-  title: string
-  description: string
-  children: ReactNode
-}
-
-function SettingsSection({
-  icon,
+function SettingRow({
   title,
-  description,
   children,
-}: SettingsSectionProps) {
-  return (
-    <section className="settings-section">
-      <div className="settings-section__heading">
-        <span className="settings-section__icon" aria-hidden="true">
-          {icon}
-        </span>
-        <div>
-          <h2>{title}</h2>
-          <p>{description}</p>
-        </div>
-      </div>
-      <div className="settings-section__rows">{children}</div>
-    </section>
-  )
-}
-
-interface SettingRowProps {
+}: {
   title: string
-  description: string
   children: ReactNode
-}
-
-function SettingRow({ title, description, children }: SettingRowProps) {
+}) {
   return (
     <div className="setting-row">
-      <div className="setting-row__copy">
-        <strong>{title}</strong>
-        <span>{description}</span>
-      </div>
+      <strong>{title}</strong>
       <div className="setting-row__control">{children}</div>
     </div>
   )

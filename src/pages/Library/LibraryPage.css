@@ -1,103 +1,256 @@
-.library-page__summary {
+.library-page__actions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.library-page__summary > span {
+.library-page__actions > span {
   color: var(--color-text-subtle);
   font-size: 0.68rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
+.library-folders {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin: -8px 0 20px;
+}
+
+.library-folder,
+.library-folders__rescan {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  color: rgb(255 255 255 / 0.38);
+  background: rgb(255 255 255 / 0.02);
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 650;
+}
+
+.library-folder button {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  margin-right: -4px;
+  border: 0;
+  border-radius: 6px;
+  color: rgb(255 255 255 / 0.3);
+  background: transparent;
+  cursor: pointer;
+}
+
+.library-folder button:hover {
+  color: white;
+  background: rgb(255 255 255 / 0.06);
+}
+
+.library-folders__rescan {
+  cursor: pointer;
+}
+
+.library-folders__rescan:hover:not(:disabled) {
+  color: white;
+  background: rgb(255 255 255 / 0.045);
+}
+
+.library-folders__rescan:disabled {
+  opacity: 0.4;
+  cursor: wait;
+}
+
+.library-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.library-search {
+  display: flex;
+  height: 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 13px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  color: var(--color-text-subtle);
+  background: rgb(255 255 255 / 0.025);
+}
+
+.library-search:focus-within {
+  border-color: var(--color-border-strong);
+  background: rgb(255 255 255 / 0.04);
+}
+
+.library-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: rgb(255 255 255 / 0.9);
+  background: transparent;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.library-search input::placeholder {
+  color: rgb(255 255 255 / 0.25);
+}
+
+.library-density {
+  display: inline-flex;
+  height: 44px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  color: rgb(255 255 255 / 0.4);
+  background: rgb(255 255 255 / 0.025);
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.library-density:hover {
+  color: white;
+  background: rgb(255 255 255 / 0.045);
+}
+
 .library-tabs {
   display: flex;
-  gap: var(--space-1);
-  margin: -8px 0 22px;
-  padding-bottom: 12px;
+  gap: 3px;
+  margin-bottom: 12px;
   border-bottom: 1px solid var(--color-border);
 }
 
 .library-tab {
   display: inline-flex;
-  height: 34px;
+  height: 38px;
   align-items: center;
   gap: 7px;
   padding: 0 11px;
-  border: 1px solid transparent;
-  border-radius: 10px;
+  border: 0;
+  border-bottom: 2px solid transparent;
   color: var(--color-text-subtle);
   background: transparent;
   font: inherit;
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.68rem;
+  font-weight: 720;
   cursor: pointer;
-  transition:
-    color var(--motion-fast) var(--ease-standard),
-    background-color var(--motion-fast) var(--ease-standard),
-    border-color var(--motion-fast) var(--ease-standard);
 }
 
 .library-tab:hover {
   color: var(--color-text-muted);
-  background: rgb(255 255 255 / 0.025);
 }
 
-.library-tab:focus-visible {
+.library-tab--active {
+  border-bottom-color: rgb(255 255 255 / 0.78);
+  color: white;
+}
+
+.library-tab:focus-visible,
+.library-density:focus-visible,
+.library-folders__rescan:focus-visible,
+.library-folder button:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
-.library-tab--active {
-  border-color: rgb(255 255 255 / 0.1);
-  color: white;
-  background: rgb(255 255 255 / 0.07);
+.library-track-list,
+.library-collection-list {
+  min-width: 0;
 }
 
-.library-canvas {
+.library-error {
+  margin: 0 0 12px;
+  color: #ff8b8b;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.library-empty {
   display: grid;
-  min-height: 340px;
+  min-height: 260px;
   place-items: center;
   align-content: center;
+  gap: 15px;
+  color: rgb(255 255 255 / 0.38);
   text-align: center;
 }
 
-.library-canvas__empty-icon {
+.library-empty strong {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.library-collection-list {
   display: grid;
-  width: 62px;
-  height: 62px;
-  place-items: center;
-  margin-bottom: 15px;
-  border: 1px solid rgb(255 255 255 / 0.07);
-  border-radius: 18px;
-  color: rgb(var(--color-accent-rgb) / 0.78);
-  background: rgb(255 255 255 / 0.025);
 }
 
-.library-canvas strong {
-  color: rgb(255 255 255 / 0.88);
-  font-size: 0.86rem;
-  font-weight: 750;
+.library-collection-row {
+  display: grid;
+  min-height: 68px;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.library-canvas p {
-  max-width: 430px;
-  margin: 6px 0 0;
+.library-collection-row:hover,
+.library-collection-row[data-active='true'] {
+  background: rgb(255 255 255 / 0.03);
+}
+
+.library-collection-row__copy {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.library-collection-row__copy strong,
+.library-collection-row__copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-collection-row__copy strong {
+  color: rgb(255 255 255 / 0.86);
+  font-size: 0.76rem;
+  font-weight: 730;
+}
+
+.library-collection-row__copy small,
+.library-collection-row > span:last-child {
   color: rgb(255 255 255 / 0.3);
-  font-size: 0.7rem;
-  line-height: 1.55;
+  font-size: 0.65rem;
+  font-weight: 600;
 }
 
-/* Phase 2 fills this with the compact artwork-first tiles shown in the design
-   reference: image, title, artist, duration/actions, no dashboard panel. */
-.library-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(154px, 1fr));
-  gap: 18px 16px;
+:root[data-density='compact'] .track-row {
+  min-height: 58px;
+  padding-block: 5px;
 }
 
-:root[data-density='compact'] .library-grid {
-  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
-  gap: 15px 13px;
+:root[data-density='compact'] .track-row .artwork {
+  width: 42px;
+  height: 42px;
 }
