@@ -93,7 +93,8 @@
 }
 
 /* A single compositor-animated selection follows the active route. */
-.sidebar__scroll { position:relative; }
+.sidebar__scroll { position:relative; z-index:1; }
+.sidebar__footer { position:relative; z-index:1; }
 .sidebar__selection {
   position:absolute; top:0; left:0; z-index:0;
   border-radius:11px; background:rgba(255,255,255,.09);
@@ -106,9 +107,9 @@
   background:var(--color-accent);
 }
 .sidebar__scroll .sidebar-link { position:relative; z-index:1; }
-.sidebar__scroll .sidebar-link--active { background:transparent; }
-.sidebar__scroll .sidebar-link--active:hover { background:rgba(255,255,255,.035); }
-.sidebar__scroll .sidebar-link--active::before { display:none; }
+.sidebar .sidebar-link--active { background:transparent; }
+.sidebar .sidebar-link--active:hover { background:rgba(255,255,255,.035); }
+.sidebar .sidebar-link--active::before { display:none; }
 .sidebar-action:hover:not(:disabled) > svg { transform:rotate(-6deg) scale(1.08); }
 .sidebar-action > svg { transition:transform var(--motion-fast) var(--ease-out); }
 @media(prefers-reduced-motion:reduce) { .sidebar__selection,.sidebar-action > svg { transition:none; } }

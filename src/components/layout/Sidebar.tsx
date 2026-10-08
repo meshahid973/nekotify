@@ -28,7 +28,7 @@ export function Sidebar() {
       : location.pathname === '/library'
         ? new URLSearchParams(location.search).get('view') ?? 'library'
         : 'settings'
-  const { containerRef, indicatorRef, indicatorStyle } = useActiveIndicator<HTMLDivElement>(activeKey)
+  const { containerRef, indicatorRef, indicatorStyle } = useActiveIndicator<HTMLElement>(activeKey)
   const view = location.pathname === '/library'
     ? new URLSearchParams(location.search).get('view')
     : null
@@ -44,15 +44,15 @@ export function Sidebar() {
   const playlists = useCollectionsStore((state) => state.playlists)
 
   return (
-    <aside className="sidebar" aria-label="Main navigation">
+    <aside className="sidebar" aria-label="Main navigation" ref={containerRef}>
       <NavLink to="/" className="sidebar__brand" aria-label="Nekotify Home">
         <span className="sidebar__brand-mark"><Music2 size={21} aria-hidden="true" /></span>
         <span className="sidebar__brand-copy"><strong>nekotify</strong></span>
       </NavLink>
 
-      <div className="sidebar__scroll" ref={containerRef}>
-        <motion.span className="sidebar__selection" ref={indicatorRef}
-          style={indicatorStyle} aria-hidden="true"/>
+      <motion.span className="sidebar__selection" ref={indicatorRef}
+        style={indicatorStyle} aria-hidden="true"/>
+      <div className="sidebar__scroll">
         <nav className="sidebar__nav" aria-label="Main pages">
           {mainLinks.map(({ to, label, icon: Icon, end }) => (
             <NavLink key={to} to={to} end={end}
@@ -120,6 +120,7 @@ export function Sidebar() {
 
       <div className="sidebar__footer">
         <NavLink to="/settings" title="Settings"
+          data-indicator-active={activeKey === 'settings'}
           className={({ isActive }) => isActive
             ? 'sidebar-link sidebar-link--active'
             : 'sidebar-link'}>
