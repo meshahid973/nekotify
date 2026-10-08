@@ -1,6 +1,8 @@
 import {
   Folder,
   FolderPlus,
+  Heart,
+  ListMusic,
   Home,
   ImagePlus,
   Images,
@@ -14,6 +16,7 @@ import type { ReactNode } from 'react'
 import { NavLink } from 'react-router-dom'
 
 import { useLibraryStore } from '@/features/library/library.store'
+import { useCollectionsStore } from '@/features/collections/collections.store'
 
 import './Sidebar.css'
 
@@ -25,6 +28,8 @@ const links = [
 
 export function Sidebar() {
   const folders = useLibraryStore((state) => state.folders)
+  const favorites = useCollectionsStore((state) => state.favorites)
+  const playlists = useCollectionsStore((state) => state.playlists)
   const artSources = useLibraryStore((state) => state.artSources)
   const artworkPool = useLibraryStore((state) => state.artworkPool)
   const tracks = useLibraryStore((state) => state.tracks)
@@ -66,6 +71,21 @@ export function Sidebar() {
             ) : null}
           </NavLink>
         ))}
+      </nav>
+
+      <nav className="sidebar__nav sidebar__collections" aria-label="Collections">
+        <NavLink to="/library?view=favorites" className={({isActive}) =>
+          isActive ? 'sidebar-link sidebar-link--active' : 'sidebar-link'
+        }>
+          <Heart size={17}/><span>Favorites</span>
+          {favorites.length ? <small>{favorites.length}</small> : null}
+        </NavLink>
+        <NavLink to="/library?view=playlists" className={({isActive}) =>
+          isActive ? 'sidebar-link sidebar-link--active' : 'sidebar-link'
+        }>
+          <ListMusic size={17}/><span>Playlists</span>
+          {playlists.length ? <small>{playlists.length}</small> : null}
+        </NavLink>
       </nav>
 
       <SidebarSection title="Folders" count={folders.length}>

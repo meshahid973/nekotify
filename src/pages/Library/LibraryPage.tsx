@@ -1,5 +1,7 @@
 import {
   Disc3,
+  Heart,
+  ListMusic,
   FolderPlus,
   LayoutGrid,
   Mic2,
@@ -9,12 +11,15 @@ import {
   X,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/primitives/Button'
 import { playLibraryTrack } from '@/features/library/playLibraryTrack'
+import { PlaylistView } from '@/features/collections/PlaylistView'
+import { useCollectionsStore } from '@/features/collections/collections.store'
 import { VirtualTrackList } from '@/features/library/VirtualTrackList'
 import { useLibraryStore } from '@/features/library/library.store'
 import { usePlaybackStore } from '@/features/playback/playback.store'
@@ -23,7 +28,7 @@ import type { Track } from '@/types/media'
 
 import './LibraryPage.css'
 
-type LibraryTab = 'songs' | 'albums' | 'artists'
+type LibraryTab = 'songs' | 'albums' | 'artists' | 'favorites' | 'playlists'
 
 interface TrackGroup {
   key: string
@@ -33,9 +38,15 @@ interface TrackGroup {
 }
 
 export function LibraryPage() {
-  const [activeTab, setActiveTab] = useState<LibraryTab>('songs')
+  const [params, setParams] = useSearchParams()
+  const view = params.get('view')
+  const activeTab: LibraryTab =
+    view === 'albums' || view === 'artists' || view === 'favorites' ||
+    view === 'playlists' ? view : 'songs'
+  const setActiveTab = (tab: LibraryTab) => setParams(tab === 'songs' ? {} : { view: tab })
   const [query, setQuery] = useState('')
   const tracks = useLibraryStore((state) => state.tracks)
+  const favorites = useCollectionsStore((state) => state.favorites)
   const folders = useLibraryStore((state) => state.folders)
   const status = useLibraryStore((state) => state.status)
   const error = useLibraryStore((state) => state.error)
@@ -70,6 +81,7 @@ export function LibraryPage() {
   )
 
   const busy = status === 'loading'
+  const favoriteTracks = filteredTracks.filter((track) => favorites.includes(track.source.path))
 
   return (
     <div className="page library-page">
@@ -159,6 +171,18 @@ export function LibraryPage() {
           label="Artists"
           onClick={() => setActiveTab('artists')}
         />
+        <LibraryTabButton
+          active={activeTab === 'favorites'}
+          icon={<Heart size={14} />}
+          label="Favorites"
+          onClick={() => setActiveTab('favorites')}
+        />
+        <LibraryTabButton
+          active={activeTab === 'playlists'}
+          icon={<ListMusic size={14} />}
+          label="Playlists"
+          onClick={() => setActiveTab('playlists')}
+        />
       </div>
 
       {error ? <p className="library-error">{error}</p> : null}
@@ -196,6 +220,14 @@ export function LibraryPage() {
           }
         />
       ) : null}
+      {activeTab === 'favorites' ? (
+        <div className="library-track-list" role="tabpanel">
+          {favoriteTracks.length ? <VirtualTrackList tracks={favoriteTracks} /> :
+            <div className="library-empty"><strong>No favorite songs yet</strong></div>}
+        </div>
+      ) : null}
+
+      {activeTab === 'playlists' ? <PlaylistView /> : null}
     </div>
   )
 }

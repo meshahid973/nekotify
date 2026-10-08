@@ -6,6 +6,7 @@ import { PlayerBar } from '@/components/layout/PlayerBar'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { PlayerPanels } from '@/components/player/PlayerPanels'
 import { useLibraryStore } from '@/features/library/library.store'
+import { useCollectionsStore } from '@/features/collections/collections.store'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 import { useUiStore } from '@/stores/ui.store'
 
@@ -36,7 +37,10 @@ export function AppShell() {
     }
   }, [density, motionPreference, theme])
 
-  useEffect(() => { void useLibraryStore.getState().refresh() }, [])
+  useEffect(() => {
+    void useLibraryStore.getState().refresh()
+    void useCollectionsStore.getState().refresh()
+  }, [])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
