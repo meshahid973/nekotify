@@ -2,7 +2,7 @@
 // https://reactbits.dev/components/option-wheel
 'use client';
 
-import { useRef, useState, useCallback, useEffect, type CSSProperties } from 'react';
+import { useRef, useState, useCallback, useEffect, useLayoutEffect, type CSSProperties } from 'react';
 import './OptionWheel.css';
 
 type Side = 'left' | 'right';
@@ -104,8 +104,9 @@ const OptionWheel = ({
 
   const remPx = typeof window !== 'undefined' ? parseFloat(getComputedStyle(document.documentElement).fontSize) || 16 : 16;
 
-  onChangeRef.current = onChange;
-  cfgRef.current = {
+  useLayoutEffect(() => {
+    onChangeRef.current = onChange;
+    cfgRef.current = {
     count: items.length,
     items,
     rowH: Math.max(fontSize * spacing * remPx, 1),
@@ -120,12 +121,14 @@ const OptionWheel = ({
     draggable,
     soundUrl,
     soundVolume
-  };
+    };
+  }, [onChange, items, fontSize, spacing, curve, tilt, blur, fade, minOpacity, side, loop,
+      smoothing, draggable, soundUrl, soundVolume, remPx]);
 
   // Single rAF loop that eases the wheel position toward its target with
   // frame-rate independent exponential smoothing, then lays every option out
   // along the curve based on its distance from the current position.
-  const runFrame = useCallback((now: number) => {
+  const runFrame = useCallback(function frame(now: number) {
     const dt = Math.min((now - lastRef.current) / 1000, 0.05);
     lastRef.current = now;
     const cfg = cfgRef.current;
@@ -170,7 +173,7 @@ const OptionWheel = ({
       el.style.setProperty('--ow-p', Math.max(0, 1 - Math.min(dist, 1)).toFixed(4));
     }
 
-    rafRef.current = settled ? null : requestAnimationFrame(runFrame);
+    rafRef.current = settled ? null : requestAnimationFrame(frame);
   }, []);
 
   const startLoop = useCallback(() => {
