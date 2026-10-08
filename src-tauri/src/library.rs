@@ -1,9 +1,12 @@
+use crate::database;
 use lofty::{file::EXTENSIONS, picture::Picture, prelude::*};
+use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
     fs,
     path::{Path, PathBuf},
+    time::UNIX_EPOCH,
 };
 use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::DialogExt;
@@ -197,6 +200,7 @@ pub async fn remove_art_source(
 
 fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
     let stored = read_stored_library(app)?;
+    let mut connection = database::open(app)?;
     let cache_dir = artwork_cache_dir(app)?;
 
     fs::create_dir_all(&cache_dir)
@@ -209,6 +213,8 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
     let mut folders = Vec::new();
     let mut tracks = Vec::new();
     let mut seen_track_ids = HashSet::new();
+    let mut seen_paths = HashSet::new();
+    let transaction = connection.transaction().map_err(|error| error.to_string())?;
 
     for folder in &stored.folders {
         let path = PathBuf::from(folder);
@@ -226,10 +232,15 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
             app,
             &cache_dir,
             &path,
+            &transaction,
             &mut tracks,
             &mut seen_track_ids,
+            &mut seen_paths,
         );
     }
+
+    database::prune(&transaction, &seen_paths)?;
+    transaction.commit().map_err(|error| error.to_string())?;
 
     let (art_sources, artwork_pool) = build_artwork_pool(app, &stored);
 
@@ -302,45 +313,78 @@ fn scan_music_directory(
     app: &AppHandle,
     cache_dir: &Path,
     root: &Path,
+    connection: &Connection,
     tracks: &mut Vec<LibraryTrack>,
     seen_track_ids: &mut HashSet<String>,
+    seen_paths: &mut HashSet<String>,
 ) {
     let mut pending = vec![root.to_path_buf()];
 
     while let Some(directory) = pending.pop() {
-        let Ok(entries) = fs::read_dir(&directory) else {
-            continue;
-        };
+        let Ok(entries) = fs::read_dir(&directory) else { continue };
 
         for entry in entries.flatten() {
-            let Ok(file_type) = entry.file_type() else {
-                continue;
-            };
-
-            if file_type.is_symlink() {
-                continue;
-            }
+            let Ok(file_type) = entry.file_type() else { continue };
+            if file_type.is_symlink() { continue }
 
             let path = entry.path();
-
             if file_type.is_dir() {
                 pending.push(path);
                 continue;
             }
+            if !file_type.is_file() || !is_supported_audio(&path) { continue }
+            if app.asset_protocol_scope().allow_file(&path).is_err() { continue }
 
-            if !file_type.is_file() || !is_supported_audio(&path) {
-                continue;
+            let path_string = path.to_string_lossy().into_owned();
+            if !seen_paths.insert(path_string.clone()) { continue }
+
+            let file_info = fs::metadata(&path).ok().and_then(|meta| {
+                let modified = meta.modified().ok()?.duration_since(UNIX_EPOCH).ok()?;
+                Some((modified.as_millis() as i64, meta.len() as i64))
+            });
+
+            let cached = file_info.and_then(|(modified, size)|
+                database::lookup(connection, &path_string, modified, size)
+            );
+
+            let mut track = if let Some(metadata) = cached {
+                let artwork_path = metadata.artwork_path.filter(|artwork| {
+                    Path::new(artwork).is_file() &&
+                        app.asset_protocol_scope().allow_file(artwork).is_ok()
+                });
+                LibraryTrack {
+                    id: format!("{:016x}", fnv1a(path_string.as_bytes())),
+                    title: metadata.title,
+                    artist: metadata.artist,
+                    album: metadata.album,
+                    duration: metadata.duration,
+                    path: path_string.clone(),
+                    artwork_path,
+                }
+            } else {
+                let fresh = read_track(app, cache_dir, &path);
+                if let Some((modified, size)) = file_info {
+                    let _ = database::save(connection, &path_string, modified, size,
+                        &database::CachedMetadata {
+                            title: fresh.title.clone(),
+                            artist: fresh.artist.clone(),
+                            album: fresh.album.clone(),
+                            duration: fresh.duration,
+                            artwork_path: fresh.artwork_path.clone(),
+                        }
+                    );
+                }
+                fresh
+            };
+
+            if let Some(override_path) = database::assigned_artwork(connection, &path_string) {
+                if Path::new(&override_path).is_file() &&
+                    app.asset_protocol_scope().allow_file(&override_path).is_ok() {
+                    track.artwork_path = Some(override_path);
+                }
             }
 
-            if app.asset_protocol_scope().allow_file(&path).is_err() {
-                continue;
-            }
-
-            let track = read_track(app, cache_dir, &path);
-
-            if seen_track_ids.insert(track.id.clone()) {
-                tracks.push(track);
-            }
+            if seen_track_ids.insert(track.id.clone()) { tracks.push(track) }
         }
     }
 }
