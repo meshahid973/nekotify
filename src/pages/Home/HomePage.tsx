@@ -68,8 +68,7 @@ export function HomePage() {
     <div className="page home-page">
       <header className="home-heading">
         <div>
-          <p className="eyebrow">YOUR PERSONAL SOUNDTRACK</p>
-          <h1>Made for listening<span>.</span></h1>
+          <h1>Home</h1>
         </div>
         <div className="home-heading__summary">
           <span><strong>{tracks.length.toLocaleString()}</strong> songs</span>
@@ -86,9 +85,8 @@ export function HomePage() {
         <section className="home-empty" aria-label="Import music">
           <div className="home-empty__symbol"><Music2 size={51} strokeWidth={1.15}/></div>
           <div className="home-empty__copy">
-            <p className="eyebrow">YOUR LIBRARY STARTS HERE</p>
             <h2>Fill your space with sound.</h2>
-            <p>Import a music folder and make Nekotify yours.</p>
+            <p>Import a music folder to start.</p>
           </div>
           <Button disabled={libraryStatus === 'loading'}
             onClick={() => void importFolder()}>
@@ -100,8 +98,7 @@ export function HomePage() {
 
       <section className="home-section" aria-labelledby="quick-picks-title">
         <div className="section-heading">
-          <div><p className="eyebrow">PICK UP WHERE YOU LEFT OFF</p>
-            <h2 id="quick-picks-title" className="section-heading__title">
+          <div><h2 id="quick-picks-title" className="section-heading__title">
               {recent.length ? 'Back in rotation' : 'Quick picks'}
             </h2>
           </div>
@@ -141,8 +138,7 @@ export function HomePage() {
       {albums.length > 0 ? (
         <section className="home-section" aria-labelledby="albums-title">
           <div className="section-heading">
-            <div><p className="eyebrow">ALL YOUR FAVORITES</p>
-              <h2 className="section-heading__title" id="albums-title">From your albums</h2>
+            <div><h2 className="section-heading__title" id="albums-title">Albums</h2>
             </div>
             <button type="button" className="home-section__link"
               onClick={() => navigate('/library?view=albums')}>
