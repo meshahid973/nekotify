@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { TrackHero } from '@/components/media/TrackHero'
+import { QuickSpin } from '@/components/reactbits/QuickSpin'
+import { useUiStore } from '@/stores/ui.store'
 import { Button } from '@/components/primitives/Button'
 import { useHistoryStore } from '@/features/history/history.store'
 import { useLibraryStore } from '@/features/library/library.store'
@@ -42,6 +44,7 @@ function albumsFrom(tracks: Track[]): AlbumCollection[] {
 
 export function HomePage() {
   const navigate = useNavigate()
+  const quickWheelEnabled = useUiStore((s)=>s.quickWheelEnabled)
   const tracks = useLibraryStore((state) => state.tracks)
   const libraryStatus = useLibraryStore((state) => state.status)
   const importFolder = useLibraryStore((state) => state.importFolder)
@@ -134,6 +137,8 @@ export function HomePage() {
           </div>
         )}
       </section>
+
+      {quickWheelEnabled ? <QuickSpin/> : null}
 
       {albums.length > 0 ? (
         <section className="home-section" aria-labelledby="albums-title">
