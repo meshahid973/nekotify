@@ -1,61 +1,34 @@
-.search-page {
-  max-width: 1320px;
-}
-
+.search-page { width:100%; }
 .search-field {
-  display: grid;
-  width: min(100%, 720px);
-  height: 48px;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  padding: 0 13px;
-  border: 1px solid var(--color-border);
-  border-radius: 11px;
-  color: var(--color-text-subtle);
-  background: rgb(255 255 255 / 0.025);
+  display:grid; align-items:center; width:min(100%,940px); min-height:63px;
+  grid-template-columns:auto minmax(0,1fr) auto; gap:15px;
+  padding:0 21px; border:1px solid var(--color-border-strong);
+  border-radius:16px; color:#babac1; background:rgba(255,255,255,.065);
+  transition:border-color var(--motion-fast),background-color var(--motion-fast);
 }
-
-.search-field:focus-within {
-  border-color: var(--color-border-strong);
-  background: rgb(255 255 255 / 0.04);
-}
-
-.search-field input {
-  width: 100%;
-  border: 0;
-  outline: 0;
-  color: rgb(255 255 255 / 0.9);
-  background: transparent;
-  font: inherit;
-  font-size: 0.76rem;
-  font-weight: 600;
-}
-
-.search-field input::placeholder {
-  color: rgb(255 255 255 / 0.25);
-}
-
+.search-field:focus-within { border-color:rgba(184,239,134,.42); background:rgba(255,255,255,.095); }
+.search-field input { min-width:0; width:100%; border:0; outline:0; background:transparent; color:#fff; font-size:1rem; }
+.search-field input::placeholder { color:#898992; }
 .search-field kbd {
-  padding: 4px 6px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: rgb(255 255 255 / 0.24);
-  background: rgb(255 255 255 / 0.02);
-  font-family: var(--font-mono);
-  font-size: 0.56rem;
-  font-weight: 700;
+  padding:7px 9px; border:1px solid var(--color-border-strong);
+  border-radius:7px; color:#aaaab1; background:rgba(0,0,0,.2);
+  font-family:var(--font-mono); font-size:.65rem;
 }
-
-.search-results {
-  margin-top: 28px;
-}
-
-.search-results > p {
-  margin: 0;
-  padding: 20px 2px;
-  border-top: 1px solid var(--color-border);
-  color: rgb(255 255 255 / 0.3);
-  font-size: 0.7rem;
-  font-weight: 600;
-}
+.search-results { margin-top:33px; }
+.search-results__header { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:0 8px 14px; border-bottom:1px solid var(--color-border); }
+.search-results__header span { color:#8b8b94; font-size:.68rem; font-weight:780; letter-spacing:.14em; }
+.search-results__header strong { color:#aaaab4; font-size:.75rem; font-weight:610; }
+.search-empty { display:grid; align-content:center; justify-items:center; gap:12px; min-height:230px; text-align:center; color:#96969f; }
+.search-empty strong { font-size:1.06rem; color:white; }
+.search-empty span { font-size:.83rem; }
+.search-discover { margin-top:40px; }
+.search-discover__headline { display:flex; align-items:center; gap:11px; color:#c6c6cd; font-size:.93rem; font-weight:720; margin-bottom:16px; }
+.search-discover__headline svg { color:var(--color-accent); }
+.search-discover p { padding:8px 0; color:#96969f; font-size:.86rem; }
+.search-discover__artists { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:11px; width:min(100%,1000px); }
+.search-discover__artists button { display:flex; align-items:center; justify-content:space-between; min-width:0; gap:10px; min-height:65px; padding:15px 19px; border:1px solid var(--color-border); border-radius:13px; background:rgba(255,255,255,.047); color:white; font-size:.85rem; font-weight:690; cursor:pointer; transition:background-color var(--motion-fast),transform var(--motion-micro); }
+.search-discover__artists button:hover { background:rgba(255,255,255,.1); transform:translateY(-2px); }
+.search-discover__artists span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.search-discover__artists svg { flex:0 0 auto; color:#96969f; }
+@media(max-width:950px) { .search-discover__artists { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:580px) { .search-field { padding-inline:12px; gap:10px; } .search-field kbd { display:none; } .search-discover__artists { grid-template-columns:1fr; } }

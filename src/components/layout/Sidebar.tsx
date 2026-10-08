@@ -1,206 +1,143 @@
 import {
-  Folder,
-  FolderPlus,
-  Heart,
-  ListMusic,
-  Home,
-  ImagePlus,
-  Images,
-  Library,
-  Music2,
-  RefreshCw,
-  Search,
-  Settings,
+  Disc3, Folder, FolderPlus, Heart, Home, ImagePlus,
+  Images, Library, ListMusic, Music2, RefreshCw, Search, Settings,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { AnimatedIcon } from '@/components/primitives/AnimatedIcon'
 
-import { useLibraryStore } from '@/features/library/library.store'
+import { AnimatedIcon } from '@/components/primitives/AnimatedIcon'
+import { useActiveIndicator } from '@/components/primitives/useActiveIndicator'
 import { useCollectionsStore } from '@/features/collections/collections.store'
+import { useLibraryStore } from '@/features/library/library.store'
 
 import './Sidebar.css'
 
-const links = [
+const mainLinks = [
   { to: '/', label: 'Home', icon: Home, end: true },
-  { to: '/library', label: 'Library', icon: Library, end: false },
-  { to: '/search', label: 'Search', icon: Search, end: false },
+  { to: '/search', label: 'Search', icon: Search, end: true },
+  { to: '/library', label: 'Your library', icon: Library, end: false },
 ]
 
 export function Sidebar() {
   const location = useLocation()
-  const collectionView = location.pathname === '/library' ? new URLSearchParams(location.search).get('view') : null
+  const activeKey = location.pathname === '/'
+    ? 'home'
+    : location.pathname === '/search'
+      ? 'search'
+      : location.pathname === '/library'
+        ? new URLSearchParams(location.search).get('view') ?? 'library'
+        : 'settings'
+  const { containerRef, indicatorRef } = useActiveIndicator<HTMLDivElement>(activeKey)
+  const view = location.pathname === '/library'
+    ? new URLSearchParams(location.search).get('view')
+    : null
   const folders = useLibraryStore((state) => state.folders)
-  const favorites = useCollectionsStore((state) => state.favorites)
-  const playlists = useCollectionsStore((state) => state.playlists)
-  const artSources = useLibraryStore((state) => state.artSources)
-  const artworkPool = useLibraryStore((state) => state.artworkPool)
   const tracks = useLibraryStore((state) => state.tracks)
-  const status = useLibraryStore((state) => state.status)
+  const artworkPool = useLibraryStore((state) => state.artworkPool)
+  const busy = useLibraryStore((state) => state.status === 'loading')
   const importFolder = useLibraryStore((state) => state.importFolder)
   const importArtFolder = useLibraryStore((state) => state.importArtFolder)
   const importArtFile = useLibraryStore((state) => state.importArtFile)
   const refresh = useLibraryStore((state) => state.refresh)
-  const busy = status === 'loading'
+  const favorites = useCollectionsStore((state) => state.favorites)
+  const playlists = useCollectionsStore((state) => state.playlists)
 
   return (
-    <aside className="sidebar" aria-label="Library navigation">
-      <div className="sidebar__brand">
-        <span className="sidebar__brand-mark" aria-hidden="true">
-          <Music2 size={18} />
-        </span>
-        <div>
-          <strong>Nekotify</strong>
-          <span>Local library</span>
-        </div>
-      </div>
+    <aside className="sidebar" aria-label="Main navigation">
+      <NavLink to="/" className="sidebar__brand" aria-label="Nekotify Home">
+        <span className="sidebar__brand-mark"><Music2 size={21} aria-hidden="true" /></span>
+        <span className="sidebar__brand-copy"><strong>nekotify</strong><small>YOUR MUSIC, YOUR WAY</small></span>
+      </NavLink>
 
-      <nav className="sidebar__nav">
-        {links.map(({ to, label, icon: Icon, end }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={end}
-            className={({ isActive }) =>
-              isActive && (label !== 'Library' || !collectionView)
-                ? 'sidebar-link sidebar-link--active'
-                : 'sidebar-link'
-            }
-          >
-            <AnimatedIcon icon={Icon} size={17} variant="lift" />
-            <span>{label}</span>
-            {label === 'Library' && tracks.length > 0 ? (
-              <small>{tracks.length}</small>
-            ) : null}
+      <div className="sidebar__scroll" ref={containerRef}>
+        <span className="sidebar__selection" ref={indicatorRef} aria-hidden="true"/>
+        <nav className="sidebar__nav" aria-label="Main pages">
+          {mainLinks.map(({ to, label, icon: Icon, end }) => (
+            <NavLink key={to} to={to} end={end}
+              title={label}
+              data-indicator-active={
+                activeKey === (to === '/' ? 'home' : to === '/search' ? 'search' : 'library')
+              }
+              className={({ isActive }) =>
+                isActive && (to !== '/library' || !view)
+                  ? 'sidebar-link sidebar-link--active' : 'sidebar-link'
+              }
+            >
+              <AnimatedIcon icon={Icon} size={19}
+                variant={to === '/search' ? 'sway' : 'lift'} />
+              <span>{label}</span>
+              {to === '/library' && tracks.length > 0 ? <small>{tracks.length}</small> : null}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="sidebar__divider" />
+
+        <div className="sidebar__section-title"><span>COLLECTION</span><Disc3 size={14} aria-hidden="true"/></div>
+        <nav className="sidebar__nav" aria-label="Your collection">
+          <NavLink to="/library?view=favorites" title="Favorites"
+            data-indicator-active={activeKey === 'favorites'}
+            className={view === 'favorites' ? 'sidebar-link sidebar-link--active' : 'sidebar-link'}>
+            <AnimatedIcon icon={Heart} size={18} variant="pulse" /><span>Liked songs</span>
+            {favorites.length > 0 ? <small>{favorites.length}</small> : null}
           </NavLink>
-        ))}
-      </nav>
+          <NavLink to="/library?view=playlists" title="Playlists"
+            data-indicator-active={activeKey === 'playlists'}
+            className={view === 'playlists' ? 'sidebar-link sidebar-link--active' : 'sidebar-link'}>
+            <AnimatedIcon icon={ListMusic} size={18} variant="sway" /><span>Playlists</span>
+            {playlists.length > 0 ? <small>{playlists.length}</small> : null}
+          </NavLink>
+        </nav>
 
-      <nav className="sidebar__nav sidebar__collections" aria-label="Collections">
-        <NavLink to="/library?view=favorites" className={
-          collectionView === 'favorites' ? 'sidebar-link sidebar-link--active' : 'sidebar-link'
-        }>
-          <Heart size={17}/><span>Favorites</span>
-          {favorites.length ? <small>{favorites.length}</small> : null}
-        </NavLink>
-        <NavLink to="/library?view=playlists" className={
-          collectionView === 'playlists' ? 'sidebar-link sidebar-link--active' : 'sidebar-link'
-        }>
-          <ListMusic size={17}/><span>Playlists</span>
-          {playlists.length ? <small>{playlists.length}</small> : null}
-        </NavLink>
-      </nav>
-
-      <SidebarSection title="Folders" count={folders.length}>
+        <div className="sidebar__section-title sidebar__section-title--second">
+          <span>MUSIC FOLDERS</span><small>{folders.length || ''}</small>
+        </div>
         <div className="sidebar__folders">
-          {folders.slice(0, 4).map((folder) => (
+          {folders.slice(0, 5).map((folder) => (
             <div className="sidebar-folder" key={folder.path} title={folder.path}>
-              <Folder size={14} aria-hidden="true" />
-              <span>{folder.name}</span>
+              <Folder size={15} aria-hidden="true" /><span>{folder.name}</span>
             </div>
           ))}
         </div>
 
-        <SidebarAction
-          disabled={busy}
-          icon={<FolderPlus size={16} />}
-          label={busy ? 'Scanning…' : 'Add music'}
-          onClick={() => void importFolder()}
-        />
-
+        <SidebarAction disabled={busy} label={busy ? 'Scanning…' : 'Add music folder'}
+          icon={<FolderPlus size={18}/>} onClick={() => void importFolder()} />
         {folders.length > 0 ? (
-          <SidebarAction
-            disabled={busy}
-            icon={<RefreshCw size={15} />}
-            label="Rescan"
-            onClick={() => void refresh()}
-          />
+          <SidebarAction disabled={busy} label="Rescan library"
+            icon={<RefreshCw size={17}/>} onClick={() => void refresh()} />
         ) : null}
-      </SidebarSection>
 
-      <SidebarSection title="Artwork" count={artworkPool.length} compact>
-        <SidebarAction
-          disabled={busy}
-          icon={<Images size={15} />}
-          label="Add art folder"
-          onClick={() => void importArtFolder()}
-        />
-        <SidebarAction
-          disabled={busy}
-          icon={<ImagePlus size={15} />}
-          label="Add cover"
-          onClick={() => void importArtFile()}
-        />
-        {artSources.length > 0 ? (
-          <span className="sidebar__art-count">
-            {artSources.length} {artSources.length === 1 ? 'source' : 'sources'}
-          </span>
-        ) : null}
-      </SidebarSection>
+        <div className="sidebar__section-title sidebar__section-title--second">
+          <span>ARTWORK</span><small>{artworkPool.length || ''}</small>
+        </div>
+        <SidebarAction disabled={busy} label="Import art folder"
+          icon={<Images size={18}/>} onClick={() => void importArtFolder()} />
+        <SidebarAction disabled={busy} label="Import cover image"
+          icon={<ImagePlus size={18}/>} onClick={() => void importArtFile()} />
+      </div>
 
-      <NavLink
-        to="/settings"
-        className={({ isActive }) =>
-          isActive
-            ? 'sidebar-link sidebar__settings sidebar-link--active'
-            : 'sidebar-link sidebar__settings'
-        }
-      >
-        <Settings size={17} aria-hidden="true" />
-        <span>Settings</span>
-      </NavLink>
+      <div className="sidebar__footer">
+        <NavLink to="/settings" title="Settings"
+          className={({ isActive }) => isActive
+            ? 'sidebar-link sidebar-link--active'
+            : 'sidebar-link'}>
+          <AnimatedIcon icon={Settings} size={19} variant="tilt" /><span>Settings</span>
+        </NavLink>
+        <span className="sidebar__footer-version">NEKOTIFY • LOCAL PLAYER</span>
+      </div>
     </aside>
   )
 }
 
-function SidebarSection({
-  title,
-  count,
-  compact = false,
-  children,
-}: {
-  title: string
-  count: number
-  compact?: boolean
-  children: ReactNode
-}) {
-  return (
-    <section
-      className={
-        compact
-          ? 'sidebar__section sidebar__section--compact'
-          : 'sidebar__section'
-      }
-    >
-      <div className="sidebar__section-heading">
-        <span>{title}</span>
-        {count > 0 ? <small>{count}</small> : null}
-      </div>
-      {children}
-    </section>
-  )
-}
-
 function SidebarAction({
-  icon,
-  label,
-  disabled,
-  onClick,
+  icon, label, disabled, onClick,
 }: {
-  icon: ReactNode
-  label: string
-  disabled?: boolean
-  onClick: () => void
+  icon: ReactNode; label: string; disabled?: boolean; onClick: () => void
 }) {
   return (
-    <button
-      type="button"
-      className="sidebar-action"
-      disabled={disabled}
-      onClick={onClick}
-    >
-      {icon}
-      <span>{label}</span>
+    <button type="button" title={label} aria-label={label}
+      className="sidebar-action" disabled={disabled} onClick={onClick}>
+      {icon}<span>{label}</span>
     </button>
   )
 }

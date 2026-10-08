@@ -35,6 +35,8 @@ export function VirtualTrackList({ tracks }: { tracks: Track[] }) {
     return () => { observer.disconnect(); window.removeEventListener('resize', update) }
   }, [tracks.length])
 
+  // TanStack Virtual's mutable measurement API is intentionally not memoized by React Compiler.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: tracks.length,
     getScrollElement,

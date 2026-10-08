@@ -13,3 +13,24 @@
 :where(button, a):hover .animated-icon--right > svg { transform: translateX(2px); }
 :where(button, a):hover .animated-icon--tilt > svg { transform: rotate(-12deg); }
 :where(button, a):active .animated-icon > svg { transform: scale(.9); }
+
+:where(button,a):hover .animated-icon--pulse > svg {
+  animation:nekotify-icon-pulse var(--motion-panel) var(--ease-out) both;
+}
+:where(button,a):hover .animated-icon--sway > svg {
+  animation:nekotify-icon-sway var(--motion-panel) var(--ease-out) both;
+}
+@keyframes nekotify-icon-pulse {
+  0%,100% { transform:scale(1); }
+  50% { transform:scale(1.19); }
+}
+@keyframes nekotify-icon-sway {
+  0%,100% { transform:rotate(0); }
+  40% { transform:rotate(-12deg); }
+  70% { transform:rotate(6deg); }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  .animated-icon > svg { animation:none !important; transition:none; }
+}
+:root[data-motion='reduced'] .animated-icon > svg { animation:none !important; transition:none; }
