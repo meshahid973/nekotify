@@ -16,15 +16,6 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - run: cargo check --manifest-path src-tauri/Cargo.toml
-      - run: cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings
+      - run: cargo check --locked --manifest-path src-tauri/Cargo.toml
+      - run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml -- -D warnings
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
-      - name: Export resolved Cargo lockfile
-        shell: pwsh
-        run: |
-          $base64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes('src-tauri/Cargo.lock'))
-          Write-Host 'BEGIN_CARGO_LOCK'
-          for ($i = 0; $i -lt $base64.Length; $i += 4000) {
-            Write-Host $base64.Substring($i, [Math]::Min(4000, $base64.Length - $i))
-          }
-          Write-Host 'END_CARGO_LOCK'
