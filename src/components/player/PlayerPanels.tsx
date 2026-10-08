@@ -178,9 +178,10 @@ function QueuePanel({ refElement, onClose }: PanelProps) {
           </div>
         ) : items.map((track, index) => (
           <motion.div layout={!reduce} transition={{layout:{type:'spring',stiffness:410,damping:38}}}
-            className="queue-panel__row" key={track.id + ':' + index}
-            data-active={currentIndex === index} data-dragging={dragging === index}
-            draggable
+            key={track.id + ':' + index}>
+            <div className="queue-panel__row"
+              data-active={currentIndex === index} data-dragging={dragging === index}
+              draggable
             onDragStart={(event) => {
               setDragging(index)
               event.dataTransfer.effectAllowed = 'move'
@@ -209,6 +210,7 @@ function QueuePanel({ refElement, onClose }: PanelProps) {
               <IconButton label={'Remove ' + track.title} size="sm"
                 disabled={index===currentIndex}
                 onClick={() => {remove(index);notify('Removed from queue','info')}}><X size={14}/></IconButton>
+            </div>
             </div>
           </motion.div>
         ))}
