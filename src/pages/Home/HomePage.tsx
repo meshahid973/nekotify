@@ -1,15 +1,44 @@
-import { FolderPlus, Library, Pause, Play } from 'lucide-react'
+import { ArrowRight, Disc3, FolderPlus, Library, Pause, Play } from 'lucide-react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { TrackHero } from '@/components/media/TrackHero'
 import { Button } from '@/components/primitives/Button'
-import { useLibraryStore } from '@/features/library/library.store'
 import { useHistoryStore } from '@/features/history/history.store'
+import { useLibraryStore } from '@/features/library/library.store'
 import { playLibraryTrack } from '@/features/library/playLibraryTrack'
 import { usePlaybackStore } from '@/features/playback/playback.store'
+import type { Track } from '@/types/media'
 
 import './HomePage.css'
+
+interface AlbumCollection {
+  key: string
+  title: string
+  artist: string
+  artwork?: Track['artwork']
+  songs: Track[]
+}
+
+function albumsFrom(tracks: Track[]): AlbumCollection[] {
+  const groups = new Map<string, AlbumCollection>()
+  for (const track of tracks) {
+    if (!track.album?.trim()) continue
+    const key = track.album + '\u001f' + track.artist
+    const found = groups.get(key)
+    if (found) {
+      found.songs.push(track)
+      if (!found.artwork && track.artwork) found.artwork = track.artwork
+    } else {
+      groups.set(key, {
+        key, title: track.album, artist: track.artist,
+        artwork: track.artwork, songs:[track],
+      })
+    }
+  }
+  return [...groups.values()].slice(0, 12)
+}
 
 export function HomePage() {
   const navigate = useNavigate()
@@ -17,115 +46,125 @@ export function HomePage() {
   const libraryStatus = useLibraryStore((state) => state.status)
   const importFolder = useLibraryStore((state) => state.importFolder)
   const currentTrack = usePlaybackStore((state) => state.track)
-  const recentPaths = useHistoryStore((state) => state.recentPaths)
   const playbackStatus = usePlaybackStore((state) => state.status)
-  const featured = currentTrack ?? tracks[0]
-  const featuredPlaying =
-    featured?.id === currentTrack?.id &&
+  const recentPaths = useHistoryStore((state) => state.recentPaths)
+
+  const albums = useMemo(() => albumsFrom(tracks), [tracks])
+  const recent = useMemo(() => {
+    const byPath = new Map(tracks.map((track) => [track.source.path, track]))
+    return recentPaths.flatMap((path) => {
+      const track = byPath.get(path)
+      return track ? [track] : []
+    })
+  }, [tracks, recentPaths])
+  const featured = currentTrack ?? recent[0] ?? tracks[0]
+  const featuredPlaying = featured?.id === currentTrack?.id &&
     (playbackStatus === 'playing' || playbackStatus === 'loading')
-  const recent = recentPaths.flatMap((path) => {
-    const found = tracks.find((track) => track.source.path === path)
-    return found ? [found] : []
-  })
-  const listenNow = [...recent, ...tracks.filter((track) =>
-    !recentPaths.includes(track.source.path))].slice(0, 10)
+  const highlights = [...recent, ...tracks.filter((track) =>
+    !recentPaths.includes(track.source.path))].slice(0, 8)
+  const browseLibrary = () => navigate('/library')
 
   return (
     <div className="page home-page">
       <header className="home-heading">
-        <p className="eyebrow">Local player</p>
-        <h1>Home</h1>
+        <div>
+          <p className="eyebrow">YOUR PERSONAL SOUNDTRACK</p>
+          <h1>Made for listening<span>.</span></h1>
+        </div>
+        <div className="home-heading__summary">
+          <span><strong>{tracks.length.toLocaleString()}</strong> songs</span>
+          <span className="home-heading__separator" aria-hidden="true" />
+          <span><strong>{albums.length.toLocaleString()}</strong> albums</span>
+        </div>
       </header>
 
       {featured ? (
-        <TrackHero
-          track={featured}
-          playing={featuredPlaying}
+        <TrackHero track={featured} playing={Boolean(featuredPlaying)}
           onToggle={() => void playLibraryTrack(featured, tracks)}
-        />
+          onLibrary={browseLibrary} />
       ) : (
-        <section className="home-empty">
-          <div>
-            <p className="eyebrow">Library</p>
-            <h2>Add your music</h2>
+        <section className="home-empty" aria-label="Import music">
+          <div className="home-empty__symbol"><Disc3 size={51} strokeWidth={1.15}/></div>
+          <div className="home-empty__copy">
+            <p className="eyebrow">YOUR LIBRARY STARTS HERE</p>
+            <h2>Fill your space with sound.</h2>
+            <p>Import a music folder and make Nekotify yours.</p>
           </div>
-          <Button
-            disabled={libraryStatus === 'loading'}
-            onClick={() => void importFolder()}
-          >
-            <FolderPlus size={16} aria-hidden="true" />
-            {libraryStatus === 'loading' ? 'Scanning…' : 'Add folder'}
+          <Button disabled={libraryStatus === 'loading'}
+            onClick={() => void importFolder()}>
+            <FolderPlus size={17} aria-hidden="true"/>
+            {libraryStatus === 'loading' ? 'Scanning…' : 'Add music'}
           </Button>
         </section>
       )}
 
-      <section className="home-section" aria-labelledby="listen-now-title">
+      <section className="home-section" aria-labelledby="quick-picks-title">
         <div className="section-heading">
-          <div>
-            <p className="eyebrow">Library</p>
-            <h2 className="section-heading__title" id="listen-now-title">
-              {recent.length ? 'Recently played' : 'Listen now'}
+          <div><p className="eyebrow">PICK UP WHERE YOU LEFT OFF</p>
+            <h2 id="quick-picks-title" className="section-heading__title">
+              {recent.length ? 'Back in rotation' : 'Quick picks'}
             </h2>
           </div>
-          <button
-            type="button"
-            className="home-section__link"
-            onClick={() => navigate('/library')}
-          >
-            See all
+          <button type="button" className="home-section__link" onClick={browseLibrary}>
+            View all <ArrowRight size={15} aria-hidden="true" />
           </button>
         </div>
-
-        {listenNow.length > 0 ? (
+        {highlights.length > 0 ? (
           <div className="home-track-grid">
-            {listenNow.map((track) => {
-              const playing =
-                track.id === currentTrack?.id &&
-                (playbackStatus === 'playing' || playbackStatus === 'loading')
-
+            {highlights.map((track) => {
+              const active = track.id === currentTrack?.id
+              const playing = active && (playbackStatus === 'playing' || playbackStatus === 'loading')
               return (
-                <button
-                  type="button"
-                  className="home-track"
-                  data-active={track.id === currentTrack?.id ? 'true' : 'false'}
-                  key={track.id}
-                  onClick={() => void playLibraryTrack(track, tracks)}
-                >
-                  <Artwork
-                    size="sm"
-                    src={track.artwork?.uri}
-                    alt={track.artwork?.alt ?? ''}
-                  />
+                <button type="button" className="home-track" key={track.id}
+                  data-active={active}
+                  aria-label={(playing ? 'Pause ' : 'Play ') + track.title}
+                  onClick={() => void playLibraryTrack(track, tracks)}>
+                  <Artwork size="sm" src={track.artwork?.uri} alt="" />
                   <span className="home-track__copy">
-                    <strong>{track.title}</strong>
-                    <small>{track.artist}</small>
+                    <strong>{track.title}</strong><small>{track.artist}</small>
                   </span>
-                  {playing ? (
-                    <Pause
-                      className="home-track__play"
-                      size={14}
-                      fill="currentColor"
-                      aria-hidden="true"
-                    />
-                  ) : (
-                    <Play
-                      className="home-track__play"
-                      size={14}
-                      fill="currentColor"
-                      aria-hidden="true"
-                    />
-                  )}
+                  <span className="home-track__play" aria-hidden="true">
+                    {playing ? <Pause size={18} fill="currentColor"/> :
+                      <Play size={18} fill="currentColor"/>}
+                  </span>
                 </button>
               )
             })}
           </div>
         ) : (
           <div className="home-list-empty">
-            <Library size={16} aria-hidden="true" />
-            <span>No songs yet</span>
+            <Library size={18} aria-hidden="true"/><span>Your songs will appear here.</span>
           </div>
         )}
       </section>
+
+      {albums.length > 0 ? (
+        <section className="home-section" aria-labelledby="albums-title">
+          <div className="section-heading">
+            <div><p className="eyebrow">ALL YOUR FAVORITES</p>
+              <h2 className="section-heading__title" id="albums-title">From your albums</h2>
+            </div>
+            <button type="button" className="home-section__link"
+              onClick={() => navigate('/library?view=albums')}>
+              Browse albums <ArrowRight size={15} aria-hidden="true"/>
+            </button>
+          </div>
+          <div className="home-albums">
+            {albums.slice(0, 6).map((album) => (
+              <button key={album.key} type="button" className="home-album"
+                aria-label={'Play album ' + album.title}
+                onClick={() => void playLibraryTrack(album.songs[0], album.songs)}>
+                <div className="home-album__cover">
+                  <Artwork size="lg" src={album.artwork?.uri} alt="" />
+                  <span className="home-album__play"><Play size={19} fill="currentColor"/></span>
+                </div>
+                <strong>{album.title}</strong>
+                <span>{album.artist}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   )
 }
