@@ -1,9 +1,10 @@
-import { FolderPlus, ImagePlus, X } from 'lucide-react'
+import { Check, FolderPlus, ImagePlus, Moon, Sparkles, X } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/primitives/Button'
 import { useLibraryStore } from '@/features/library/library.store'
+import { usePlaybackStore } from '@/features/playback/playback.store'
 import {
   type AppTheme,
   type MotionPreference,
@@ -14,6 +15,7 @@ import {
 import './SettingsPage.css'
 
 export function SettingsPage() {
+  const artwork = usePlaybackStore((state) => state.track?.artwork?.uri)
   const density = useUiStore((state) => state.density)
   const motionPreference = useUiStore((state) => state.motionPreference)
   const theme = useUiStore((state) => state.theme)
@@ -32,20 +34,14 @@ export function SettingsPage() {
 
   return (
     <div className="page settings-page">
-      <PageHeader eyebrow="Nekotify" title="Settings" />
+      <PageHeader eyebrow="MAKE IT YOURS" title="Settings"
+        description="A few things, exactly how you like them." />
 
       <section className="settings-section">
         <h2>Appearance</h2>
         <div className="settings-section__rows">
           <SettingRow title="Theme">
-            <ChoiceGroup<AppTheme>
-              value={theme}
-              onChange={setTheme}
-              options={[
-                ['oled', 'OLED'],
-                ['ambience', 'Ambience'],
-              ]}
-            />
+            <ThemeSelector value={theme} artwork={artwork} onChange={setTheme}/>
           </SettingRow>
 
           <SettingRow title="Density">
@@ -174,6 +170,32 @@ function ChoiceGroup<T extends string>({
           {label}
         </button>
       ))}
+    </div>
+  )
+}
+
+function ThemeSelector({
+  value, artwork, onChange,
+}: { value: AppTheme; artwork?: string; onChange: (value: AppTheme) => void }) {
+  return (
+    <div className="theme-selector" role="group" aria-label="Application theme">
+      <button type="button" className="theme-selector__choice" aria-pressed={value === 'oled'}
+        onClick={() => onChange('oled')}>
+        <span className="theme-selector__preview theme-selector__preview--oled">
+          <Moon size={23} aria-hidden="true"/>
+          <span className="theme-selector__check">{value === 'oled' ? <Check size={14}/> : null}</span>
+        </span>
+        <span className="theme-selector__description"><strong>OLED</strong><small>Pure black</small></span>
+      </button>
+      <button type="button" className="theme-selector__choice" aria-pressed={value === 'ambience'}
+        onClick={() => onChange('ambience')}>
+        <span className="theme-selector__preview theme-selector__preview--ambience">
+          {artwork ? <img src={artwork} alt="" aria-hidden="true"/> : null}
+          <Sparkles size={23} aria-hidden="true"/>
+          <span className="theme-selector__check">{value === 'ambience' ? <Check size={14}/> : null}</span>
+        </span>
+        <span className="theme-selector__description"><strong>Ambience</strong><small>Artwork background</small></span>
+      </button>
     </div>
   )
 }
