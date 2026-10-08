@@ -1,4 +1,4 @@
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
 use std::{collections::HashSet, fs, path::PathBuf, time::Duration};
 use tauri::{AppHandle, Manager};
@@ -27,7 +27,9 @@ pub struct Collections {
 }
 
 fn db_path(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = app.path().app_data_dir()
+    let dir = app
+        .path()
+        .app_data_dir()
         .map_err(|error| format!("Cannot locate app data: {error}"))?;
     fs::create_dir_all(&dir).map_err(|error| format!("Cannot create app data: {error}"))?;
     Ok(dir.join("nekotify.sqlite"))
@@ -67,30 +69,42 @@ pub fn open(app: &AppHandle) -> Result<Connection, String> {
            id INTEGER PRIMARY KEY AUTOINCREMENT,
            track_path TEXT NOT NULL,
            listened_at INTEGER NOT NULL DEFAULT (unixepoch())
-         );"
-    ).map_err(|error| format!("Cannot initialize library database: {error}"))?;
+         );",
+    )
+    .map_err(|error| format!("Cannot initialize library database: {error}"))?;
     Ok(conn)
 }
 
 pub fn lookup(
-    conn: &Connection, path: &str, modified_ms: i64, size: i64,
+    conn: &Connection,
+    path: &str,
+    modified_ms: i64,
+    size: i64,
 ) -> Option<CachedMetadata> {
     conn.query_row(
         "SELECT title, artist, album, duration, artwork_path FROM library_tracks
          WHERE path = ?1 AND modified_ms = ?2 AND size = ?3",
         params![path, modified_ms, size],
-        |row| Ok(CachedMetadata {
-            title: row.get(0)?,
-            artist: row.get(1)?,
-            album: row.get(2)?,
-            duration: row.get(3)?,
-            artwork_path: row.get(4)?,
-        }),
-    ).optional().ok().flatten()
+        |row| {
+            Ok(CachedMetadata {
+                title: row.get(0)?,
+                artist: row.get(1)?,
+                album: row.get(2)?,
+                duration: row.get(3)?,
+                artwork_path: row.get(4)?,
+            })
+        },
+    )
+    .optional()
+    .ok()
+    .flatten()
 }
 
 pub fn save(
-    conn: &Connection, path: &str, modified_ms: i64, size: i64,
+    conn: &Connection,
+    path: &str,
+    modified_ms: i64,
+    size: i64,
     track: &CachedMetadata,
 ) -> Result<(), String> {
     conn.execute(
@@ -102,18 +116,27 @@ pub fn save(
          title=excluded.title, artist=excluded.artist, album=excluded.album,
          duration=excluded.duration, artwork_path=excluded.artwork_path",
         params![
-            path, modified_ms, size, track.title, track.artist,
-            track.album, track.duration, track.artwork_path,
+            path,
+            modified_ms,
+            size,
+            track.title,
+            track.artist,
+            track.album,
+            track.duration,
+            track.artwork_path,
         ],
-    ).map_err(|error| format!("Cannot cache track metadata: {error}"))?;
+    )
+    .map_err(|error| format!("Cannot cache track metadata: {error}"))?;
     Ok(())
 }
 
 pub fn prune(conn: &Connection, scanned: &HashSet<String>) -> Result<(), String> {
     let paths = {
-        let mut statement = conn.prepare("SELECT path FROM library_tracks")
+        let mut statement = conn
+            .prepare("SELECT path FROM library_tracks")
             .map_err(|error| error.to_string())?;
-        let records = statement.query_map([], |row| row.get::<_, String>(0))
+        let records = statement
+            .query_map([], |row| row.get::<_, String>(0))
             .map_err(|error| error.to_string())?;
         records.filter_map(Result::ok).collect::<Vec<_>>()
     };
@@ -129,46 +152,68 @@ pub fn prune(conn: &Connection, scanned: &HashSet<String>) -> Result<(), String>
 pub fn assigned_artwork(conn: &Connection, path: &str) -> Option<String> {
     conn.query_row(
         "SELECT artwork_path FROM artwork_assignments WHERE track_path=?1",
-        params![path], |row| row.get(0),
-    ).optional().ok().flatten()
+        params![path],
+        |row| row.get(0),
+    )
+    .optional()
+    .ok()
+    .flatten()
 }
 
 fn collections(conn: &Connection) -> Result<Collections, String> {
-    let mut favorite_query = conn.prepare("SELECT track_path FROM favorites ORDER BY track_path")
+    let mut favorite_query = conn
+        .prepare("SELECT track_path FROM favorites ORDER BY track_path")
         .map_err(|error| error.to_string())?;
     let favorites = favorite_query
         .query_map([], |row| row.get::<_, String>(0))
         .map_err(|error| error.to_string())?
-        .collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())?;
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())?;
 
-    let mut playlist_query = conn.prepare("SELECT id,name FROM playlists ORDER BY name")
+    let mut playlist_query = conn
+        .prepare("SELECT id,name FROM playlists ORDER BY name")
         .map_err(|error| error.to_string())?;
     let mut playlists = Vec::new();
     let iter = playlist_query
-        .query_map([], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?)))
+        .query_map([], |row| {
+            Ok((row.get::<_, i64>(0)?, row.get::<_, String>(1)?))
+        })
         .map_err(|error| error.to_string())?;
     for record in iter {
         let (id, name) = record.map_err(|error| error.to_string())?;
-        let mut item_query = conn.prepare(
-            "SELECT track_path FROM playlist_tracks WHERE playlist_id=?1 ORDER BY position"
-        ).map_err(|error| error.to_string())?;
+        let mut item_query = conn
+            .prepare(
+                "SELECT track_path FROM playlist_tracks WHERE playlist_id=?1 ORDER BY position",
+            )
+            .map_err(|error| error.to_string())?;
         let track_paths = item_query
             .query_map(params![id], |row| row.get::<_, String>(0))
             .map_err(|error| error.to_string())?
-            .collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())?;
-        playlists.push(Playlist { id, name, track_paths });
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|error| error.to_string())?;
+        playlists.push(Playlist {
+            id,
+            name,
+            track_paths,
+        });
     }
-    Ok(Collections { favorites, playlists })
+    Ok(Collections {
+        favorites,
+        playlists,
+    })
 }
 
 async fn with_collections(
-    app: AppHandle, action: impl FnOnce(&Connection) -> Result<(), String> + Send + 'static,
+    app: AppHandle,
+    action: impl FnOnce(&Connection) -> Result<(), String> + Send + 'static,
 ) -> Result<Collections, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let conn = open(&app)?;
         action(&conn)?;
         collections(&conn)
-    }).await.map_err(|error| format!("Database worker failed: {error}"))?
+    })
+    .await
+    .map_err(|error| format!("Database worker failed: {error}"))?
 }
 
 #[tauri::command]
@@ -179,13 +224,20 @@ pub async fn get_collections(app: AppHandle) -> Result<Collections, String> {
 #[tauri::command]
 pub async fn toggle_favorite(app: AppHandle, path: String) -> Result<Collections, String> {
     with_collections(app, move |conn| {
-        if conn.execute("DELETE FROM favorites WHERE track_path=?1", params![path])
-            .map_err(|error| error.to_string())? == 0 {
-            conn.execute("INSERT INTO favorites (track_path) VALUES (?1)", params![path])
-                .map_err(|error| error.to_string())?;
+        if conn
+            .execute("DELETE FROM favorites WHERE track_path=?1", params![path])
+            .map_err(|error| error.to_string())?
+            == 0
+        {
+            conn.execute(
+                "INSERT INTO favorites (track_path) VALUES (?1)",
+                params![path],
+            )
+            .map_err(|error| error.to_string())?;
         }
         Ok(())
-    }).await
+    })
+    .await
 }
 
 #[tauri::command]
@@ -198,7 +250,8 @@ pub async fn create_playlist(app: AppHandle, name: String) -> Result<Collections
         conn.execute("INSERT INTO playlists(name) VALUES (?1)", params![name])
             .map_err(|error| error.to_string())?;
         Ok(())
-    }).await
+    })
+    .await
 }
 
 #[tauri::command]
@@ -207,12 +260,15 @@ pub async fn delete_playlist(app: AppHandle, playlist_id: i64) -> Result<Collect
         conn.execute("DELETE FROM playlists WHERE id=?1", params![playlist_id])
             .map_err(|error| error.to_string())?;
         Ok(())
-    }).await
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn add_to_playlist(
-    app: AppHandle, playlist_id: i64, path: String,
+    app: AppHandle,
+    playlist_id: i64,
+    path: String,
 ) -> Result<Collections, String> {
     with_collections(app, move |conn| {
         conn.execute(
@@ -220,39 +276,49 @@ pub async fn add_to_playlist(
              SELECT ?1,?2, COALESCE(MAX(position)+1,0) FROM playlist_tracks
              WHERE playlist_id=?1",
             params![playlist_id, path],
-        ).map_err(|error| error.to_string())?;
+        )
+        .map_err(|error| error.to_string())?;
         Ok(())
-    }).await
+    })
+    .await
 }
 
 #[tauri::command]
 pub async fn remove_from_playlist(
-    app: AppHandle, playlist_id: i64, path: String,
+    app: AppHandle,
+    playlist_id: i64,
+    path: String,
 ) -> Result<Collections, String> {
     with_collections(app, move |conn| {
         conn.execute(
             "DELETE FROM playlist_tracks WHERE playlist_id=?1 AND track_path=?2",
             params![playlist_id, path],
-        ).map_err(|error| error.to_string())?;
+        )
+        .map_err(|error| error.to_string())?;
         Ok(())
-    }).await
+    })
+    .await
 }
 
 fn recent_paths(conn: &Connection) -> Result<Vec<String>, String> {
-    let mut statement = conn.prepare(
-        "SELECT track_path FROM listening_history
-         GROUP BY track_path ORDER BY MAX(id) DESC LIMIT 40"
-    ).map_err(|error| error.to_string())?;
-    statement.query_map([], |row| row.get::<_, String>(0))
+    let mut statement = conn
+        .prepare(
+            "SELECT track_path FROM listening_history
+         GROUP BY track_path ORDER BY MAX(id) DESC LIMIT 40",
+        )
+        .map_err(|error| error.to_string())?;
+    statement
+        .query_map([], |row| row.get::<_, String>(0))
         .map_err(|error| error.to_string())?
-        .collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|error| error.to_string())
 }
 
 #[tauri::command]
 pub async fn get_recent(app: AppHandle) -> Result<Vec<String>, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        recent_paths(&open(&app)?)
-    }).await.map_err(|error| error.to_string())?
+    tauri::async_runtime::spawn_blocking(move || recent_paths(&open(&app)?))
+        .await
+        .map_err(|error| error.to_string())?
 }
 
 #[tauri::command]
@@ -262,11 +328,15 @@ pub async fn record_listen(app: AppHandle, path: String) -> Result<Vec<String>, 
         conn.execute(
             "INSERT INTO listening_history(track_path) VALUES (?1)",
             params![path],
-        ).map_err(|error| error.to_string())?;
+        )
+        .map_err(|error| error.to_string())?;
         conn.execute_batch(
             "DELETE FROM listening_history WHERE id NOT IN
-             (SELECT id FROM listening_history ORDER BY id DESC LIMIT 2000)"
-        ).map_err(|error| error.to_string())?;
+             (SELECT id FROM listening_history ORDER BY id DESC LIMIT 2000)",
+        )
+        .map_err(|error| error.to_string())?;
         recent_paths(&conn)
-    }).await.map_err(|error| error.to_string())?
+    })
+    .await
+    .map_err(|error| error.to_string())?
 }
