@@ -23,7 +23,7 @@ export function IconButton({
       type={type}
       className={`icon-button icon-button--${size} ${className}`.trim()}
       aria-label={label}
-      title={label}
+      data-tooltip={label}
       {...props}
     >
       {children}

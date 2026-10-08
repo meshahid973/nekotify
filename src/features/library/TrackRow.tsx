@@ -2,6 +2,7 @@ import { Heart, ListPlus, Paintbrush, Pause, Play, Music2 } from 'lucide-react'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { ContextMenu } from '@/components/overlays/ContextMenu'
+import { PlaylistCombobox } from '@/components/overlays/PlaylistCombobox'
 import { notify } from '@/stores/toast.store'
 import { useState } from 'react'
 import { useCollectionsStore } from '@/features/collections/collections.store'
@@ -61,20 +62,11 @@ export function TrackRow({
           onClick={() => useCoverPickerStore.getState().open(track.source.path)}
         ><Paintbrush size={15}/></button>
         {playlists.length > 0 ? (
-          <select
-            className="track-row__playlist"
-            aria-label={'Add ' + track.title + ' to playlist'}
-            value=""
-            onChange={(event) => {
-              const id = Number(event.currentTarget.value)
-              if (id) void addToPlaylist(id, track.source.path)
-            }}
-          >
-            <option value="">Playlist…</option>
-            {playlists.map((playlist) => (
-              <option key={playlist.id} value={playlist.id}>{playlist.name}</option>
-            ))}
-          </select>
+          <PlaylistCombobox label={'Add '+track.title+' to playlist'}
+            playlists={playlists} onChoose={(playlist)=>{
+              void addToPlaylist(playlist.id,track.source.path)
+              notify('Added to '+playlist.name,'success')
+            }}/>
         ) : null}
       </div>
 

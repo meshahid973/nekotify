@@ -28,3 +28,15 @@
   65% { transform:scale(1.12) rotate(4deg); }
   100% { transform:scale(1) rotate(0); }
 }
+
+.icon-button[data-tooltip]:hover::before,
+.icon-button[data-tooltip]:focus-visible::before {
+ content:attr(data-tooltip); position:absolute; bottom:calc(100% + 10px); left:50%;
+ transform:translateX(-50%); padding:6px 9px;
+ border:1px solid #383838; border-radius:7px; color:#fff; background:#252525;
+ white-space:nowrap; font-size:.68rem; font-weight:550; line-height:1;
+ pointer-events:none; z-index:80; box-shadow:0 5px 18px #0007;
+ animation:nk-tip-in .14s ease-out both;
+}
+@keyframes nk-tip-in { from { opacity:0; translate:0 3px; } to { opacity:1; translate:0 0; } }
+@media(prefers-reduced-motion:reduce){.icon-button[data-tooltip]::before{animation:none}}
