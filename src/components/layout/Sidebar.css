@@ -98,9 +98,7 @@
   position:absolute; top:0; left:0; z-index:0;
   border-radius:11px; background:rgba(255,255,255,.09);
   opacity:0; pointer-events:none;
-  transition:transform var(--motion-panel) var(--ease-out),
-    width var(--motion-panel) var(--ease-out),
-    height var(--motion-panel) var(--ease-out),opacity var(--motion-fast);
+
 }
 .sidebar__selection::before {
   content:""; position:absolute; top:26%; left:0;

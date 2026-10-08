@@ -3,6 +3,7 @@ import {
   Images, Library, ListMusic, Music2, RefreshCw, Search, Settings,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { motion } from 'motion/react'
 import { NavLink, useLocation } from 'react-router-dom'
 
 import { AnimatedIcon } from '@/components/primitives/AnimatedIcon'
@@ -27,7 +28,7 @@ export function Sidebar() {
       : location.pathname === '/library'
         ? new URLSearchParams(location.search).get('view') ?? 'library'
         : 'settings'
-  const { containerRef, indicatorRef } = useActiveIndicator<HTMLDivElement>(activeKey)
+  const { containerRef, indicatorRef, indicatorStyle } = useActiveIndicator<HTMLDivElement>(activeKey)
   const view = location.pathname === '/library'
     ? new URLSearchParams(location.search).get('view')
     : null
@@ -50,7 +51,8 @@ export function Sidebar() {
       </NavLink>
 
       <div className="sidebar__scroll" ref={containerRef}>
-        <span className="sidebar__selection" ref={indicatorRef} aria-hidden="true"/>
+        <motion.span className="sidebar__selection" ref={indicatorRef}
+          style={indicatorStyle} aria-hidden="true"/>
         <nav className="sidebar__nav" aria-label="Main pages">
           {mainLinks.map(({ to, label, icon: Icon, end }) => (
             <NavLink key={to} to={to} end={end}
