@@ -237,3 +237,36 @@ pub async fn remove_from_playlist(
         Ok(())
     }).await
 }
+
+fn recent_paths(conn: &Connection) -> Result<Vec<String>, String> {
+    let mut statement = conn.prepare(
+        "SELECT track_path FROM listening_history
+         GROUP BY track_path ORDER BY MAX(id) DESC LIMIT 40"
+    ).map_err(|error| error.to_string())?;
+    statement.query_map([], |row| row.get::<_, String>(0))
+        .map_err(|error| error.to_string())?
+        .collect::<Result<Vec<_>, _>>().map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+pub async fn get_recent(app: AppHandle) -> Result<Vec<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        recent_paths(&open(&app)?)
+    }).await.map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+pub async fn record_listen(app: AppHandle, path: String) -> Result<Vec<String>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let conn = open(&app)?;
+        conn.execute(
+            "INSERT INTO listening_history(track_path) VALUES (?1)",
+            params![path],
+        ).map_err(|error| error.to_string())?;
+        conn.execute_batch(
+            "DELETE FROM listening_history WHERE id NOT IN
+             (SELECT id FROM listening_history ORDER BY id DESC LIMIT 2000)"
+        ).map_err(|error| error.to_string())?;
+        recent_paths(&conn)
+    }).await.map_err(|error| error.to_string())?
+}

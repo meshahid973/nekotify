@@ -7,6 +7,8 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             database::get_collections,
+            database::get_recent,
+            database::record_listen,
             database::create_playlist,
             database::delete_playlist,
             database::add_to_playlist,
