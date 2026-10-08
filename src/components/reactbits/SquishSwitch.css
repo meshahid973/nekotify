@@ -1,0 +1,6 @@
+.nk-squish { display:inline-flex; align-items:center; justify-content:center; background:transparent; border:0; border-radius:999px; padding:4px; cursor:pointer; }
+.nk-squish__track { width:54px; height:30px; padding:4px; display:block; border:1px solid #555; border-radius:99px; background:#272727; transition:background-color .2s; }
+.nk-squish[aria-checked='true'] .nk-squish__track { background:#e8e8e8; border-color:#fff; }
+.nk-squish__thumb { display:block; width:20px; height:20px; border-radius:50%; background:#a7a7a7; box-shadow:0 2px 6px #0005; }
+.nk-squish[aria-checked='true'] .nk-squish__thumb { background:#111; }
+.nk-squish:disabled { opacity:.4; cursor:not-allowed; }

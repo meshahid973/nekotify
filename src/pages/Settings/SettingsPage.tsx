@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/primitives/Button'
+import { SquishSwitch } from '@/components/reactbits/SquishSwitch'
 import { useLibraryStore } from '@/features/library/library.store'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 import {
@@ -19,9 +20,11 @@ export function SettingsPage() {
   const density = useUiStore((state) => state.density)
   const motionPreference = useUiStore((state) => state.motionPreference)
   const theme = useUiStore((state) => state.theme)
+  const quickWheelEnabled = useUiStore((state) => state.quickWheelEnabled)
   const setDensity = useUiStore((state) => state.setDensity)
   const setMotionPreference = useUiStore((state) => state.setMotionPreference)
   const setTheme = useUiStore((state) => state.setTheme)
+  const setQuickWheelEnabled = useUiStore((state) => state.setQuickWheelEnabled)
 
   const artSources = useLibraryStore((state) => state.artSources)
   const artworkPool = useLibraryStore((state) => state.artworkPool)
@@ -63,6 +66,16 @@ export function SettingsPage() {
                 ['reduced', 'Reduced'],
               ]}
             />
+          </SettingRow>
+        </div>
+      </section>
+
+      <section className="settings-section">
+        <h2>Extras</h2>
+        <div className="settings-section__rows">
+          <SettingRow title="Quick Spin">
+            <SquishSwitch checked={quickWheelEnabled} onChange={setQuickWheelEnabled}
+              label="Show Quick Spin wheel on Home" />
           </SettingRow>
         </div>
       </section>
