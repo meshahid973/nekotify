@@ -34,7 +34,7 @@
   position:relative; z-index:3; align-self:center;
   display:grid; justify-items:start; align-content:center;
   width:min(61%,800px); min-width:0; max-height:100%; overflow:hidden;
-  padding:clamp(28px,4.3vw,74px);
+  padding:clamp(20px,2.5vw,48px) clamp(24px,4vw,68px);
 }
 .track-hero__eyebrow {
   display:flex; align-items:center; gap:9px;
@@ -43,8 +43,8 @@
 }
 .track-hero__dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#fff; }
 .track-hero__copy h2 {
-  max-width:18ch; margin:13px 0 13px;
-  color:#fff; font-size:clamp(2.15rem,4.2vw,4.9rem);
+  max-width:18ch; margin:10px 0 11px;
+  color:#fff; font-size:clamp(2rem,min(4.2vw,5.6vh),4.7rem);
   line-height:1.03; font-weight:810; letter-spacing:-.065em;
   overflow:hidden; overflow-wrap:anywhere;
   display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3;
@@ -52,7 +52,7 @@
 }
 .track-hero__meta {
   display:flex; flex-wrap:wrap; align-items:center; gap:10px;
-  margin:0 0 28px; color:rgba(255,255,255,.68);
+  margin:0 0 clamp(13px,2vh,23px); color:rgba(255,255,255,.68);
   font-size:clamp(.83rem,1.05vw,.97rem); font-weight:530;
 }
 .track-hero__meta strong { color:rgba(255,255,255,.94); font-weight:670; }
@@ -74,9 +74,9 @@
   .track-hero__copy h2 { font-size:clamp(2.05rem,4.6vw,3.7rem); }
 }
 @media(max-width:720px) {
-  .track-hero { height:clamp(290px,39vh,370px); border-radius:18px; }
+  .track-hero { height:clamp(320px,39vh,400px); border-radius:18px; }
   .track-hero__copy { width:100%; padding:24px; }
-  .track-hero__copy h2 { max-width:22ch; font-size:clamp(1.85rem,5vw,2.7rem); -webkit-line-clamp:3; line-clamp:3; }
+  .track-hero__copy h2 { max-width:22ch; font-size:clamp(1.65rem,4.9vw,2.4rem); -webkit-line-clamp:3; line-clamp:3; }
   .track-hero__image { width:100%; opacity:.64; mask-image:none; -webkit-mask-image:none; }
   .track-hero__overlay { background:linear-gradient(90deg,rgba(0,0,0,.87),rgba(0,0,0,.49)); }
   .track-hero__edge-label { display:none; }
@@ -85,5 +85,5 @@
 @media (max-height:650px) and (min-width:721px) {
   .track-hero { height:clamp(285px,55vh,380px); }
   .track-hero__copy { padding-block:22px; }
-  .track-hero__copy h2 { font-size:clamp(2rem,4vw,3.3rem); -webkit-line-clamp:3; line-clamp:3; }
+  .track-hero__copy h2 { font-size:clamp(1.9rem,min(3.6vw,5.2vh),3.2rem); -webkit-line-clamp:3; line-clamp:3; }
 }
