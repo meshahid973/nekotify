@@ -15,7 +15,7 @@ import { Artwork } from '@/components/artwork/Artwork'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/primitives/Button'
 import { playLibraryTrack } from '@/features/library/playLibraryTrack'
-import { TrackRow } from '@/features/library/TrackRow'
+import { VirtualTrackList } from '@/features/library/VirtualTrackList'
 import { useLibraryStore } from '@/features/library/library.store'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 import { useUiStore } from '@/stores/ui.store'
@@ -43,7 +43,6 @@ export function LibraryPage() {
   const refresh = useLibraryStore((state) => state.refresh)
   const removeFolder = useLibraryStore((state) => state.removeFolder)
   const currentTrack = usePlaybackStore((state) => state.track)
-  const playbackStatus = usePlaybackStore((state) => state.status)
   const density = useUiStore((state) => state.density)
   const setDensity = useUiStore((state) => state.setDensity)
 
@@ -167,22 +166,7 @@ export function LibraryPage() {
       {activeTab === 'songs' ? (
         <div className="library-track-list" role="tabpanel">
           {filteredTracks.length > 0 ? (
-            filteredTracks.map((track) => {
-              const active = currentTrack?.id === track.id
-
-              return (
-                <TrackRow
-                  key={track.id}
-                  track={track}
-                  active={active}
-                  playing={
-                    active &&
-                    (playbackStatus === 'playing' || playbackStatus === 'loading')
-                  }
-                  onPlay={() => void playLibraryTrack(track, filteredTracks)}
-                />
-              )
-            })
+            <VirtualTrackList tracks={filteredTracks} />
           ) : (
             <LibraryEmpty
               busy={busy}

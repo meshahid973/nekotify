@@ -1,0 +1,3 @@
+.virtual-track-list { position:relative; min-width:0; width:100%; }
+.virtual-track-list__row { position:absolute; top:0; left:0; width:100%; }
+.virtual-track-list__row .track-row { width:100%; }
