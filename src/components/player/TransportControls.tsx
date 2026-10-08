@@ -3,6 +3,7 @@ import {
 } from 'lucide-react'
 
 import { IconButton } from '@/components/primitives/IconButton'
+import { AnimatedIcon } from '@/components/primitives/AnimatedIcon'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 
 import './TransportControls.css'
@@ -40,7 +41,7 @@ export function TransportControls() {
         disabled={!track}
         onClick={() => void previous().catch(() => undefined)}
       >
-        <SkipBack size={17} aria-hidden="true" />
+        <AnimatedIcon icon={SkipBack} size={17} variant="left" />
       </IconButton>
       <IconButton
         className="transport-controls__play"
@@ -58,7 +59,7 @@ export function TransportControls() {
         disabled={!track}
         onClick={() => void next().catch(() => undefined)}
       >
-        <SkipForward size={17} aria-hidden="true" />
+        <AnimatedIcon icon={SkipForward} size={17} variant="right" />
       </IconButton>
       <IconButton
         label={repeatMode === 'off' ? 'Repeat off' : repeatMode === 'all' ? 'Repeat all' : 'Repeat one'}

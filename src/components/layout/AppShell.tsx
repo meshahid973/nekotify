@@ -5,6 +5,7 @@ import { PlayerBar } from '@/components/layout/PlayerBar'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { AmbienceBackdrop } from '@/components/layout/AmbienceBackdrop'
 import { PlayerPanels } from '@/components/player/PlayerPanels'
+import { MediaSessionBridge } from '@/features/playback/MediaSessionBridge'
 import { CoverPicker } from '@/features/library/CoverPicker'
 import { useLibraryStore } from '@/features/library/library.store'
 import { useHistoryStore } from '@/features/history/history.store'
@@ -83,6 +84,7 @@ export function AppShell() {
       <main className="app-shell__content"><Outlet /></main>
       <PlayerPanels />
       <CoverPicker />
+      <MediaSessionBridge />
       <PlayerBar />
     </div>
   )

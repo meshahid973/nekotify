@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { AnimatedIcon } from '@/components/primitives/AnimatedIcon'
 
 import { useLibraryStore } from '@/features/library/library.store'
 import { useCollectionsStore } from '@/features/collections/collections.store'
@@ -66,7 +67,7 @@ export function Sidebar() {
                 : 'sidebar-link'
             }
           >
-            <Icon size={17} aria-hidden="true" />
+            <AnimatedIcon icon={Icon} size={17} variant="lift" />
             <span>{label}</span>
             {label === 'Library' && tracks.length > 0 ? (
               <small>{tracks.length}</small>
