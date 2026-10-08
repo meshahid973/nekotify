@@ -23,7 +23,8 @@ export function Button({
   ...props
 }: ButtonProps) {
   const systemReduced = useReducedMotion()
-  const reduced = Boolean(systemReduced) || useUiStore((s)=>s.motionPreference)==='reduced'
+  const preference = useUiStore((state)=>state.motionPreference)
+  const reduced = Boolean(systemReduced) || preference === 'reduced'
   return (
     <motion.button
       whileTap={reduced?undefined:{scale:.96}}
