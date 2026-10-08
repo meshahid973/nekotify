@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp, ListMusic, X } from 'lucide-react'
 import { useEffect, useRef } from 'react'
+import type { RefObject } from 'react'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { IconButton } from '@/components/primitives/IconButton'
@@ -54,7 +55,7 @@ export function PlayerPanels() {
 
 function NowPlayingPanel({
   refElement, onClose,
-}: { refElement: React.RefObject<HTMLElement | null>; onClose: () => void }) {
+}: { refElement: RefObject<HTMLElement | null>; onClose: () => void }) {
   const track = usePlaybackStore((state) => state.track)
   const currentTime = usePlaybackStore((state) => state.currentTime)
   const duration = usePlaybackStore((state) => state.duration)
@@ -79,7 +80,7 @@ function NowPlayingPanel({
 
 function QueuePanel({
   refElement, onClose,
-}: { refElement: React.RefObject<HTMLElement | null>; onClose: () => void }) {
+}: { refElement: RefObject<HTMLElement | null>; onClose: () => void }) {
   const items = useQueueStore((state) => state.items)
   const index = useQueueStore((state) => state.currentIndex)
   const select = useQueueStore((state) => state.select)
