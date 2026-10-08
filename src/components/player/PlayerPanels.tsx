@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { ArrowDown, ArrowUp, GripVertical, Heart, ListMusic, Music2, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, GripVertical, ListMusic, Music2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 
@@ -8,6 +8,7 @@ import { Button } from '@/components/primitives/Button'
 import { IconButton } from '@/components/primitives/IconButton'
 import { Slider } from '@/components/primitives/Slider'
 import { TransportControls } from '@/components/player/TransportControls'
+import { PulseHeart } from '@/components/reactbits/PulseHeart'
 import { useCollectionsStore } from '@/features/collections/collections.store'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 import { usePlayerPanelsStore } from '@/features/playback/player-panels.store'
@@ -124,7 +125,7 @@ function NowPlayingPanel({ refElement, onClose }: PanelProps) {
               <IconButton label={liked ? 'Remove from liked songs' : 'Like this song'}
                 aria-pressed={liked} size="md"
                 onClick={() => void toggleFavorite(track.source.path)}>
-                <Heart size={19} fill={liked ? 'currentColor' : 'none'} />
+                <PulseHeart liked={liked} size={19}/>
               </IconButton>
               <Button variant="secondary" size="sm" onClick={() => setPanel('queue')}>
                 <ListMusic size={17}/> View queue

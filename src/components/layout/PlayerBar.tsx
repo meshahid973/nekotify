@@ -1,8 +1,10 @@
-import { Heart, ListMusic, Maximize2, Volume2, VolumeX } from 'lucide-react'
+import { ListMusic, Maximize2, Volume2, VolumeX } from 'lucide-react'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { IconButton } from '@/components/primitives/IconButton'
 import { Slider } from '@/components/primitives/Slider'
+import { ElasticVolumeSlider } from '@/components/reactbits/ElasticVolumeSlider'
+import { PulseHeart } from '@/components/reactbits/PulseHeart'
 import { TransportControls } from '@/components/player/TransportControls'
 import { useCollectionsStore } from '@/features/collections/collections.store'
 import { usePlaybackStore } from '@/features/playback/playback.store'
@@ -46,7 +48,7 @@ export function PlayerBar() {
             label={liked ? 'Remove from liked songs' : 'Add to liked songs'}
             aria-pressed={liked} size="sm"
             onClick={() => void toggleFavorite(track.source.path)}>
-            <Heart size={18} fill={liked ? 'currentColor' : 'none'}/>
+            <PulseHeart liked={liked} size={18}/>
           </IconButton>
         ) : null}
       </div>
@@ -83,12 +85,10 @@ export function PlayerBar() {
           <IconButton label={muted ? 'Unmute' : 'Mute'} size="sm" onClick={toggleMuted}>
             {muted ? <VolumeX size={18}/> : <Volume2 size={18}/>}
           </IconButton>
-          <Slider className="player-bar__volume" label="Volume"
-            value={muted ? 0 : volume} formatValue={(value) => Math.round(value * 100) + '%'}
-            onValueChange={(value) => {
-              if (muted) toggleMuted()
-              setVolume(value)
-            }}/>
+          <ElasticVolumeSlider value={muted ? 0 : volume} onValueChange={(value) => {
+            if (muted) toggleMuted()
+            setVolume(value)
+          }}/>
         </div>
       </div>
     </footer>

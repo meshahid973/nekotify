@@ -3,6 +3,7 @@ import { Heart, ListPlus, Paintbrush, Pause, Play, Music2 } from 'lucide-react'
 import { Artwork } from '@/components/artwork/Artwork'
 import { ContextMenu } from '@/components/overlays/ContextMenu'
 import { PlaylistCombobox } from '@/components/overlays/PlaylistCombobox'
+import { PulseHeart } from '@/components/reactbits/PulseHeart'
 import { notify } from '@/stores/toast.store'
 import { useState } from 'react'
 import { useCollectionsStore } from '@/features/collections/collections.store'
@@ -51,7 +52,7 @@ export function TrackRow({
           type="button" aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}
           aria-pressed={favorite}
           onClick={() => {void toggleFavorite(track.source.path);notify(favorite?'Removed from Liked songs':'Added to Liked songs','success')}}
-        ><Heart size={16} fill={favorite ? 'currentColor' : 'none'}/></button>
+        ><PulseHeart liked={favorite} size={16}/></button>
         <button type="button" className="track-row__icon"
           title="Play next" aria-label={'Play ' + track.title + ' next'}
           onClick={() => {useQueueStore.getState().playNext(track);notify('Playing next: '+track.title,'success')}}
