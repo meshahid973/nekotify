@@ -32,9 +32,6 @@ export function TrackHero({
       )}
       <div className="track-hero__overlay" aria-hidden="true" />
       <div className="track-hero__copy">
-        <div className="track-hero__eyebrow"><span className="track-hero__dot" />
-          {playing ? 'Now playing' : 'Featured'}
-        </div>
         <h2 title={track.title}>{displayTitle}</h2>
         <p className="track-hero__meta">
           <strong>{track.artist}</strong>

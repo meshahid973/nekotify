@@ -34,8 +34,7 @@ export function SettingsPage() {
 
   return (
     <div className="page settings-page">
-      <PageHeader eyebrow="MAKE IT YOURS" title="Settings"
-        description="A few things, exactly how you like them." />
+      <PageHeader title="Settings" />
 
       <section className="settings-section">
         <h2>Appearance</h2>

@@ -33,8 +33,7 @@ export function SearchPage() {
 
   return (
     <div className="page search-page">
-      <PageHeader eyebrow="DISCOVER YOUR LIBRARY" title="Find your sound"
-        description="Songs, artists, and albums. All in one place." />
+      <PageHeader title="Search" />
 
       <label className="search-field">
         <Search size={21} aria-hidden="true" />

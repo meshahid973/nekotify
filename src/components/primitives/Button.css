@@ -9,10 +9,10 @@
 .button--sm { min-height:37px; padding:0 16px; font-size:.78rem; }
 .button--md { min-height:45px; padding:0 23px; font-size:.87rem; }
 .button--primary {
-  color:#10140c; background:var(--color-accent);
+  color:#000; background:var(--color-accent);
   box-shadow:0 7px 24px rgba(0,0,0,.24);
 }
-.button--primary:hover:not(:disabled) { background:#cef6ad; transform:translateY(-2px); }
+.button--primary:hover:not(:disabled) { background:#efefef; transform:translateY(-2px); }
 .button--secondary {
   color:#fff; background:rgba(255,255,255,.1); border-color:rgba(255,255,255,.11);
 }

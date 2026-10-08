@@ -19,7 +19,7 @@
   transition:color var(--motion-fast),background-color var(--motion-fast);
 }
 .choice-group__option:hover { color:#fff; }
-.choice-group__option--active,.choice-group__option--active:hover { color:#11150e; background:var(--color-accent); }
+.choice-group__option--active,.choice-group__option--active:hover { color:#000; background:var(--color-accent); }
 .settings-actions { display:flex; flex-wrap:wrap; align-items:center; gap:9px; }
 .settings-actions > span { color:#a7a7af; margin-right:5px; font-size:.75rem; }
 .settings-remove {
@@ -55,7 +55,7 @@
 .theme-selector__check {
   position:absolute; z-index:2; right:7px; top:7px;
   display:grid; place-items:center; width:20px; height:20px;
-  border-radius:50%; color:#0b1408; background:var(--color-accent);
+  border-radius:50%; color:#000; background:var(--color-accent);
 }
 .theme-selector__check:empty { background:rgba(255,255,255,.15); }
 .theme-selector__description { display:grid; gap:4px; }

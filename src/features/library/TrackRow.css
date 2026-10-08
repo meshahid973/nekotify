@@ -15,7 +15,7 @@
   color:#eee; background:rgba(255,255,255,.08); cursor:pointer;
   transition:transform var(--motion-micro),background-color var(--motion-fast);
 }
-.track-row__play:hover { background:var(--color-accent); color:#10140c; }
+.track-row__play:hover { background:var(--color-accent); color:#000; }
 .track-row__play:active { transform:scale(.92); }
 .track-row__identity { display:grid; min-width:0; gap:5px; }
 .track-row__identity strong,.track-row__identity span,.track-row__album {
@@ -31,7 +31,7 @@
   transition:color var(--motion-fast),background-color var(--motion-fast),transform var(--motion-micro);
 }
 .track-row__icon:hover { color:#fff; background:rgba(255,255,255,.1); transform:translateY(-1px); }
-.track-row__icon--active { color:#ff96b1; }
+.track-row__icon--active { color:#fff; }
 .track-row__playlist { width:91px; height:33px; padding-inline:6px; border:1px solid var(--color-border); border-radius:8px; color:#d7d7dd; background:#1c1c1e; font-size:.69rem; }
 @keyframes liked-icon-enter { 0% { transform:scale(.7); } 60% { transform:scale(1.19); } 100% { transform:scale(1); } }
 .track-row__icon--active svg { animation:liked-icon-enter var(--motion-panel) var(--ease-out) both; }

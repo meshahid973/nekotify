@@ -5,11 +5,11 @@
 .transport-controls .icon-button:not(:disabled):active { transform:scale(.89); }
 .transport-controls .transport-controls__play {
   width:44px; height:44px; border:0; border-radius:50%;
-  color:#0d1309; background:var(--color-accent);
+  color:#000; background:var(--color-accent);
   box-shadow:0 6px 20px rgba(0,0,0,.23);
 }
 .transport-controls .transport-controls__play:hover:not(:disabled) {
-  color:#0d1309; background:#cef6ad; transform:scale(1.065);
+  color:#000; background:#efefef; transform:scale(1.065);
 }
 .transport-controls__active, .transport-controls .transport-controls__active { color:var(--color-accent); }
 @keyframes transport-toggle {
