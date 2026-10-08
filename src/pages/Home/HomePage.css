@@ -106,3 +106,7 @@
 @media(max-width:1849px) {
   .home-track-grid .home-track:nth-child(9) { display:none; }
 }
+
+/* React Bits AnimatedList-inspired entrances stay limited to 9 Home songs. */
+.nk-animated-list__item { min-width:0; }
+.nk-animated-list__item .home-track { width:100%; }
