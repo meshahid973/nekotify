@@ -1,7 +1,7 @@
 .track-hero {
   position:relative; isolation:isolate; overflow:hidden;
   display:flex; align-items:stretch; width:100%;
-  min-height:clamp(320px,39vh,490px);
+  min-height:clamp(320px,39vh,620px);
   border:1px solid rgba(255,255,255,.085); border-radius:24px;
   background:linear-gradient(112deg,#1c2023,#121315 72%,#0d0d0f);
   box-shadow:0 24px 90px rgba(0,0,0,.18);
