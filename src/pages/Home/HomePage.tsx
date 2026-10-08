@@ -61,7 +61,7 @@ export function HomePage() {
   const featuredPlaying = featured?.id === currentTrack?.id &&
     (playbackStatus === 'playing' || playbackStatus === 'loading')
   const highlights = [...recent, ...tracks.filter((track) =>
-    !recentPaths.includes(track.source.path))].slice(0, 8)
+    !recentPaths.includes(track.source.path))].slice(0, 9)
   const browseLibrary = () => navigate('/library')
 
   return (

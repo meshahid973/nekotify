@@ -85,16 +85,12 @@
 .library-tabs { position:relative; isolation:isolate; }
 .library-tabs__selection {
   position:absolute; z-index:0; top:0; left:0;
-  border-radius:999px; background:var(--color-accent);
+  border-radius:999px; background:rgba(255,255,255,.115);
   opacity:0; pointer-events:none;
-  transition:transform var(--motion-panel) var(--ease-out),
-    width var(--motion-panel) var(--ease-out),
-    height var(--motion-panel) var(--ease-out),
-    opacity var(--motion-fast);
 }
 .library-tab { position:relative; z-index:1; }
 .library-tab--active,.library-tab--active:hover {
-  color:#000; background:transparent; border-color:transparent;
+  color:#fff; background:transparent; border-color:transparent;
 }
 .library-tab--active:hover { background:rgba(255,255,255,.04); }
 .library-tab:not(.library-tab--active):hover { transform:translateY(-1px); }

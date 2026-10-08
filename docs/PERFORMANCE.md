@@ -4,13 +4,14 @@ Performance is a product requirement for Nekotify.
 
 ## Current budgets
 
-- Built JavaScript: **under 130 KiB gzip**
-- Built CSS: **under 28 KiB gzip**
+- Built JavaScript: **under 185 KiB gzip**
+- Built CSS: **under 30 KiB gzip**
 - Idle JavaScript animation loops: **zero**
 - Global playback progress: **bounded**
 - Heavy component libraries: **none**
+- Motion: **one pinned dependency**, limited to sidebar/tab springs and seek/volume interactions.
 
-The single `npm run check` script measures the built bundle when `dist/assets` exists.
+The single `npm run check` script measures the built bundle when `dist/assets` exists. The JavaScript budget was explicitly raised from 135 KiB to 185 KiB for the requested Motion controls; CI must still fail on further unbounded growth.
 
 ## Playback
 
@@ -24,11 +25,11 @@ Embedded artwork is extracted once to the app cache and then served through the 
 
 ## Ambience
 
-The ambience theme uses one currently playing artwork layer with CSS blur and darkening. It does not run canvas shaders, palette extraction, animated color fields, or permanent JavaScript effects.
+The ambience theme uses the playing artwork (plus one temporary outgoing layer during a track switch) with CSS blur and darkening, shared by content, sidebar and player. It does not run canvas shaders, palette extraction, animated color fields, or permanent JavaScript effects.
 
 ## Large libraries
 
-The current row model is ready for virtualization. TanStack Virtual is already available and should be enabled when large-library rendering work lands.
+Library and Search already use TanStack Virtual to keep mounted song rows bounded.
 
 ## Dependencies
 

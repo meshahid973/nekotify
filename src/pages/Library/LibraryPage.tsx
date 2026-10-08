@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { motion } from 'motion/react'
 import type { KeyboardEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
@@ -47,7 +48,7 @@ export function LibraryPage() {
     view === 'playlists' ? view : 'songs'
   const setActiveTab = (tab: LibraryTab) => setParams(tab === 'songs' ? {} : { view: tab })
   const [query, setQuery] = useState('')
-  const { containerRef: tabsRef, indicatorRef: tabIndicatorRef } =
+  const { containerRef: tabsRef, indicatorRef: tabIndicatorRef, indicatorStyle: tabIndicatorStyle } =
     useActiveIndicator<HTMLDivElement>(activeTab)
 
   const onTabKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -170,7 +171,8 @@ export function LibraryPage() {
 
       <div className="library-tabs" role="tablist" aria-label="Library views"
         ref={tabsRef} onKeyDown={onTabKeyDown}>
-        <span className="library-tabs__selection" ref={tabIndicatorRef} aria-hidden="true"/>
+        <motion.span className="library-tabs__selection" ref={tabIndicatorRef}
+          style={tabIndicatorStyle} aria-hidden="true"/>
         <LibraryTabButton
           active={activeTab === 'songs'}
           icon={<Music size={14} />}
