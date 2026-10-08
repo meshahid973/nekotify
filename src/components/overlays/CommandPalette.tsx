@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Heart, Library, ListMusic, Moon, Music2, Search, Settings } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
@@ -10,7 +10,6 @@ import { usePlaybackStore } from '@/features/playback/playback.store'
 import { useQueueStore } from '@/features/queue/queue.store'
 import { useCollectionsStore } from '@/features/collections/collections.store'
 import { useUiStore } from '@/stores/ui.store'
-import type { Track } from '@/types/media'
 import './Overlays.css'
 
 // Adapted from beUI's command-palette interaction pattern.
@@ -24,6 +23,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const preference = useUiStore((s) => s.motionPreference)
   const reduced = Boolean(systemReduced) || preference === 'reduced'
   const [query, setQuery] = useState('')
+  const deferredQuery = useDeferredValue(query)
   const [selected, setSelected] = useState(0)
   const input = useRef<HTMLInputElement>(null)
   const panel = useRef<HTMLDivElement>(null)
@@ -51,19 +51,27 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       { id:'next', label:'Play current track next', keywords:'queue', icon:ListMusic, action:()=>useQueueStore.getState().playNext(current) },
       { id:'favorite', label:'Toggle favorite', keywords:'like heart', icon:Heart, action:()=>{void useCollectionsStore.getState().toggleFavorite(current.source.path)} },
     ] : []
-    const songs = tracks.slice(0,800).map((track:Track)=>({
-      id:'track:'+track.id, label:track.title, keywords:[track.artist,track.album].filter(Boolean).join(' '),
-      icon:Music2, action:()=>{void playLibraryTrack(track,tracks)},
-    }))
-    return [...navigation,...actions,...songs]
-  }, [tracks,current,theme,navigate])
+    return [...navigation,...actions]
+  }, [current,theme,navigate])
 
   const filtered = useMemo(() => {
-    const words = query.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean)
-    if (!words.length) return commands.slice(0,12)
-    return commands.filter((c)=>words.every((word)=>
-      (c.label+' '+c.keywords).toLocaleLowerCase().includes(word))).slice(0,50)
-  },[commands,query])
+    const words = deferredQuery.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean)
+    const matches = (value:string) => words.every((word)=>value.toLocaleLowerCase().includes(word))
+    const result = commands.filter(c=>matches(c.label+' '+c.keywords))
+    // Search every imported song, but stop after 50 matches; never truncate the
+    // searchable library to an arbitrary first-N subset.
+    for (const track of tracks) {
+      if (result.length>=50) break
+      if (words.length && !matches([track.title,track.artist,track.album].filter(Boolean).join(' '))) continue
+      result.push({
+        id:'track:'+track.id,label:track.title,
+        keywords:[track.artist,track.album].filter(Boolean).join(' '),
+        icon:Music2,action:()=>{void playLibraryTrack(track,tracks)},
+      })
+      if(!words.length && result.length>=12)break
+    }
+    return result.slice(0,50)
+  },[commands,tracks,deferredQuery])
   const safeIndex = Math.min(selected,Math.max(0,filtered.length-1))
   const choose = (index:number) => {
     const item = filtered[index]
