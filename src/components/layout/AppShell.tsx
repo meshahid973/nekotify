@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
-import type { CSSProperties } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 
 import { PlayerBar } from '@/components/layout/PlayerBar'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { AmbienceBackdrop } from '@/components/layout/AmbienceBackdrop'
 import { PlayerPanels } from '@/components/player/PlayerPanels'
 import { CoverPicker } from '@/features/library/CoverPicker'
 import { useLibraryStore } from '@/features/library/library.store'
@@ -74,15 +74,9 @@ export function AppShell() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [navigate])
 
-  const ambienceStyle = artwork
-    ? ({ backgroundImage: 'url("' + artwork + '")' } as CSSProperties)
-    : undefined
-
   return (
     <div className="app-shell" data-theme={theme} data-has-ambience={artwork ? 'true' : 'false'}>
-      <div className="app-shell__ambience" aria-hidden="true">
-        <div className="app-shell__ambience-image" style={ambienceStyle} />
-      </div>
+      <AmbienceBackdrop artwork={artwork} active={theme === 'ambience'} />
       <Sidebar />
       <main className="app-shell__content"><Outlet /></main>
       <PlayerPanels />
