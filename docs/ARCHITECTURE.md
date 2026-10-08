@@ -37,7 +37,7 @@ Artwork can also come from:
 - an imported artwork folder;
 - an individually imported cover image.
 
-Imported artwork becomes a pool. On each library load/rescan the pool is shuffled and assigned only to tracks that do not already have real embedded/local artwork. This keeps fallback art varied without changing real album covers.
+Imported artwork becomes a pool. Fallback selections are kept stable across library refreshes and can be explicitly reshuffled. User-selected per-track cover overrides are stored in SQLite and do not replace the original media tags.
 
 Only discovered media and artwork files are exposed through the Tauri asset protocol.
 
@@ -49,9 +49,9 @@ React and Zustand do not own the audio element. Route changes do not recreate pl
 
 ## Layout
 
-The desktop shell fills the viewport instead of centering the app inside a fixed-width canvas. The sidebar and player stay persistent while route content uses the full remaining width.
+The desktop shell fills the viewport instead of centering the app inside a fixed-width canvas. OLED defaults to black and white, while Ambience reaches the sidebar behind translucent chrome. The sidebar and player stay persistent while route content uses the full remaining width.
 
-The Home hero is a reusable React component with artwork on the right and metadata/actions on the left. Animation is CSS-only and respects reduced-motion settings.
+The Home hero is a reusable React component with artwork on the right and metadata/actions on the left. The hero stays a fixed-height banner and cleans remix suffixes only for display. Motion springs are limited to the sidebar, tabs and playback sliders; other effects use CSS. All honor reduced-motion settings.
 
 ## Themes
 

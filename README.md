@@ -12,7 +12,7 @@ Nekotify is a lightweight, local desktop music player built with React, TypeScri
 - Lofty
 - TanStack Virtual
 - Lucide React
-- plain CSS motion and layout
+- Motion for React (targeted spring interactions) + CSS layout
 
 ## Development
 
@@ -42,5 +42,5 @@ See `docs/ARCHITECTURE.md`, `docs/PERFORMANCE.md`, and `docs/DEVELOPMENT.md`.
 3. Filesystem and metadata work stay native.
 4. UI state and domain state stay separate.
 5. Real artwork drives visual atmosphere.
-6. Motion stays CSS and lightweight.
+6. CSS handles micro-interactions; one bounded Motion dependency handles spring indicators and sliders.
 7. Verification stays focused on important contracts.
