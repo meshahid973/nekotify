@@ -1,61 +1,21 @@
-.search-page {
-  max-width: 1320px;
-}
-
+.search-page { width:100%; }
 .search-field {
-  display: grid;
-  width: min(100%, 720px);
-  height: 48px;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  padding: 0 13px;
-  border: 1px solid var(--color-border);
-  border-radius: 11px;
-  color: var(--color-text-subtle);
-  background: rgb(255 255 255 / 0.025);
+  display:grid; align-items:center;
+  width:min(100%,920px); min-height:61px;
+  grid-template-columns:auto minmax(0,1fr) auto;
+  gap:14px; padding:0 22px;
+  border:1px solid var(--color-border-strong);
+  border-radius:15px; color:#aaaab3; background:rgba(255,255,255,.055);
+  transition:border-color var(--motion-fast),background-color var(--motion-fast);
 }
-
-.search-field:focus-within {
-  border-color: var(--color-border-strong);
-  background: rgb(255 255 255 / 0.04);
-}
-
-.search-field input {
-  width: 100%;
-  border: 0;
-  outline: 0;
-  color: rgb(255 255 255 / 0.9);
-  background: transparent;
-  font: inherit;
-  font-size: 0.76rem;
-  font-weight: 600;
-}
-
-.search-field input::placeholder {
-  color: rgb(255 255 255 / 0.25);
-}
-
+.search-field:focus-within { border-color:rgba(184,239,134,.45); background:rgba(255,255,255,.08); }
+.search-field input { width:100%; min-width:0; outline:0; border:0; background:transparent; color:#fff; font:inherit; font-size:.95rem; }
+.search-field input::placeholder { color:#93939c; }
 .search-field kbd {
-  padding: 4px 6px;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  color: rgb(255 255 255 / 0.24);
-  background: rgb(255 255 255 / 0.02);
-  font-family: var(--font-mono);
-  font-size: 0.56rem;
-  font-weight: 700;
+  padding:6px 9px; border:1px solid var(--color-border-strong);
+  border-radius:7px; color:#a5a5ae; background:rgba(0,0,0,.16);
+  font-family:var(--font-mono); font-size:.67rem;
 }
-
-.search-results {
-  margin-top: 28px;
-}
-
-.search-results > p {
-  margin: 0;
-  padding: 20px 2px;
-  border-top: 1px solid var(--color-border);
-  color: rgb(255 255 255 / 0.3);
-  font-size: 0.7rem;
-  font-weight: 600;
-}
+.search-results { margin-top:35px; }
+.search-results > p { margin:0; padding:26px 3px; border-top:1px solid var(--color-border); color:#a3a3ac; font-size:.87rem; }
+@media(max-width:580px) { .search-field { padding:0 12px; gap:9px; } .search-field kbd { display:none; } }
