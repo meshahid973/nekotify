@@ -1,16 +1,17 @@
-import { ArrowDown, ArrowUp, ListMusic, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, GripVertical, Heart, ListMusic, Music2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 
 import { Artwork } from '@/components/artwork/Artwork'
+import { Button } from '@/components/primitives/Button'
 import { IconButton } from '@/components/primitives/IconButton'
 import { Slider } from '@/components/primitives/Slider'
 import { TransportControls } from '@/components/player/TransportControls'
+import { useCollectionsStore } from '@/features/collections/collections.store'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 import { usePlayerPanelsStore } from '@/features/playback/player-panels.store'
 import { formatPlaybackTime } from '@/features/playback/playback.utils'
 import { useQueueStore } from '@/features/queue/queue.store'
-
 import './PlayerPanels.css'
 
 export function PlayerPanels() {
@@ -21,11 +22,26 @@ export function PlayerPanels() {
   useEffect(() => {
     if (!panel) return
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    panelRef.current?.focus()
+    const root = panelRef.current
+    root?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        event.stopPropagation()
+        event.preventDefault()
         setPanel(null)
+      }
+      if (event.key !== 'Tab' || !root) return
+      const focusables = Array.from(root.querySelectorAll<HTMLElement>(
+        'button:not(:disabled), input:not(:disabled), select:not(:disabled), [tabindex="0"]',
+      ))
+      if (focusables.length === 0) return
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === root)) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === root)) {
+        event.preventDefault()
+        first.focus()
       }
     }
     window.addEventListener('keydown', onKeyDown)
@@ -36,112 +52,150 @@ export function PlayerPanels() {
   }, [panel, setPanel])
 
   if (!panel) return null
-
   return (
     <div className="player-panels">
-      <button
-        className="player-panels__scrim"
-        type="button"
-        aria-label="Close player panel"
-        onClick={() => setPanel(null)}
-      />
-      {panel === 'queue' ? (
-        <QueuePanel refElement={panelRef} onClose={() => setPanel(null)} />
-      ) : (
-        <NowPlayingPanel refElement={panelRef} onClose={() => setPanel(null)} />
-      )}
+      <button className="player-panels__scrim" type="button" tabIndex={-1}
+        aria-label="Close player panel" onClick={() => setPanel(null)} />
+      {panel === 'queue'
+        ? <QueuePanel refElement={panelRef} onClose={() => setPanel(null)} />
+        : <NowPlayingPanel refElement={panelRef} onClose={() => setPanel(null)} />}
     </div>
   )
 }
 
-function NowPlayingPanel({
-  refElement, onClose,
-}: { refElement: RefObject<HTMLElement | null>; onClose: () => void }) {
+interface PanelProps {
+  refElement: RefObject<HTMLElement | null>
+  onClose: () => void
+}
+
+function NowPlayingPanel({ refElement, onClose }: PanelProps) {
   const track = usePlaybackStore((state) => state.track)
   const currentTime = usePlaybackStore((state) => state.currentTime)
   const duration = usePlaybackStore((state) => state.duration)
   const seek = usePlaybackStore((state) => state.seek)
+  const favorites = useCollectionsStore((state) => state.favorites)
+  const toggleFavorite = useCollectionsStore((state) => state.toggleFavorite)
+  const setPanel = usePlayerPanelsStore((state) => state.setPanel)
   if (!track) return null
+  const liked = favorites.includes(track.source.path)
 
   return (
-    <section className="now-playing-panel" role="dialog" aria-modal="true" aria-label="Now playing" tabIndex={-1} ref={refElement}>
+    <section className="now-playing-panel" role="dialog" aria-modal="true"
+      aria-label="Now playing" tabIndex={-1} ref={refElement}>
+      {track.artwork ? <img className="now-playing-panel__backdrop"
+        src={track.artwork.uri} alt="" aria-hidden="true" /> : null}
+      <div className="now-playing-panel__scrim" aria-hidden="true" />
       <div className="player-panels__heading">
-        <span>Now playing</span>
-        <IconButton label="Close Now Playing" size="sm" onClick={onClose}><X size={18}/></IconButton>
+        <span><Music2 size={17} aria-hidden="true" /> NOW PLAYING</span>
+        <IconButton label="Close Now Playing" size="sm" onClick={onClose}><X size={20}/></IconButton>
       </div>
       <div className="now-playing-panel__body">
-        <Artwork size="lg" src={track.artwork?.uri} alt={track.artwork?.alt ?? ''}/>
-        <h2>{track.title}</h2>
-        <p>{track.artist}{track.album ? ' · ' + track.album : ''}</p>
-        <TransportControls />
-        <Slider className="now-playing-panel__seek" label="Seek" min={0}
-          max={Math.max(duration, 1)} step={0.1}
-          value={Math.min(currentTime, Math.max(duration, 1))}
-          disabled={duration <= 0} onValueChange={seek}/>
-        <span className="now-playing-panel__position">{formatPlaybackTime(currentTime)} / {formatPlaybackTime(duration)}</span>
+        <div className="now-playing-panel__details">
+          <p className="eyebrow">THE SOUNDTRACK IS YOURS</p>
+          <h2>{track.title}</h2>
+          <p className="now-playing-panel__artist">{track.artist}</p>
+          {track.album ? <p className="now-playing-panel__album">{track.album}</p> : null}
+          <div className="now-playing-panel__control-block">
+            <div className="now-playing-panel__slider">
+              <Slider label="Seek" min={0} max={Math.max(duration,1)}
+                step={0.1} value={Math.min(currentTime,Math.max(duration,1))}
+                disabled={duration <= 0} onValueChange={seek} />
+              <div className="now-playing-panel__position">
+                <span>{formatPlaybackTime(currentTime)}</span>
+                <span>{formatPlaybackTime(duration)}</span>
+              </div>
+            </div>
+            <TransportControls />
+            <div className="now-playing-panel__additional">
+              <IconButton label={liked ? 'Remove from liked songs' : 'Like this song'}
+                aria-pressed={liked} size="md"
+                onClick={() => void toggleFavorite(track.source.path)}>
+                <Heart size={19} fill={liked ? 'currentColor' : 'none'} />
+              </IconButton>
+              <Button variant="secondary" size="sm" onClick={() => setPanel('queue')}>
+                <ListMusic size={17}/> View queue
+              </Button>
+            </div>
+          </div>
+        </div>
+        <div className="now-playing-panel__visual">
+          <Artwork size="lg" src={track.artwork?.uri}
+            alt={track.artwork?.alt ?? 'Current album artwork'} />
+        </div>
       </div>
     </section>
   )
 }
 
-function QueuePanel({
-  refElement, onClose,
-}: { refElement: RefObject<HTMLElement | null>; onClose: () => void }) {
+function QueuePanel({ refElement, onClose }: PanelProps) {
   const items = useQueueStore((state) => state.items)
-  const index = useQueueStore((state) => state.currentIndex)
+  const currentIndex = useQueueStore((state) => state.currentIndex)
   const select = useQueueStore((state) => state.select)
   const move = useQueueStore((state) => state.move)
-  const [dragging, setDragging] = useState<number | null>(null)
   const remove = useQueueStore((state) => state.remove)
+  const [dragging, setDragging] = useState<number | null>(null)
   const loadTrack = usePlaybackStore((state) => state.loadTrack)
   const play = usePlaybackStore((state) => state.play)
-
-  const playAt = (itemIndex: number) => {
-    const selected = select(itemIndex)
-    if (!selected) return
-    loadTrack(selected)
+  const playAt = (index: number) => {
+    const chosen = select(index)
+    if (!chosen) return
+    loadTrack(chosen)
     void play().catch(() => undefined)
   }
 
   return (
-    <section className="queue-panel" role="dialog" aria-modal="true" aria-label="Playback queue" tabIndex={-1} ref={refElement}>
+    <section className="queue-panel" role="dialog" aria-modal="true"
+      aria-label="Playback queue" tabIndex={-1} ref={refElement}>
       <div className="player-panels__heading">
-        <span><ListMusic size={17} aria-hidden="true"/> Queue</span>
-        <IconButton label="Close queue" size="sm" onClick={onClose}><X size={18}/></IconButton>
+        <div><p className="eyebrow">UP NEXT</p>
+          <h2>Play queue <span>{items.length}</span></h2></div>
+        <IconButton label="Close queue" size="sm" onClick={onClose}><X size={20}/></IconButton>
       </div>
       <div className="queue-panel__list">
-        {items.length === 0 ? <p className="queue-panel__empty">Queue is empty</p> :
-          items.map((track, itemIndex) => (
-            <div className="queue-panel__row" data-active={index === itemIndex}
-              data-dragging={dragging === itemIndex}
-              key={track.id + ':' + itemIndex}
-              draggable
-              onDragStart={(event) => {
-                setDragging(itemIndex)
-                event.dataTransfer.effectAllowed = 'move'
-                event.dataTransfer.setData('text/plain', String(itemIndex))
-              }}
-              onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move' }}
-              onDrop={(event) => {
-                event.preventDefault()
-                const from = Number(event.dataTransfer.getData('text/plain'))
-                if (Number.isInteger(from) && from >= 0 && from < items.length) move(from, itemIndex)
-                setDragging(null)
-              }}
-              onDragEnd={() => setDragging(null)}
-            >
-              <button type="button" className="queue-panel__track" onClick={() => playAt(itemIndex)}>
-                <Artwork size="sm" src={track.artwork?.uri} alt=""/>
-                <span><strong>{track.title}</strong><small>{track.artist}</small></span>
-              </button>
-              <div className="queue-panel__actions">
-                <IconButton label={'Move ' + track.title + ' up'} size="sm" disabled={itemIndex === 0} onClick={() => move(itemIndex, itemIndex - 1)}><ArrowUp size={14}/></IconButton>
-                <IconButton label={'Move ' + track.title + ' down'} size="sm" disabled={itemIndex === items.length - 1} onClick={() => move(itemIndex, itemIndex + 1)}><ArrowDown size={14}/></IconButton>
-                <IconButton label={'Remove ' + track.title} size="sm" disabled={itemIndex === index} onClick={() => remove(itemIndex)}><X size={14}/></IconButton>
-              </div>
+        {items.length === 0 ? (
+          <div className="queue-panel__empty">
+            <ListMusic size={29}/><strong>Your queue is empty</strong>
+            <span>Play a song from your library to begin.</span>
+          </div>
+        ) : items.map((track, index) => (
+          <div className="queue-panel__row" key={track.id + ':' + index}
+            data-active={currentIndex === index} data-dragging={dragging === index}
+            draggable
+            onDragStart={(event) => {
+              setDragging(index)
+              event.dataTransfer.effectAllowed = 'move'
+              event.dataTransfer.setData('text/plain', String(index))
+            }}
+            onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move' }}
+            onDrop={(event) => {
+              event.preventDefault()
+              const from = Number(event.dataTransfer.getData('text/plain'))
+              if (Number.isInteger(from) && from >= 0 && from < items.length) move(from,index)
+              setDragging(null)
+            }}
+            onDragEnd={() => setDragging(null)}>
+            <GripVertical className="queue-panel__grab" size={16} aria-hidden="true"/>
+            <button className="queue-panel__track" type="button"
+              aria-label={'Play ' + track.title} onClick={() => playAt(index)}>
+              <Artwork size="sm" src={track.artwork?.uri} alt=""/>
+              <span><strong>{track.title}</strong><small>{track.artist}</small></span>
+            </button>
+            <div className="queue-panel__actions">
+              <IconButton label={'Move ' + track.title + ' up'} size="sm"
+                disabled={index===0} onClick={() => move(index,index-1)}><ArrowUp size={14}/></IconButton>
+              <IconButton label={'Move ' + track.title + ' down'} size="sm"
+                disabled={index===items.length-1}
+                onClick={() => move(index,index+1)}><ArrowDown size={14}/></IconButton>
+              <IconButton label={'Remove ' + track.title} size="sm"
+                disabled={index===currentIndex}
+                onClick={() => remove(index)}><X size={14}/></IconButton>
             </div>
-          ))}
+          </div>
+        ))}
       </div>
+      {items.length > 0 ? <footer className="queue-panel__footer">
+        Drag to reorder, or use the arrow buttons.
+      </footer> : null}
     </section>
   )
 }
