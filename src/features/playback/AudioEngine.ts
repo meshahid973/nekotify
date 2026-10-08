@@ -14,10 +14,12 @@ class AudioEngine {
   private status: PlaybackStatus = 'idle'
   private error: string | null = null
   private progressTimer: number | null = null
+  private pendingSeek = 0
 
-  load(uri: string) {
+  load(uri: string, resumeAt = 0) {
     const audio = this.getAudio()
     this.stopProgressTimer()
+    this.pendingSeek = Math.max(0, resumeAt)
     this.status = 'loading'
     this.error = null
     audio.src = uri
@@ -103,6 +105,10 @@ class AudioEngine {
       this.emit()
     })
     audio.addEventListener('loadedmetadata', () => {
+      if (this.pendingSeek > 0 && Number.isFinite(audio.duration)) {
+        audio.currentTime = Math.min(this.pendingSeek, Math.max(0, audio.duration - 1))
+      }
+      this.pendingSeek = 0
       this.status = audio.paused ? 'paused' : 'playing'
       this.emit()
     })

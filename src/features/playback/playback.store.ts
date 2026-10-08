@@ -4,7 +4,40 @@ import { audioEngine } from '@/features/playback/AudioEngine'
 import type { PlaybackStatus, RepeatMode } from '@/features/playback/playback.types'
 import { clamp } from '@/features/playback/playback.utils'
 import { useQueueStore } from '@/features/queue/queue.store'
+import { useHistoryStore } from '@/features/history/history.store'
 import type { Track } from '@/types/media'
+
+const POSITION_KEY = 'nekotify-playback-positions'
+let previousStatus: PlaybackStatus = 'idle'
+let loggedTrackId: string | null = null
+let lastPositionSave = 0
+
+function getPositions(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(POSITION_KEY)
+    return raw ? JSON.parse(raw) as Record<string, number> : {}
+  } catch {
+    return {}
+  }
+}
+
+function positionFor(path: string): number {
+  const position = getPositions()[path]
+  return Number.isFinite(position) && position > 0 ? position : 0
+}
+
+function rememberPosition(path: string, seconds: number) {
+  try {
+    const positions = getPositions()
+    if (seconds <= 0) delete positions[path]
+    else positions[path] = Math.max(0, seconds)
+    const keys = Object.keys(positions)
+    if (keys.length > 500) keys.slice(0, keys.length - 500).forEach((key) => delete positions[key])
+    localStorage.setItem(POSITION_KEY, JSON.stringify(positions))
+  } catch {
+    // Playback must work without local storage.
+  }
+}
 
 const SETTINGS_KEY = 'nekotify-playback-settings'
 interface PlaybackPreferences {
@@ -78,8 +111,13 @@ export const usePlaybackStore = create<PlaybackState>((set, get) => ({
   error: null,
 
   loadTrack: (track) => {
+    const previousTrack = get().track
+    if (previousTrack && previousTrack.id !== track.id) {
+      rememberPosition(previousTrack.source.path, get().currentTime)
+    }
     set({ track, status: 'loading', duration: track.duration, currentTime: 0, bufferedEnd: 0, error: null })
-    audioEngine.load(track.source.uri)
+    loggedTrackId = null
+    audioEngine.load(track.source.uri, positionFor(track.source.path))
   },
   play: async () => {
     if (get().track) await audioEngine.play()
@@ -145,6 +183,21 @@ export const usePlaybackStore = create<PlaybackState>((set, get) => ({
 }))
 
 audioEngine.subscribe((snapshot) => {
+  const track = usePlaybackStore.getState().track
+  if (track) {
+    if (snapshot.status === 'playing' && loggedTrackId !== track.id) {
+      loggedTrackId = track.id
+      void useHistoryStore.getState().record(track.source.path)
+    }
+    const now = Date.now()
+    if (snapshot.status === 'playing' && now - lastPositionSave >= 5000) {
+      rememberPosition(track.source.path, snapshot.currentTime)
+      lastPositionSave = now
+    } else if (snapshot.status === 'paused' && previousStatus !== 'paused') {
+      rememberPosition(track.source.path, snapshot.currentTime)
+    }
+  }
+  previousStatus = snapshot.status
   usePlaybackStore.setState({
     status: snapshot.status,
     currentTime: snapshot.currentTime,
@@ -162,6 +215,7 @@ audioEngine.setMuted(initial.muted)
 
 audioEngine.onEnded(() => {
   const player = usePlaybackStore.getState()
+  if (player.track) rememberPosition(player.track.source.path, 0)
   if (player.repeatMode === 'one') {
     player.seek(0)
     void player.play().catch(() => undefined)

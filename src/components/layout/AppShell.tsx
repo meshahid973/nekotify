@@ -7,6 +7,7 @@ import { AmbienceBackdrop } from '@/components/layout/AmbienceBackdrop'
 import { PlayerPanels } from '@/components/player/PlayerPanels'
 import { CoverPicker } from '@/features/library/CoverPicker'
 import { useLibraryStore } from '@/features/library/library.store'
+import { useHistoryStore } from '@/features/history/history.store'
 import { useCollectionsStore } from '@/features/collections/collections.store'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 import { useUiStore } from '@/stores/ui.store'
@@ -41,6 +42,7 @@ export function AppShell() {
   useEffect(() => {
     void useLibraryStore.getState().refresh()
     void useCollectionsStore.getState().refresh()
+    void useHistoryStore.getState().refresh()
   }, [])
 
   useEffect(() => {
