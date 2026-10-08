@@ -104,7 +104,7 @@
 }
 
 @media(max-width:1849px) {
-  .home-track-grid .home-track:nth-child(9) { display:none; }
+  .home-track-grid > .nk-animated-list__item:nth-child(9) { display:none; }
 }
 
 /* React Bits AnimatedList-inspired entrances stay limited to 9 Home songs. */
