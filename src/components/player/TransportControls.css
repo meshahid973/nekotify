@@ -1,0 +1,15 @@
+.transport-controls { display: flex; align-items: center; justify-content: center; gap: 5px; }
+.transport-controls .icon-button { transition: background-color 160ms ease, color 160ms ease, transform 160ms ease; }
+.transport-controls .icon-button:not(:disabled):active { transform: scale(.91); }
+.transport-controls .icon-button:not(:disabled):hover svg { transform: translateY(-1px); }
+.transport-controls .icon-button svg { transition: transform 160ms ease; }
+.transport-controls__active { color: #c7f574 !important; }
+.transport-controls .transport-controls__play {
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 50%;
+  color: #080808;
+  background: #fff;
+}
+.transport-controls__play:not(:disabled):hover { background: #ededed; }
+:root[data-motion='reduced'] .transport-controls .icon-button,
+:root[data-motion='reduced'] .transport-controls .icon-button svg { transition: none; }

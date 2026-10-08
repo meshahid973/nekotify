@@ -4,6 +4,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 
 import { PlayerBar } from '@/components/layout/PlayerBar'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { PlayerPanels } from '@/components/player/PlayerPanels'
 import { useLibraryStore } from '@/features/library/library.store'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 import { useUiStore } from '@/stores/ui.store'
@@ -11,15 +12,10 @@ import { useUiStore } from '@/stores/ui.store'
 import './AppShell.css'
 
 function isInteractiveTarget(target: EventTarget | null) {
-  if (!(target instanceof HTMLElement)) {
-    return false
-  }
-
-  return Boolean(
-    target.closest(
-      'button, a, input, textarea, select, [contenteditable="true"], [role="slider"]',
-    ),
-  )
+  if (!(target instanceof HTMLElement)) return false
+  return Boolean(target.closest(
+    'button, a, input, textarea, select, [contenteditable="true"], [role="slider"]',
+  ))
 }
 
 export function AppShell() {
@@ -33,7 +29,6 @@ export function AppShell() {
     document.documentElement.dataset.density = density
     document.documentElement.dataset.motion = motionPreference
     document.documentElement.dataset.theme = theme
-
     return () => {
       delete document.documentElement.dataset.density
       delete document.documentElement.dataset.motion
@@ -41,14 +36,11 @@ export function AppShell() {
     }
   }, [density, motionPreference, theme])
 
-  useEffect(() => {
-    void useLibraryStore.getState().refresh()
-  }, [])
+  useEffect(() => { void useLibraryStore.getState().refresh() }, [])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const modifier = event.ctrlKey || event.metaKey
-
       if (modifier && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         navigate('/search')
@@ -57,29 +49,22 @@ export function AppShell() {
         })
         return
       }
-
       if (modifier && event.key.toLowerCase() === 'l') {
         event.preventDefault()
         navigate('/library')
         return
       }
-
-      if (isInteractiveTarget(event.target) || modifier || event.altKey) {
-        return
-      }
-
+      if (isInteractiveTarget(event.target) || modifier || event.altKey) return
       if (event.code === 'Space') {
         event.preventDefault()
-        void usePlaybackStore.getState().togglePlayback()
+        void usePlaybackStore.getState().togglePlayback().catch(() => undefined)
         return
       }
-
       if (event.key.toLowerCase() === 'm') {
         event.preventDefault()
         usePlaybackStore.getState().toggleMuted()
       }
     }
-
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [navigate])
@@ -89,21 +74,13 @@ export function AppShell() {
     : undefined
 
   return (
-    <div
-      className="app-shell"
-      data-theme={theme}
-      data-has-ambience={artwork ? 'true' : 'false'}
-    >
+    <div className="app-shell" data-theme={theme} data-has-ambience={artwork ? 'true' : 'false'}>
       <div className="app-shell__ambience" aria-hidden="true">
         <div className="app-shell__ambience-image" style={ambienceStyle} />
       </div>
-
       <Sidebar />
-
-      <main className="app-shell__content">
-        <Outlet />
-      </main>
-
+      <main className="app-shell__content"><Outlet /></main>
+      <PlayerPanels />
       <PlayerBar />
     </div>
   )
