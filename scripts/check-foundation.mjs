@@ -134,6 +134,22 @@ for (const command of [
   }
 }
 
+const heroSource = readFileSync(join(root, 'src/components/media/TrackHero.tsx'), 'utf8')
+const heroStyle = readFileSync(join(root, 'src/components/media/TrackHero.css'), 'utf8')
+const shellStyle = readFileSync(join(root, 'src/components/layout/AppShell.css'), 'utf8')
+const homeSource = readFileSync(join(root, 'src/pages/Home/HomePage.tsx'), 'utf8')
+
+if (!heroSource.includes('className="track-hero__image"') ||
+    !heroStyle.includes('.track-hero__image') ||
+    !homeSource.includes('<TrackHero')) {
+  failures.push('wide Home artwork hero must remain mounted and styled')
+}
+
+if (!shellStyle.includes('100dvh') ||
+    !shellStyle.includes('minmax(0,1fr)')) {
+  failures.push('fullscreen shell must retain flexible viewport sizing')
+}
+
 const assetsDirectory = join(root, 'dist', 'assets')
 
 if (existsSync(assetsDirectory)) {

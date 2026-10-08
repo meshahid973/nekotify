@@ -4,7 +4,7 @@
   gap:18px; align-items:center; min-width:0;
   padding:12px clamp(18px,2vw,34px);
   border-top:1px solid rgba(255,255,255,.095);
-  background:#080808;
+  background:#000;
 }
 .app-shell[data-theme='ambience'] .player-bar {
   background:rgba(10,10,12,.89); backdrop-filter:blur(24px);
@@ -53,11 +53,14 @@
   .player-bar__volume,.player-bar__equalizer { display:none; }
 }
 @media(max-width:700px) {
-  .player-bar { grid-template-columns:minmax(115px,1fr) minmax(185px,1.6fr); gap:7px; padding:7px 10px; }
+  .player-bar { grid-template-columns:minmax(100px,1fr) minmax(175px,1.6fr) auto; gap:5px; padding:7px 10px; }
   .player-bar__track { gap:8px; }
   .player-bar__artwork-action .artwork { width:44px; height:44px; }
   .player-bar__track-copy strong { font-size:.76rem; }
-  .player-bar__track-copy span,.player-bar__favorite,.player-bar__utilities { display:none; }
+  .player-bar__track-copy span,.player-bar__favorite { display:none; }
+  .player-bar__utilities { display:flex; gap:0; }
+  .player-bar__utilities > .icon-button:nth-of-type(2),
+  .player-bar__volume-control,.player-bar__equalizer { display:none; }
   .player-bar__timeline { grid-template-columns:28px minmax(35px,1fr) 28px; gap:6px; font-size:.58rem; }
 }
 @media(prefers-reduced-motion:reduce) { .player-bar__equalizer i { animation:none; } }

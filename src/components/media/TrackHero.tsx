@@ -1,4 +1,4 @@
-import { Disc3, Pause, Play } from 'lucide-react'
+import { Music2, Pause, Play } from 'lucide-react'
 
 import { Button } from '@/components/primitives/Button'
 import type { Track } from '@/types/media'
@@ -26,7 +26,7 @@ export function TrackHero({
             src={track.artwork.uri} alt="" aria-hidden="true" />
         </>
       ) : (
-        <Disc3 className="track-hero__placeholder" aria-hidden="true" />
+        <Music2 className="track-hero__placeholder" aria-hidden="true" />
       )}
       <div className="track-hero__overlay" aria-hidden="true" />
       <div className="track-hero__copy">

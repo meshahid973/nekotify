@@ -1,4 +1,4 @@
-import { ArrowRight, Disc3, FolderPlus, Library, Pause, Play } from 'lucide-react'
+import { ArrowRight, FolderPlus, Music2, Library, Pause, Play } from 'lucide-react'
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -84,7 +84,7 @@ export function HomePage() {
           onLibrary={browseLibrary} />
       ) : (
         <section className="home-empty" aria-label="Import music">
-          <div className="home-empty__symbol"><Disc3 size={51} strokeWidth={1.15}/></div>
+          <div className="home-empty__symbol"><Music2 size={51} strokeWidth={1.15}/></div>
           <div className="home-empty__copy">
             <p className="eyebrow">YOUR LIBRARY STARTS HERE</p>
             <h2>Fill your space with sound.</h2>
