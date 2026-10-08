@@ -11,8 +11,11 @@ export function AmbienceBackdrop({
 
   useEffect(() => {
     if (artwork === current) return
-    setPrevious(current)
-    setCurrent(artwork)
+    const frame = window.requestAnimationFrame(() => {
+      setPrevious(current)
+      setCurrent(artwork)
+    })
+    return () => window.cancelAnimationFrame(frame)
   }, [artwork, current])
 
   useEffect(() => {
