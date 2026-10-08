@@ -18,6 +18,12 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Resolve Motion lockfile (temporary)
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          echo BEGIN_MOTION_LOCK
+          base64 -w 0 package-lock.json | fold -w 4000
+          echo END_MOTION_LOCK
       - run: npm ci
       - run: npm run test
       - run: npm run typecheck
