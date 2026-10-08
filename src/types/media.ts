@@ -21,5 +21,6 @@ export interface Track {
   album?: string
   duration: number
   artwork?: ArtworkRef
+  artworkKind?: 'local' | 'fallback'
   source: TrackSource
 }

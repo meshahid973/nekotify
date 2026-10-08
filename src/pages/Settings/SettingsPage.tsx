@@ -28,6 +28,7 @@ export function SettingsPage() {
   const importArtFile = useLibraryStore((state) => state.importArtFile)
   const removeArtSource = useLibraryStore((state) => state.removeArtSource)
   const busy = status === 'loading'
+  const reshuffleFallbacks = useLibraryStore((state) => state.reshuffleFallbacks)
 
   return (
     <div className="page settings-page">
@@ -74,6 +75,10 @@ export function SettingsPage() {
       <section className="settings-section">
         <h2>Artwork</h2>
         <div className="settings-section__rows">
+          <SettingRow title="Fallback covers">
+            <Button variant="secondary" size="sm" onClick={reshuffleFallbacks}
+              disabled={!artworkPool.length}>Reshuffle</Button>
+          </SettingRow>
           <SettingRow title="Sources">
             <div className="settings-actions">
               <span>{artworkPool.length} images</span>

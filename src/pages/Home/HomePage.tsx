@@ -5,6 +5,7 @@ import { Artwork } from '@/components/artwork/Artwork'
 import { TrackHero } from '@/components/media/TrackHero'
 import { Button } from '@/components/primitives/Button'
 import { useLibraryStore } from '@/features/library/library.store'
+import { useHistoryStore } from '@/features/history/history.store'
 import { playLibraryTrack } from '@/features/library/playLibraryTrack'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 
@@ -16,12 +17,18 @@ export function HomePage() {
   const libraryStatus = useLibraryStore((state) => state.status)
   const importFolder = useLibraryStore((state) => state.importFolder)
   const currentTrack = usePlaybackStore((state) => state.track)
+  const recentPaths = useHistoryStore((state) => state.recentPaths)
   const playbackStatus = usePlaybackStore((state) => state.status)
   const featured = currentTrack ?? tracks[0]
   const featuredPlaying =
     featured?.id === currentTrack?.id &&
     (playbackStatus === 'playing' || playbackStatus === 'loading')
-  const listenNow = tracks.slice(0, 10)
+  const recent = recentPaths.flatMap((path) => {
+    const found = tracks.find((track) => track.source.path === path)
+    return found ? [found] : []
+  })
+  const listenNow = [...recent, ...tracks.filter((track) =>
+    !recentPaths.includes(track.source.path))].slice(0, 10)
 
   return (
     <div className="page home-page">
@@ -57,7 +64,7 @@ export function HomePage() {
           <div>
             <p className="eyebrow">Library</p>
             <h2 className="section-heading__title" id="listen-now-title">
-              Listen now
+              {recent.length ? 'Recently played' : 'Listen now'}
             </h2>
           </div>
           <button

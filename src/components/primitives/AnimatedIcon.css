@@ -1,0 +1,15 @@
+.animated-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.animated-icon > svg {
+  transition: transform var(--motion-fast) var(--ease-out);
+  transform-origin: center;
+}
+:where(button, a):hover .animated-icon--lift > svg { transform: translateY(-2px); }
+:where(button, a):hover .animated-icon--left > svg { transform: translateX(-2px); }
+:where(button, a):hover .animated-icon--right > svg { transform: translateX(2px); }
+:where(button, a):hover .animated-icon--tilt > svg { transform: rotate(-12deg); }
+:where(button, a):active .animated-icon > svg { transform: scale(.9); }

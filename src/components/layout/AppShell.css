@@ -10,39 +10,6 @@
   background: #000;
 }
 
-.app-shell__ambience {
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--motion-artwork) var(--ease-standard);
-}
-
-.app-shell[data-theme='ambience'][data-has-ambience='true']
-  .app-shell__ambience {
-  opacity: 1;
-}
-
-.app-shell__ambience-image {
-  position: absolute;
-  inset: -12%;
-  background-position: center;
-  background-size: cover;
-  filter: blur(72px) saturate(1.08) brightness(0.5);
-  transform: scale(1.08);
-}
-
-.app-shell__ambience::after {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(to bottom, rgb(0 0 0 / 0.48), rgb(0 0 0 / 0.74)),
-    linear-gradient(90deg, rgb(0 0 0 / 0.42), transparent 48%);
-  content: '';
-}
-
 .app-shell__content {
   position: relative;
   z-index: 1;

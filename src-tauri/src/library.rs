@@ -1,9 +1,12 @@
+use crate::database;
 use lofty::{file::EXTENSIONS, picture::Picture, prelude::*};
+use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
     fs,
     path::{Path, PathBuf},
+    time::UNIX_EPOCH,
 };
 use tauri::{AppHandle, Manager};
 use tauri_plugin_dialog::DialogExt;
@@ -161,10 +164,7 @@ pub async fn import_art_file(app: AppHandle) -> Result<Option<LibrarySnapshot>, 
 }
 
 #[tauri::command]
-pub async fn remove_music_folder(
-    app: AppHandle,
-    path: String,
-) -> Result<LibrarySnapshot, String> {
+pub async fn remove_music_folder(app: AppHandle, path: String) -> Result<LibrarySnapshot, String> {
     let mut stored = read_stored_library(&app)?;
     stored
         .folders
@@ -177,10 +177,7 @@ pub async fn remove_music_folder(
 }
 
 #[tauri::command]
-pub async fn remove_art_source(
-    app: AppHandle,
-    path: String,
-) -> Result<LibrarySnapshot, String> {
+pub async fn remove_art_source(app: AppHandle, path: String) -> Result<LibrarySnapshot, String> {
     let mut stored = read_stored_library(&app)?;
     stored
         .art_folders
@@ -195,8 +192,55 @@ pub async fn remove_art_source(
         .map_err(|error| format!("Artwork scan task failed: {error}"))?
 }
 
+#[tauri::command]
+pub async fn set_track_artwork(
+    app: AppHandle,
+    track_path: String,
+    artwork_path: Option<String>,
+) -> Result<LibrarySnapshot, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let connection = database::open(&app)?;
+        let found = connection
+            .query_row(
+                "SELECT count(*) FROM library_tracks WHERE path=?1",
+                rusqlite::params![track_path],
+                |row| row.get::<_, i64>(0),
+            )
+            .map_err(|error| error.to_string())?;
+        if found == 0 {
+            return Err("The selected track is not in the library.".to_string());
+        }
+
+        if let Some(ref requested) = artwork_path {
+            let stored = read_stored_library(&app)?;
+            let (_, pool) = build_artwork_pool(&app, &stored);
+            if !pool.iter().any(|item| item.path == *requested) {
+                return Err("Choose an image from an imported artwork source.".to_string());
+            }
+            connection
+                .execute(
+                    "INSERT INTO artwork_assignments(track_path,artwork_path) VALUES (?1,?2)
+                 ON CONFLICT(track_path) DO UPDATE SET artwork_path=excluded.artwork_path",
+                    rusqlite::params![track_path, requested],
+                )
+                .map_err(|error| error.to_string())?;
+        } else {
+            connection
+                .execute(
+                    "DELETE FROM artwork_assignments WHERE track_path=?1",
+                    rusqlite::params![track_path],
+                )
+                .map_err(|error| error.to_string())?;
+        }
+        build_snapshot(&app)
+    })
+    .await
+    .map_err(|error| format!("Artwork worker failed: {error}"))?
+}
+
 fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
     let stored = read_stored_library(app)?;
+    let mut connection = database::open(app)?;
     let cache_dir = artwork_cache_dir(app)?;
 
     fs::create_dir_all(&cache_dir)
@@ -209,6 +253,10 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
     let mut folders = Vec::new();
     let mut tracks = Vec::new();
     let mut seen_track_ids = HashSet::new();
+    let mut seen_paths = HashSet::new();
+    let transaction = connection
+        .transaction()
+        .map_err(|error| error.to_string())?;
 
     for folder in &stored.folders {
         let path = PathBuf::from(folder);
@@ -226,10 +274,15 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
             app,
             &cache_dir,
             &path,
+            &transaction,
             &mut tracks,
             &mut seen_track_ids,
+            &mut seen_paths,
         );
     }
+
+    database::prune(&transaction, &seen_paths)?;
+    transaction.commit().map_err(|error| error.to_string())?;
 
     let (art_sources, artwork_pool) = build_artwork_pool(app, &stored);
 
@@ -302,8 +355,10 @@ fn scan_music_directory(
     app: &AppHandle,
     cache_dir: &Path,
     root: &Path,
+    connection: &Connection,
     tracks: &mut Vec<LibraryTrack>,
     seen_track_ids: &mut HashSet<String>,
+    seen_paths: &mut HashSet<String>,
 ) {
     let mut pending = vec![root.to_path_buf()];
 
@@ -316,30 +371,82 @@ fn scan_music_directory(
             let Ok(file_type) = entry.file_type() else {
                 continue;
             };
-
             if file_type.is_symlink() {
                 continue;
             }
 
             let path = entry.path();
-
             if file_type.is_dir() {
                 pending.push(path);
                 continue;
             }
-
             if !file_type.is_file() || !is_supported_audio(&path) {
                 continue;
             }
-
             if app.asset_protocol_scope().allow_file(&path).is_err() {
                 continue;
             }
 
-            let track = read_track(app, cache_dir, &path);
+            let path_string = path.to_string_lossy().into_owned();
+            if !seen_paths.insert(path_string.clone()) {
+                continue;
+            }
+
+            let file_info = fs::metadata(&path).ok().and_then(|meta| {
+                let modified = meta.modified().ok()?.duration_since(UNIX_EPOCH).ok()?;
+                Some((modified.as_millis() as i64, meta.len() as i64))
+            });
+
+            let cached = file_info.and_then(|(modified, size)| {
+                database::lookup(connection, &path_string, modified, size)
+            });
+
+            let mut track = if let Some(metadata) = cached {
+                let artwork_path = metadata.artwork_path.filter(|artwork| {
+                    Path::new(artwork).is_file()
+                        && app.asset_protocol_scope().allow_file(artwork).is_ok()
+                });
+                LibraryTrack {
+                    id: format!("{:016x}", fnv1a(path_string.as_bytes())),
+                    title: metadata.title,
+                    artist: metadata.artist,
+                    album: metadata.album,
+                    duration: metadata.duration,
+                    path: path_string.clone(),
+                    artwork_path,
+                }
+            } else {
+                let fresh = read_track(app, cache_dir, &path);
+                if let Some((modified, size)) = file_info {
+                    let _ = database::save(
+                        connection,
+                        &path_string,
+                        modified,
+                        size,
+                        &database::CachedMetadata {
+                            title: fresh.title.clone(),
+                            artist: fresh.artist.clone(),
+                            album: fresh.album.clone(),
+                            duration: fresh.duration,
+                            artwork_path: fresh.artwork_path.clone(),
+                        },
+                    );
+                }
+                fresh
+            };
+
+            if let Some(override_path) = database::assigned_artwork(connection, &path_string)
+                && Path::new(&override_path).is_file()
+                && app
+                    .asset_protocol_scope()
+                    .allow_file(&override_path)
+                    .is_ok()
+            {
+                track.artwork_path = Some(override_path);
+            }
 
             if seen_track_ids.insert(track.id.clone()) {
-                tracks.push(track);
+                tracks.push(track)
             }
         }
     }
@@ -497,10 +604,7 @@ fn image_extension_from_bytes(bytes: &[u8]) -> Option<&'static str> {
         Some("gif")
     } else if bytes.starts_with(b"BM") {
         Some("bmp")
-    } else if bytes.len() >= 12
-        && bytes.starts_with(b"RIFF")
-        && &bytes[8..12] == b"WEBP"
-    {
+    } else if bytes.len() >= 12 && bytes.starts_with(b"RIFF") && &bytes[8..12] == b"WEBP" {
         Some("webp")
     } else {
         None
@@ -632,8 +736,7 @@ fn write_stored_library(app: &AppHandle, stored: &StoredLibrary) -> Result<(), S
     let encoded = serde_json::to_vec_pretty(stored)
         .map_err(|error| format!("Could not encode library settings: {error}"))?;
 
-    fs::write(path, encoded)
-        .map_err(|error| format!("Could not save library settings: {error}"))
+    fs::write(path, encoded).map_err(|error| format!("Could not save library settings: {error}"))
 }
 
 fn fnv1a(bytes: &[u8]) -> u64 {

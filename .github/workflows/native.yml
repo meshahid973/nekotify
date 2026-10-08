@@ -1,0 +1,21 @@
+name: Native
+on:
+  pull_request:
+    paths:
+      - 'src-tauri/**'
+      - '.github/workflows/native.yml'
+concurrency:
+  group: native-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - run: cargo check --locked --manifest-path src-tauri/Cargo.toml
+      - run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml -- -D warnings
+      - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check

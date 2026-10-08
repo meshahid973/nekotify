@@ -1,5 +1,6 @@
 import { convertFileSrc, invoke, isTauri } from '@tauri-apps/api/core'
 import { create } from 'zustand'
+import { usePlaybackStore } from '@/features/playback/playback.store'
 
 import type {
   NativeArtworkSource,
@@ -25,6 +26,8 @@ interface LibraryState {
   importArtFile: () => Promise<void>
   removeFolder: (path: string) => Promise<void>
   removeArtSource: (path: string) => Promise<void>
+  setArtwork: (trackPath: string, artworkPath: string | null) => Promise<void>
+  reshuffleFallbacks: () => void
 }
 
 function mapArtwork(artwork: NativeLibraryArtwork): ArtworkRef {
@@ -35,18 +38,31 @@ function mapArtwork(artwork: NativeLibraryArtwork): ArtworkRef {
   }
 }
 
-function shuffleArtwork(items: ArtworkRef[]) {
-  const shuffled = [...items]
+const FALLBACK_KEY = 'nekotify-fallback-artwork-v1'
 
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1))
-    const current = shuffled[index]
-
-    shuffled[index] = shuffled[swapIndex]
-    shuffled[swapIndex] = current
+function readFallbacks(): Record<string, string> {
+  try {
+    const stored = localStorage.getItem(FALLBACK_KEY)
+    return stored ? JSON.parse(stored) as Record<string, string> : {}
+  } catch {
+    return {}
   }
+}
 
-  return shuffled
+function storeFallbacks(assignments: Record<string, string>) {
+  try {
+    localStorage.setItem(FALLBACK_KEY, JSON.stringify(assignments))
+  } catch {
+    // Cache is optional; deterministic assignments still work.
+  }
+}
+
+function stableIndex(trackId: string, length: number) {
+  let hash = 2166136261
+  for (let i = 0; i < trackId.length; i += 1) {
+    hash = Math.imul(hash ^ trackId.charCodeAt(i), 16777619)
+  }
+  return (hash >>> 0) % length
 }
 
 function mapTrack(
@@ -68,6 +84,7 @@ function mapTrack(
     album: track.album || undefined,
     duration: track.duration,
     artwork,
+    artworkKind: track.artworkPath ? 'local' : 'fallback',
     source: {
       kind: 'local',
       path: track.path,
@@ -77,20 +94,25 @@ function mapTrack(
 }
 
 function snapshotState(snapshot: NativeLibrarySnapshot) {
-  const artworkPool = shuffleArtwork(snapshot.artworkPool.map(mapArtwork))
+  const artworkPool = snapshot.artworkPool.map(mapArtwork).sort(
+    (a, b) => (a.path ?? '').localeCompare(b.path ?? ''),
+  )
+  const assignments = readFallbacks()
+  const choices = new Map(artworkPool.map((art) => [art.path, art]))
+  const tracks = snapshot.tracks.map((track) => {
+    if (track.artworkPath || artworkPool.length === 0) return mapTrack(track)
+    const chosen = choices.get(assignments[track.id]) ??
+      artworkPool[stableIndex(track.id, artworkPool.length)]
+    if (chosen.path) assignments[track.id] = chosen.path
+    return mapTrack(track, chosen)
+  })
+  storeFallbacks(assignments)
 
   return {
     folders: snapshot.folders,
     artSources: snapshot.artSources,
     artworkPool,
-    tracks: snapshot.tracks.map((track, index) =>
-      mapTrack(
-        track,
-        artworkPool.length > 0
-          ? artworkPool[index % artworkPool.length]
-          : undefined,
-      ),
-    ),
+    tracks,
     status: 'ready' as const,
     error: null,
   }
@@ -104,7 +126,8 @@ async function invokeSnapshot(
   command:
     | 'load_library'
     | 'remove_music_folder'
-    | 'remove_art_source',
+    | 'remove_art_source'
+    | 'set_track_artwork',
   args?: Record<string, unknown>,
 ) {
   return invoke<NativeLibrarySnapshot>(command, args)
@@ -119,7 +142,15 @@ async function invokeOptionalSnapshot(
   return invoke<NativeLibrarySnapshot | null>(command)
 }
 
-export const useLibraryStore = create<LibraryState>((set) => ({
+function synchronizePlayingTrack(tracks: Track[]) {
+  const playing = usePlaybackStore.getState().track
+  if (!playing) return
+  const replacement = tracks.find((track) => track.id === playing.id)
+  if (replacement) usePlaybackStore.setState({ track: replacement })
+}
+
+export const useLibraryStore = create<LibraryState>((set, get) => ({
+
   folders: [],
   artSources: [],
   artworkPool: [],
@@ -136,7 +167,9 @@ export const useLibraryStore = create<LibraryState>((set) => ({
     set({ status: 'loading', error: null })
 
     try {
-      set(snapshotState(await invokeSnapshot('load_library')))
+      const snapshot = snapshotState(await invokeSnapshot('load_library'))
+      set(snapshot)
+      synchronizePlayingTrack(snapshot.tracks)
     } catch (error) {
       set({ status: 'error', error: errorMessage(error) })
     }
@@ -155,7 +188,13 @@ export const useLibraryStore = create<LibraryState>((set) => ({
 
     try {
       const snapshot = await invokeOptionalSnapshot('import_music_folder')
-      set(snapshot ? snapshotState(snapshot) : { status: 'ready' })
+      if (snapshot) {
+        const next = snapshotState(snapshot)
+        set(next)
+        synchronizePlayingTrack(next.tracks)
+      } else {
+        set({ status: 'ready' })
+      }
     } catch (error) {
       set({ status: 'error', error: errorMessage(error) })
     }
@@ -174,7 +213,13 @@ export const useLibraryStore = create<LibraryState>((set) => ({
 
     try {
       const snapshot = await invokeOptionalSnapshot('import_art_folder')
-      set(snapshot ? snapshotState(snapshot) : { status: 'ready' })
+      if (snapshot) {
+        const next = snapshotState(snapshot)
+        set(next)
+        synchronizePlayingTrack(next.tracks)
+      } else {
+        set({ status: 'ready' })
+      }
     } catch (error) {
       set({ status: 'error', error: errorMessage(error) })
     }
@@ -193,7 +238,13 @@ export const useLibraryStore = create<LibraryState>((set) => ({
 
     try {
       const snapshot = await invokeOptionalSnapshot('import_art_file')
-      set(snapshot ? snapshotState(snapshot) : { status: 'ready' })
+      if (snapshot) {
+        const next = snapshotState(snapshot)
+        set(next)
+        synchronizePlayingTrack(next.tracks)
+      } else {
+        set({ status: 'ready' })
+      }
     } catch (error) {
       set({ status: 'error', error: errorMessage(error) })
     }
@@ -234,4 +285,33 @@ export const useLibraryStore = create<LibraryState>((set) => ({
       set({ status: 'error', error: errorMessage(error) })
     }
   },
+  setArtwork: async (trackPath, artworkPath) => {
+    if (!isTauri()) return
+    set({ status: 'loading', error: null })
+    try {
+      const snapshot = snapshotState(
+        await invokeSnapshot('set_track_artwork', { trackPath, artworkPath }),
+      )
+      set(snapshot)
+      synchronizePlayingTrack(snapshot.tracks)
+    } catch (error) {
+      set({ status: 'error', error: errorMessage(error) })
+    }
+  },
+
+  reshuffleFallbacks: () => {
+    const pool = get().artworkPool
+    if (!pool.length) return
+    const assignments = readFallbacks()
+    const tracks = get().tracks.map((track) => {
+      if (track.artworkKind !== 'fallback') return track
+      const picked = pool[Math.floor(Math.random() * pool.length)]
+      if (picked.path) assignments[track.id] = picked.path
+      return { ...track, artwork: picked }
+    })
+    storeFallbacks(assignments)
+    set({ tracks })
+    synchronizePlayingTrack(tracks)
+  },
+
 }))

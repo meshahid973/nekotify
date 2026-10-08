@@ -2,18 +2,14 @@ import { Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { PageHeader } from '@/components/layout/PageHeader'
-import { playLibraryTrack } from '@/features/library/playLibraryTrack'
-import { TrackRow } from '@/features/library/TrackRow'
+import { VirtualTrackList } from '@/features/library/VirtualTrackList'
 import { useLibraryStore } from '@/features/library/library.store'
-import { usePlaybackStore } from '@/features/playback/playback.store'
 
 import './SearchPage.css'
 
 export function SearchPage() {
   const [query, setQuery] = useState('')
   const tracks = useLibraryStore((state) => state.tracks)
-  const currentTrack = usePlaybackStore((state) => state.track)
-  const playbackStatus = usePlaybackStore((state) => state.status)
   const normalizedQuery = query.trim().toLowerCase()
 
   const results = useMemo(
@@ -51,21 +47,7 @@ export function SearchPage() {
       <section className="search-results" aria-live="polite">
         {normalizedQuery ? (
           results.length > 0 ? (
-            results.map((track) => {
-              const active = currentTrack?.id === track.id
-              return (
-                <TrackRow
-                  key={track.id}
-                  track={track}
-                  active={active}
-                  playing={
-                    active &&
-                    (playbackStatus === 'playing' || playbackStatus === 'loading')
-                  }
-                  onPlay={() => void playLibraryTrack(track, results)}
-                />
-              )
-            })
+            <VirtualTrackList tracks={results} />
           ) : (
             <p>No results</p>
           )
