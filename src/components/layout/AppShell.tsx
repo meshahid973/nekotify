@@ -5,6 +5,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { PlayerBar } from '@/components/layout/PlayerBar'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { PlayerPanels } from '@/components/player/PlayerPanels'
+import { CoverPicker } from '@/features/library/CoverPicker'
 import { useLibraryStore } from '@/features/library/library.store'
 import { useCollectionsStore } from '@/features/collections/collections.store'
 import { usePlaybackStore } from '@/features/playback/playback.store'
@@ -85,6 +86,7 @@ export function AppShell() {
       <Sidebar />
       <main className="app-shell__content"><Outlet /></main>
       <PlayerPanels />
+      <CoverPicker />
       <PlayerBar />
     </div>
   )

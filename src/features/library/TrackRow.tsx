@@ -1,9 +1,10 @@
-import { Heart, ListPlus, Pause, Play } from 'lucide-react'
+import { Heart, ListPlus, Paintbrush, Pause, Play } from 'lucide-react'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { useCollectionsStore } from '@/features/collections/collections.store'
 import { formatPlaybackTime } from '@/features/playback/playback.utils'
 import { useQueueStore } from '@/features/queue/queue.store'
+import { useCoverPickerStore } from '@/features/library/cover-picker.store'
 import type { Track } from '@/types/media'
 
 import './TrackRow.css'
@@ -48,6 +49,11 @@ export function TrackRow({
           title="Play next" aria-label={'Play ' + track.title + ' next'}
           onClick={() => useQueueStore.getState().playNext(track)}
         ><ListPlus size={16}/></button>
+        <button type="button" className="track-row__icon"
+          aria-label={'Choose artwork for ' + track.title}
+          title="Choose artwork"
+          onClick={() => useCoverPickerStore.getState().open(track.source.path)}
+        ><Paintbrush size={15}/></button>
         {playlists.length > 0 ? (
           <select
             className="track-row__playlist"
