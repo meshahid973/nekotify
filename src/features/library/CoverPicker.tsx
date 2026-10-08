@@ -1,7 +1,8 @@
-import { Search, X } from 'lucide-react'
+import { Search, X, Maximize2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { IconButton } from '@/components/primitives/IconButton'
+import { ImageViewer } from '@/components/overlays/ImageViewer'
 import { useCoverPickerStore } from '@/features/library/cover-picker.store'
 import { useLibraryStore } from '@/features/library/library.store'
 
@@ -15,6 +16,7 @@ export function CoverPicker() {
   const setArtwork = useLibraryStore((state) => state.setArtwork)
   const status = useLibraryStore((state) => state.status)
   const [query, setQuery] = useState('')
+  const [previewIndex,setPreviewIndex] = useState<number|null>(null)
   const ref = useRef<HTMLElement>(null)
   const track = tracks.find((item) => item.source.path === trackPath)
 
@@ -23,14 +25,14 @@ export function CoverPicker() {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
     ref.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') close()
+      if (event.key === 'Escape' && previewIndex===null) close()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => {
       window.removeEventListener('keydown', onKeyDown)
       previous?.focus()
     }
-  }, [close, trackPath])
+  }, [close, trackPath, previewIndex])
 
   if (!trackPath) return null
 
@@ -64,15 +66,23 @@ export function CoverPicker() {
             disabled={status === 'loading'} onClick={() => select(null)}>
             Use original
           </button>
-          {matches.map((art) => (
-            <button type="button" key={art.path} disabled={status === 'loading'}
-              title={art.alt ?? ''} onClick={() => select(art.path ?? null)}>
-              <img src={art.uri} alt={art.alt ?? 'Artwork'} loading="lazy"/>
-            </button>
+          {matches.map((art,i) => (
+            <div className="cover-picker__tile" key={art.path}>
+              <button type="button" disabled={status==='loading'} title={art.alt ?? ''}
+                onClick={()=>select(art.path??null)}>
+                <img src={art.uri} alt={art.alt??'Artwork'} loading="lazy"/>
+              </button>
+              <button type="button" className="cover-picker__preview"
+                aria-label={'Preview '+(art.alt??'artwork')}
+                onClick={()=>setPreviewIndex(i)}><Maximize2 size={15}/></button>
+            </div>
           ))}
         </div>
         {!pool.length ? <p>Import an artwork folder in Settings first.</p> : null}
       </section>
+      <ImageViewer images={matches.map(art=>({src:art.uri,alt:art.alt??'Artwork',path:art.path}))}
+        index={previewIndex} onIndex={setPreviewIndex} onClose={()=>setPreviewIndex(null)}
+        onChoose={select}/>
     </div>
   )
 }
