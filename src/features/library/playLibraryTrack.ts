@@ -14,15 +14,16 @@ export async function playLibraryTrack(track: Track, tracks: Track[]) {
     return
   }
 
-  useQueueStore.getState().setQueue(tracks, index >= 0 ? index : 0)
-
   if (playback.track?.id !== track.id) {
+    useQueueStore.getState().setQueue(tracks, index >= 0 ? index : 0)
     playback.loadTrack(track)
+  } else if (useQueueStore.getState().items.length === 0) {
+    useQueueStore.getState().setQueue(tracks, index >= 0 ? index : 0)
   }
 
   try {
     await playback.play()
   } catch {
-    return
+    // The audio engine already exposes the error to the player.
   }
 }

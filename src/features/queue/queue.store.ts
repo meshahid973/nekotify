@@ -7,75 +7,139 @@ import {
   normalizeQueueIndex,
   removeQueueItem,
 } from '@/features/queue/queue.utils'
+import type { RepeatMode } from '@/features/playback/playback.types'
 import type { Track } from '@/types/media'
+
+interface QueueNavigation {
+  shuffle?: boolean
+  repeatMode?: RepeatMode
+}
 
 interface QueueState {
   items: Track[]
   currentIndex: number
+  history: number[]
+  visited: number[]
   setQueue: (items: Track[], startIndex?: number) => void
+  select: (index: number) => Track | null
   enqueue: (track: Track) => void
   playNext: (track: Track) => void
   remove: (index: number) => void
   move: (from: number, to: number) => void
   clear: () => void
-  advance: () => Track | null
-  previous: () => Track | null
+  advance: (options?: QueueNavigation) => Track | null
+  previous: (options?: QueueNavigation) => Track | null
 }
 
 export const useQueueStore = create<QueueState>((set, get) => ({
   items: [],
   currentIndex: -1,
+  history: [],
+  visited: [],
 
-  setQueue: (items, startIndex = 0) =>
+  setQueue: (items, startIndex = 0) => {
+    const currentIndex = normalizeQueueIndex(items.length, startIndex)
     set({
       items: [...items],
-      currentIndex: normalizeQueueIndex(items.length, startIndex),
-    }),
+      currentIndex,
+      history: currentIndex < 0 ? [] : [currentIndex],
+      visited: currentIndex < 0 ? [] : [currentIndex],
+    })
+  },
 
-  enqueue: (track) =>
-    set((state) => ({
-      items: [...state.items, track],
-      currentIndex: state.currentIndex < 0 ? 0 : state.currentIndex,
-    })),
+  select: (index) => {
+    const state = get()
+    if (index < 0 || index >= state.items.length) return null
+    set({ currentIndex: index, history: [index], visited: [index] })
+    return state.items[index]
+  },
+
+  enqueue: (track) => set((state) => ({ items: [...state.items, track] })),
 
   playNext: (track) =>
     set((state) => ({
       items: insertTrackNext(state.items, state.currentIndex, track),
-      currentIndex: state.currentIndex < 0 ? 0 : state.currentIndex,
+      history: state.currentIndex < 0 ? [] : [state.currentIndex],
+      visited: state.currentIndex < 0 ? [] : [state.currentIndex],
     })),
 
   remove: (index) =>
-    set((state) => removeQueueItem(state.items, state.currentIndex, index)),
+    set((state) => {
+      const next = removeQueueItem(state.items, state.currentIndex, index)
+      return {
+        ...next,
+        history: next.currentIndex < 0 ? [] : [next.currentIndex],
+        visited: next.currentIndex < 0 ? [] : [next.currentIndex],
+      }
+    }),
 
   move: (from, to) =>
-    set((state) => ({
-      items: moveQueueItem(state.items, from, to),
-      currentIndex: moveQueueCursor(state.currentIndex, from, to),
-    })),
+    set((state) => {
+      const currentIndex = moveQueueCursor(state.currentIndex, from, to)
+      return {
+        items: moveQueueItem(state.items, from, to),
+        currentIndex,
+        history: currentIndex < 0 ? [] : [currentIndex],
+        visited: currentIndex < 0 ? [] : [currentIndex],
+      }
+    }),
 
-  clear: () => set({ items: [], currentIndex: -1 }),
+  clear: () => set({ items: [], currentIndex: -1, history: [], visited: [] }),
 
-  advance: () => {
-    const { items, currentIndex } = get()
-    const nextIndex = currentIndex + 1
+  advance: ({ shuffle = false, repeatMode = 'off' } = {}) => {
+    const state = get()
+    if (state.items.length === 0) return null
 
-    if (nextIndex < 0 || nextIndex >= items.length) {
-      return null
+    let nextIndex: number
+    if (shuffle) {
+      let candidates = state.items
+        .map((_, index) => index)
+        .filter((index) => index !== state.currentIndex && !state.visited.includes(index))
+      if (!candidates.length && repeatMode === 'all') {
+        candidates = state.items
+          .map((_, index) => index)
+          .filter((index) => index !== state.currentIndex)
+      }
+      if (!candidates.length) return null
+      nextIndex = candidates[Math.floor(Math.random() * candidates.length)]
+    } else {
+      nextIndex = state.currentIndex + 1
+      if (nextIndex >= state.items.length) {
+        if (repeatMode !== 'all') return null
+        nextIndex = 0
+      }
     }
 
-    set({ currentIndex: nextIndex })
-    return items[nextIndex]
+    set({
+      currentIndex: nextIndex,
+      history: [...state.history, nextIndex],
+      visited: shuffle && state.visited.length === state.items.length
+        ? [state.currentIndex, nextIndex].filter((index) => index >= 0)
+        : [...state.visited, nextIndex].filter((index, position, items) => items.indexOf(index) === position),
+    })
+    return state.items[nextIndex]
   },
 
-  previous: () => {
-    const { items, currentIndex } = get()
-    const previousIndex = currentIndex - 1
+  previous: ({ shuffle = false, repeatMode = 'off' } = {}) => {
+    const state = get()
+    if (!state.items.length) return null
 
-    if (previousIndex < 0 || previousIndex >= items.length) {
-      return null
+    let previousIndex = state.currentIndex - 1
+    let history = state.history
+    if (shuffle) {
+      if (history.length < 2) return null
+      history = history.slice(0, -1)
+      previousIndex = history[history.length - 1]
+    } else if (previousIndex < 0) {
+      if (repeatMode !== 'all') return null
+      previousIndex = state.items.length - 1
     }
 
-    set({ currentIndex: previousIndex })
-    return items[previousIndex]
+    set({
+      currentIndex: previousIndex,
+      history: shuffle ? history : [...history, previousIndex],
+      visited: state.visited,
+    })
+    return state.items[previousIndex]
   },
 }))
