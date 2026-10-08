@@ -198,6 +198,44 @@ pub async fn remove_art_source(
         .map_err(|error| format!("Artwork scan task failed: {error}"))?
 }
 
+#[tauri::command]
+pub async fn set_track_artwork(
+    app: AppHandle,
+    track_path: String,
+    artwork_path: Option<String>,
+) -> Result<LibrarySnapshot, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let connection = database::open(&app)?;
+        let found = connection.query_row(
+            "SELECT count(*) FROM library_tracks WHERE path=?1",
+            rusqlite::params![track_path],
+            |row| row.get::<_, i64>(0),
+        ).map_err(|error| error.to_string())?;
+        if found == 0 {
+            return Err("The selected track is not in the library.".to_string());
+        }
+
+        if let Some(ref requested) = artwork_path {
+            let stored = read_stored_library(&app)?;
+            let (_, pool) = build_artwork_pool(&app, &stored);
+            if !pool.iter().any(|item| item.path == *requested) {
+                return Err("Choose an image from an imported artwork source.".to_string());
+            }
+            connection.execute(
+                "INSERT INTO artwork_assignments(track_path,artwork_path) VALUES (?1,?2)
+                 ON CONFLICT(track_path) DO UPDATE SET artwork_path=excluded.artwork_path",
+                rusqlite::params![track_path, requested],
+            ).map_err(|error| error.to_string())?;
+        } else {
+            connection.execute(
+                "DELETE FROM artwork_assignments WHERE track_path=?1",
+                rusqlite::params![track_path],
+            ).map_err(|error| error.to_string())?;
+        }
+        build_snapshot(&app)
+    }).await.map_err(|error| format!("Artwork worker failed: {error}"))?
+}
+
 fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
     let stored = read_stored_library(app)?;
     let mut connection = database::open(app)?;

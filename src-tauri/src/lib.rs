@@ -13,6 +13,7 @@ pub fn run() {
             database::remove_from_playlist,
             database::toggle_favorite,
             library::load_library,
+            library::set_track_artwork,
             library::import_music_folder,
             library::import_art_folder,
             library::import_art_file,

@@ -34,7 +34,7 @@ fn db_path(app: &AppHandle) -> Result<PathBuf, String> {
 }
 
 pub fn open(app: &AppHandle) -> Result<Connection, String> {
-    let mut conn = Connection::open(db_path(app)?)
+    let conn = Connection::open(db_path(app)?)
         .map_err(|error| format!("Cannot open library database: {error}"))?;
     conn.busy_timeout(Duration::from_secs(5))
         .map_err(|error| error.to_string())?;
