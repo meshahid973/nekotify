@@ -103,7 +103,6 @@ export function LibraryPage() {
   return (
     <div className="page library-page">
       <PageHeader
-        eyebrow="Local player"
         title="Your Library"
         actions={
           <div className="library-page__actions">

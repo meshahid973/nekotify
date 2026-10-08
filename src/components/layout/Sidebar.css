@@ -7,7 +7,7 @@
   background:#000;
 }
 .app-shell[data-theme='ambience'] .sidebar {
-  background:rgba(8,8,10,.88); backdrop-filter:blur(24px);
+  background:rgba(0,0,0,.43); backdrop-filter:blur(14px);
 }
 .sidebar__brand {
   display:flex; align-items:center; gap:12px;
@@ -16,7 +16,7 @@
 .sidebar__brand-mark {
   display:grid; flex:0 0 42px; width:42px; height:42px;
   place-items:center; border-radius:13px;
-  color:#0b110a; background:var(--color-accent);
+  color:#050505; background:var(--color-accent);
 }
 .sidebar__brand-copy { display:grid; gap:1px; min-width:0; }
 .sidebar__brand-copy strong {
@@ -121,3 +121,7 @@
 .sidebar__brand:hover .sidebar__brand-mark > svg { transform:rotate(-12deg) scale(1.08); }
 .sidebar-action > svg { transform-origin:center; }
 .sidebar-link--active .animated-icon > svg { stroke-width:2.25; }
+
+.app-shell[data-theme='oled'] .sidebar { background:#000; }
+.app-shell[data-theme='ambience'] .sidebar__footer { background:rgba(0,0,0,.12); }
+.sidebar__brand-copy { gap:0; }

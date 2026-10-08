@@ -46,7 +46,7 @@ export function Sidebar() {
     <aside className="sidebar" aria-label="Main navigation">
       <NavLink to="/" className="sidebar__brand" aria-label="Nekotify Home">
         <span className="sidebar__brand-mark"><Music2 size={21} aria-hidden="true" /></span>
-        <span className="sidebar__brand-copy"><strong>nekotify</strong><small>YOUR MUSIC, YOUR WAY</small></span>
+        <span className="sidebar__brand-copy"><strong>nekotify</strong></span>
       </NavLink>
 
       <div className="sidebar__scroll" ref={containerRef}>
@@ -123,7 +123,6 @@ export function Sidebar() {
             : 'sidebar-link'}>
           <AnimatedIcon icon={Settings} size={19} variant="tilt" /><span>Settings</span>
         </NavLink>
-        <span className="sidebar__footer-version">NEKOTIFY • LOCAL PLAYER</span>
       </div>
     </aside>
   )

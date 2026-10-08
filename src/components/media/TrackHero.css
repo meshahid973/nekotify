@@ -1,9 +1,9 @@
 .track-hero {
   position:relative; isolation:isolate; overflow:hidden;
   display:flex; align-items:stretch; width:100%;
-  min-height:clamp(320px,39vh,620px);
+  height:clamp(340px,42vh,560px); min-height:0;
   border:1px solid rgba(255,255,255,.085); border-radius:24px;
-  background:linear-gradient(112deg,#1c2023,#121315 72%,#0d0d0f);
+  background:#101010;
   box-shadow:0 24px 90px rgba(0,0,0,.18);
 }
 .track-hero__wash {
@@ -33,25 +33,26 @@
 .track-hero__copy {
   position:relative; z-index:3; align-self:center;
   display:grid; justify-items:start; align-content:center;
-  width:min(61%,800px); min-width:0;
-  padding:clamp(28px,4.3vw,74px);
+  width:min(61%,800px); min-width:0; max-height:100%; overflow:hidden;
+  padding:clamp(20px,2.5vw,48px) clamp(24px,4vw,68px);
 }
 .track-hero__eyebrow {
   display:flex; align-items:center; gap:9px;
   color:rgba(255,255,255,.72); font-size:.72rem;
   font-weight:780; letter-spacing:.115em;
 }
-.track-hero__dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--color-accent); box-shadow:0 0 12px rgba(184,239,134,.35); }
+.track-hero__dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#fff; }
 .track-hero__copy h2 {
-  max-width:13ch; margin:16px 0 14px;
-  color:#fff; font-size:clamp(2.5rem,4.55vw,5.4rem);
-  line-height:1.02; font-weight:840; letter-spacing:-.075em;
-  overflow-wrap:anywhere; text-wrap:balance;
-  text-shadow:0 3px 24px rgba(0,0,0,.18);
+  max-width:18ch; margin:10px 0 11px;
+  color:#fff; font-size:clamp(2rem,min(4.2vw,5.6vh),4.7rem);
+  line-height:1.03; font-weight:810; letter-spacing:-.065em;
+  overflow:hidden; overflow-wrap:anywhere;
+  display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3;
+  line-clamp:3;
 }
 .track-hero__meta {
   display:flex; flex-wrap:wrap; align-items:center; gap:10px;
-  margin:0 0 28px; color:rgba(255,255,255,.68);
+  margin:0 0 clamp(13px,2vh,23px); color:rgba(255,255,255,.68);
   font-size:clamp(.83rem,1.05vw,.97rem); font-weight:530;
 }
 .track-hero__meta strong { color:rgba(255,255,255,.94); font-weight:670; }
@@ -70,13 +71,19 @@
 @media(max-width:1050px) {
   .track-hero__copy { width:66%; }
   .track-hero__image { width:79%; }
-  .track-hero__copy h2 { font-size:clamp(2.1rem,5vw,4rem); }
+  .track-hero__copy h2 { font-size:clamp(2.05rem,4.6vw,3.7rem); }
 }
 @media(max-width:720px) {
-  .track-hero { min-height:clamp(275px,38vh,345px); border-radius:18px; }
+  .track-hero { height:clamp(320px,39vh,400px); border-radius:18px; }
   .track-hero__copy { width:100%; padding:24px; }
-  .track-hero__copy h2 { max-width:17ch; font-size:clamp(1.9rem,5vw,2.8rem); }
+  .track-hero__copy h2 { max-width:22ch; font-size:clamp(1.65rem,4.9vw,2.4rem); -webkit-line-clamp:3; line-clamp:3; }
   .track-hero__image { width:100%; opacity:.64; mask-image:none; -webkit-mask-image:none; }
   .track-hero__overlay { background:linear-gradient(90deg,rgba(0,0,0,.87),rgba(0,0,0,.49)); }
   .track-hero__edge-label { display:none; }
+}
+
+@media (max-height:650px) and (min-width:721px) {
+  .track-hero { height:clamp(285px,55vh,380px); }
+  .track-hero__copy { padding-block:22px; }
+  .track-hero__copy h2 { font-size:clamp(1.9rem,min(3.6vw,5.2vh),3.2rem); -webkit-line-clamp:3; line-clamp:3; }
 }

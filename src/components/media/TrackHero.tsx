@@ -2,6 +2,7 @@ import { Music2, Pause, Play } from 'lucide-react'
 
 import { Button } from '@/components/primitives/Button'
 import type { Track } from '@/types/media'
+import { cleanHeroTitle } from '@/features/library/cleanHeroTitle'
 
 import './TrackHero.css'
 
@@ -15,6 +16,7 @@ interface TrackHeroProps {
 export function TrackHero({
   track, playing, onToggle, onLibrary,
 }: TrackHeroProps) {
+  const displayTitle = cleanHeroTitle(track.title)
   return (
     <section className="track-hero" data-has-artwork={Boolean(track.artwork)}
       aria-label="Featured music">
@@ -30,10 +32,7 @@ export function TrackHero({
       )}
       <div className="track-hero__overlay" aria-hidden="true" />
       <div className="track-hero__copy">
-        <div className="track-hero__eyebrow"><span className="track-hero__dot" />
-          {playing ? 'NOW PLAYING' : 'FEATURED FROM YOUR LIBRARY'}
-        </div>
-        <h2 title={track.title}>{track.title}</h2>
+        <h2 title={track.title}>{displayTitle}</h2>
         <p className="track-hero__meta">
           <strong>{track.artist}</strong>
           {track.album ? <><span className="track-hero__bullet">•</span><span>{track.album}</span></> : null}
@@ -52,7 +51,6 @@ export function TrackHero({
           ) : null}
         </div>
       </div>
-      <span className="track-hero__edge-label" aria-hidden="true">NEKOTIFY / LOCAL MUSIC</span>
     </section>
   )
 }

@@ -7,7 +7,7 @@
   background:#000;
 }
 .app-shell[data-theme='ambience'] .player-bar {
-  background:rgba(10,10,12,.89); backdrop-filter:blur(24px);
+  background:rgba(0,0,0,.57); backdrop-filter:blur(16px);
 }
 .player-bar__track { display:flex; align-items:center; gap:13px; min-width:0; }
 .player-bar__artwork-action {
@@ -24,7 +24,7 @@
 .player-bar__track-copy strong { font-size:.89rem; font-weight:710; color:#fafafa; }
 .player-bar__track-copy span { font-size:.77rem; color:#a5a5ae; }
 .player-bar__favorite { margin-left:2px; }
-.player-bar__favorite[aria-pressed='true'] { color:#f994b0; }
+.player-bar__favorite[aria-pressed='true'] { color:#fff; }
 .player-bar__transport {
   display:grid; justify-items:center; align-content:center;
   gap:2px; min-width:0;

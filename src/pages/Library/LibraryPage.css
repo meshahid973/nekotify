@@ -22,7 +22,7 @@
   border-radius:12px; background:rgba(255,255,255,.045); color:#92929a;
   transition:border-color var(--motion-fast),background-color var(--motion-fast);
 }
-.library-search:focus-within { border-color:rgba(184,239,134,.35); background:rgba(255,255,255,.07); }
+.library-search:focus-within { border-color:rgba(255,255,255,.35); background:rgba(255,255,255,.07); }
 .library-search input { min-width:0; width:100%; border:0; outline:0; color:#fff; background:transparent; font-size:.84rem; font-weight:550; }
 .library-search input::placeholder { color:#77777f; }
 .library-density {
@@ -44,8 +44,8 @@
   transition:color var(--motion-fast),background-color var(--motion-fast),border-color var(--motion-fast);
 }
 .library-tab:hover { color:white; background:rgba(255,255,255,.1); }
-.library-tab--active { color:#10160b; background:var(--color-accent); border-color:var(--color-accent); }
-.library-tab--active:hover { color:#10160b; background:#cef6ad; }
+.library-tab--active { color:#000; background:var(--color-accent); border-color:var(--color-accent); }
+.library-tab--active:hover { color:#000; background:#efefef; }
 .library-track-list,.library-collection-list { min-width:0; }
 .library-error { padding:11px 14px; margin:0 0 14px; border-radius:9px; color:#ffaeae; background:rgba(253,104,104,.07); font-size:.8rem; }
 .library-empty {
@@ -94,7 +94,7 @@
 }
 .library-tab { position:relative; z-index:1; }
 .library-tab--active,.library-tab--active:hover {
-  color:#10160b; background:transparent; border-color:transparent;
+  color:#000; background:transparent; border-color:transparent;
 }
 .library-tab--active:hover { background:rgba(255,255,255,.04); }
 .library-tab:not(.library-tab--active):hover { transform:translateY(-1px); }

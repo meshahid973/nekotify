@@ -1,19 +1,20 @@
 :root {
   color-scheme: dark;
   --color-bg: #000;
-  --color-surface: #0e0e10;
+  --color-surface: #0a0a0a;
   --color-surface-raised: #18181b;
   --color-surface-soft: #212125;
-  --color-text: #fafafa;
+  --color-text: #fff;
+  --color-accent-foreground: #000;
   --color-text-muted: #b2b2b9;
   --color-text-subtle: #898991;
   --color-border: rgb(255 255 255 / .075);
   --color-border-strong: rgb(255 255 255 / .14);
-  --color-focus: #e0f7ad;
-  --color-accent: #b8ef86;
-  --color-accent-rgb: 184 239 134;
-  --color-accent-secondary: #c4b5fd;
-  --color-accent-secondary-rgb: 196 181 253;
+  --color-focus: #fff;
+  --color-accent: #fff;
+  --color-accent-rgb: 255 255 255;
+  --color-accent-secondary: #d4d4d8;
+  --color-accent-secondary-rgb: 212 212 216;
 
   --font-sans: Inter, "Segoe UI Variable", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, ui-monospace, monospace;
