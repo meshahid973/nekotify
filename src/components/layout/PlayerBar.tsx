@@ -16,6 +16,7 @@ export function PlayerBar() {
   const status = usePlaybackStore((state) => state.status)
   const currentTime = usePlaybackStore((state) => state.currentTime)
   const duration = usePlaybackStore((state) => state.duration)
+  const bufferedEnd = usePlaybackStore((state) => state.bufferedEnd)
   const volume = usePlaybackStore((state) => state.volume)
   const muted = usePlaybackStore((state) => state.muted)
   const seek = usePlaybackStore((state) => state.seek)
@@ -56,6 +57,7 @@ export function PlayerBar() {
           <span>{formatPlaybackTime(currentTime)}</span>
           <Slider label="Seek" min={0} max={Math.max(duration,1)} step={0.1}
             value={Math.min(currentTime,Math.max(duration,1))}
+            buffered={bufferedEnd} formatValue={formatPlaybackTime}
             disabled={!track || duration <= 0} onValueChange={seek}/>
           <span>{formatPlaybackTime(duration)}</span>
         </div>
@@ -82,7 +84,8 @@ export function PlayerBar() {
             {muted ? <VolumeX size={18}/> : <Volume2 size={18}/>}
           </IconButton>
           <Slider className="player-bar__volume" label="Volume"
-            value={muted ? 0 : volume} onValueChange={(value) => {
+            value={muted ? 0 : volume} formatValue={(value) => Math.round(value * 100) + '%'}
+            onValueChange={(value) => {
               if (muted) toggleMuted()
               setVolume(value)
             }}/>

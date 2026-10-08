@@ -72,6 +72,7 @@ function NowPlayingPanel({ refElement, onClose }: PanelProps) {
   const track = usePlaybackStore((state) => state.track)
   const currentTime = usePlaybackStore((state) => state.currentTime)
   const duration = usePlaybackStore((state) => state.duration)
+  const bufferedEnd = usePlaybackStore((state) => state.bufferedEnd)
   const seek = usePlaybackStore((state) => state.seek)
   const favorites = useCollectionsStore((state) => state.favorites)
   const toggleFavorite = useCollectionsStore((state) => state.toggleFavorite)
@@ -99,6 +100,7 @@ function NowPlayingPanel({ refElement, onClose }: PanelProps) {
             <div className="now-playing-panel__slider">
               <Slider label="Seek" min={0} max={Math.max(duration,1)}
                 step={0.1} value={Math.min(currentTime,Math.max(duration,1))}
+                buffered={bufferedEnd} formatValue={formatPlaybackTime}
                 disabled={duration <= 0} onValueChange={seek} />
               <div className="now-playing-panel__position">
                 <span>{formatPlaybackTime(currentTime)}</span>
