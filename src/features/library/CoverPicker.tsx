@@ -21,7 +21,7 @@ export function CoverPicker() {
   const track = tracks.find((item) => item.source.path === trackPath)
 
   useEffect(() => {
-    if (!trackPath) return
+    if (!trackPath || previewIndex !== null) return
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null
     ref.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {

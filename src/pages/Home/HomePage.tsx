@@ -7,6 +7,7 @@ import { Artwork } from '@/components/artwork/Artwork'
 import { TrackHero } from '@/components/media/TrackHero'
 import { QuickSpin } from '@/components/reactbits/QuickSpin'
 import { ChromaAlbumGrid } from '@/components/reactbits/ChromaAlbumGrid'
+import { FadeContent } from '@/components/reactbits/FadeContent'
 import { useUiStore } from '@/stores/ui.store'
 import { Button } from '@/components/primitives/Button'
 import { useHistoryStore } from '@/features/history/history.store'
@@ -150,7 +151,7 @@ export function HomePage() {
       {quickWheelEnabled ? <QuickSpin/> : null}
 
       {albums.length > 0 ? (
-        <section className="home-section" aria-labelledby="albums-title">
+        <FadeContent><section className="home-section" aria-labelledby="albums-title">
           <div className="section-heading">
             <div><h2 className="section-heading__title" id="albums-title">Albums</h2>
             </div>
@@ -161,7 +162,7 @@ export function HomePage() {
           </div>
           <ChromaAlbumGrid albums={albums.slice(0,6)}
             onPlay={(songs)=>{if(songs[0])void playLibraryTrack(songs[0],songs)}}/>
-        </section>
+        </section></FadeContent>
       ) : null}
     </div>
   )
