@@ -6,7 +6,11 @@ export function cleanHeroTitle(title: string): string {
   const original = title.trim()
   if (!original) return title
   let cleaned = original
-    .replace(/\s*[\[(][^\])]*(?:slowed|reverb|sped[\s-]*up|speed[\s-]*up|extended[\s-]*version)[^\])]*[\])]/gi, '')
+    .replace(/\s*(?:\([^)]*\)|\[[^\n]*?\])/g, (segment) =>
+      /\b(slowed|reverb|sped[\s-]*up|speed[\s-]*up|extended[\s-]*version)\b/i.test(segment)
+        ? ''
+        : segment,
+    )
     .replace(/\s*(?:[-–—|]\s*)?(?:(?:ultra|super|very|extra)\s+)?slowed(?:\s*(?:\+|&|and)\s*reverb)?(?:\s+(?:version|edit))?\s*$/gi, '')
     .replace(/\s*(?:[-–—|]\s*)?(?:reverb(?:ed)?|sped[\s-]*up|speed[\s-]*up|extended[\s-]*version)(?:\s+(?:version|edit))?\s*$/gi, '')
     .replace(/\s*[-–—|/,:]+\s*$/g, '')
