@@ -25,3 +25,8 @@
 .track-row__icon:focus-visible,.track-row__play:focus-visible,.track-row__playlist:focus-visible { outline:2px solid var(--color-focus); outline-offset:2px; }
 @media(max-width:1080px) { .track-row { grid-template-columns:34px 48px minmax(120px,1fr) 42px auto; } .track-row__album { display:none; } }
 @media(max-width:720px) { .track-row__playlist { display:none; } .track-row { gap:6px; padding-inline:6px; } }
+
+@keyframes liked-icon-enter { 0% { transform:scale(.75); } 55% { transform:scale(1.23); } 100% { transform:scale(1); } }
+.track-row__icon--active svg { animation:liked-icon-enter 260ms var(--ease-out) both; }
+@media(prefers-reduced-motion:reduce) { .track-row__icon--active svg { animation:none; } }
+:root[data-motion='reduced'] .track-row__icon--active svg { animation:none; }

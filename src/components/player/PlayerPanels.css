@@ -24,3 +24,7 @@
 @keyframes player-panel-enter { from { opacity:0; transform:translateY(10px) scale(.985); } to { opacity:1; transform:translateY(0) scale(1); } }
 @media(max-width:800px){ .player-panels { left:0; } }
 :root[data-motion='reduced'] .queue-panel,:root[data-motion='reduced'] .now-playing-panel { animation:none; }
+
+.queue-panel__row[data-dragging='true'] { opacity:.5; }
+.queue-panel__row[draggable='true'] { cursor:grab; }
+.queue-panel__row[draggable='true']:active { cursor:grabbing; }

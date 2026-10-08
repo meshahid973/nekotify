@@ -13,7 +13,7 @@ import {
   Settings,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 
 import { useLibraryStore } from '@/features/library/library.store'
 import { useCollectionsStore } from '@/features/collections/collections.store'
@@ -27,6 +27,8 @@ const links = [
 ]
 
 export function Sidebar() {
+  const location = useLocation()
+  const collectionView = location.pathname === '/library' ? new URLSearchParams(location.search).get('view') : null
   const folders = useLibraryStore((state) => state.folders)
   const favorites = useCollectionsStore((state) => state.favorites)
   const playlists = useCollectionsStore((state) => state.playlists)
@@ -74,14 +76,14 @@ export function Sidebar() {
       </nav>
 
       <nav className="sidebar__nav sidebar__collections" aria-label="Collections">
-        <NavLink to="/library?view=favorites" className={({isActive}) =>
-          isActive ? 'sidebar-link sidebar-link--active' : 'sidebar-link'
+        <NavLink to="/library?view=favorites" className={
+          collectionView === 'favorites' ? 'sidebar-link sidebar-link--active' : 'sidebar-link'
         }>
           <Heart size={17}/><span>Favorites</span>
           {favorites.length ? <small>{favorites.length}</small> : null}
         </NavLink>
-        <NavLink to="/library?view=playlists" className={({isActive}) =>
-          isActive ? 'sidebar-link sidebar-link--active' : 'sidebar-link'
+        <NavLink to="/library?view=playlists" className={
+          collectionView === 'playlists' ? 'sidebar-link sidebar-link--active' : 'sidebar-link'
         }>
           <ListMusic size={17}/><span>Playlists</span>
           {playlists.length ? <small>{playlists.length}</small> : null}

@@ -41,7 +41,7 @@ export function PlaylistView() {
         <form className="playlists-view__create" onSubmit={(event) => { event.preventDefault(); create() }}>
           <input value={name} onChange={(event) => setName(event.currentTarget.value)}
             maxLength={80} placeholder="New playlist" aria-label="New playlist name"/>
-          <Button size="sm" disabled={busy || !name.trim()}><Plus size={15}/> Create</Button>
+          <Button type="submit" size="sm" disabled={busy || !name.trim()}><Plus size={15}/> Create</Button>
         </form>
         {playlists.map((playlist) => (
           <button type="button" key={playlist.id}

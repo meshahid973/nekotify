@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, ListMusic, X } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 
 import { Artwork } from '@/components/artwork/Artwork'
@@ -85,6 +85,7 @@ function QueuePanel({
   const index = useQueueStore((state) => state.currentIndex)
   const select = useQueueStore((state) => state.select)
   const move = useQueueStore((state) => state.move)
+  const [dragging, setDragging] = useState<number | null>(null)
   const remove = useQueueStore((state) => state.remove)
   const loadTrack = usePlaybackStore((state) => state.loadTrack)
   const play = usePlaybackStore((state) => state.play)
@@ -105,7 +106,24 @@ function QueuePanel({
       <div className="queue-panel__list">
         {items.length === 0 ? <p className="queue-panel__empty">Queue is empty</p> :
           items.map((track, itemIndex) => (
-            <div className="queue-panel__row" data-active={index === itemIndex} key={track.id + ':' + itemIndex}>
+            <div className="queue-panel__row" data-active={index === itemIndex}
+              data-dragging={dragging === itemIndex}
+              key={track.id + ':' + itemIndex}
+              draggable
+              onDragStart={(event) => {
+                setDragging(itemIndex)
+                event.dataTransfer.effectAllowed = 'move'
+                event.dataTransfer.setData('text/plain', String(itemIndex))
+              }}
+              onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move' }}
+              onDrop={(event) => {
+                event.preventDefault()
+                const from = Number(event.dataTransfer.getData('text/plain'))
+                if (Number.isInteger(from) && from >= 0 && from < items.length) move(from, itemIndex)
+                setDragging(null)
+              }}
+              onDragEnd={() => setDragging(null)}
+            >
               <button type="button" className="queue-panel__track" onClick={() => playAt(itemIndex)}>
                 <Artwork size="sm" src={track.artwork?.uri} alt=""/>
                 <span><strong>{track.title}</strong><small>{track.artist}</small></span>
