@@ -83,10 +83,9 @@ function NowPlayingPanel({ refElement, onClose }: PanelProps) {
   const favorites = useCollectionsStore((state) => state.favorites)
   const toggleFavorite = useCollectionsStore((state) => state.toggleFavorite)
   const setPanel = usePlayerPanelsStore((state) => state.setPanel)
+  const reduce = useReducedMotion()
   if (!track) return null
   const liked = favorites.includes(track.source.path)
-
-  const reduce = useReducedMotion()
   return (
     <motion.section
       initial={{opacity:0,scale:reduce?1:.975,y:reduce?0:12}}
