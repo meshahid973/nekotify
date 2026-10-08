@@ -33,18 +33,18 @@
 .home-section__link:hover { color:#fff; gap:13px; }
 .home-track-grid {
   display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:11px;
+  gap:10px;
 }
 .home-track {
-  display:flex; align-items:center; min-width:0; min-height:74px; gap:15px;
-  padding:8px 10px; border:1px solid var(--color-border);
-  border-radius:13px; background:rgba(255,255,255,.035);
+  display:flex; align-items:center; min-width:0; min-height:79px; gap:15px;
+  padding:8px 10px; border:1px solid rgba(255,255,255,.055);
+  border-radius:12px; background:rgba(255,255,255,.045);
   color:#fff; text-align:left; cursor:pointer;
   transition:background-color var(--motion-fast),transform var(--motion-micro),
     border-color var(--motion-fast);
 }
 .home-track .artwork { width:57px; height:57px; border-radius:9px; }
-.home-track:hover { background:rgba(255,255,255,.085); border-color:rgba(255,255,255,.14); transform:translateY(-2px); }
+.home-track:hover { background:rgba(255,255,255,.09); border-color:rgba(255,255,255,.13); transform:translateY(-1px); }
 .home-track:active { transform:scale(.99); }
 .home-track[data-active='true'] { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.17); }
 .home-track__copy { display:grid; flex:1; gap:5px; min-width:0; }
@@ -101,4 +101,8 @@
   .home-empty { flex-wrap:wrap; padding:26px; }
   .home-empty__symbol { flex-basis:76px; height:76px; }
   .home-empty .button { width:100%; }
+}
+
+@media(max-width:1849px) {
+  .home-track-grid .home-track:nth-child(9) { display:none; }
 }

@@ -7,6 +7,7 @@ test('removes trailing slowed/reverb tags without editing real metadata', () => 
   assert.equal(cleanHeroTitle('Telephones [Slowed & Reverb]'), 'Telephones')
   assert.equal(cleanHeroTitle('Song — Extended Version'), 'Song')
   assert.equal(cleanHeroTitle('Track - Sped up'), 'Track')
+  assert.equal(cleanHeroTitle('Limerence by Yves tumor slowed extended version'), 'Limerence by Yves tumor')
 })
 
 test('preserves meaningful titles and handles edge cases', () => {

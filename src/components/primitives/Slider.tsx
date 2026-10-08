@@ -103,7 +103,7 @@ export function Slider({
                 animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
                 exit={reduce ? { opacity: 0 } : { opacity: 0, y: 4, scale: 0.9 }}
                 transition={reduce ? { duration: 0.08 } : BUBBLE}
-                style={reduce ? undefined : { rotate }}
+                style={reduce ? { x: '-50%' } : { x: '-50%', rotate }}
               >{readout}</motion.output>
             ) : null}
           </AnimatePresence>
