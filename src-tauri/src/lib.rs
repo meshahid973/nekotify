@@ -1,3 +1,4 @@
+mod database;
 mod library;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -5,6 +6,12 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
+            database::get_collections,
+            database::create_playlist,
+            database::delete_playlist,
+            database::add_to_playlist,
+            database::remove_from_playlist,
+            database::toggle_favorite,
             library::load_library,
             library::import_music_folder,
             library::import_art_folder,
