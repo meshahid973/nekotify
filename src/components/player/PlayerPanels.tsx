@@ -1,3 +1,4 @@
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { ArrowDown, ArrowUp, GripVertical, Heart, ListMusic, Music2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
@@ -12,12 +13,14 @@ import { usePlaybackStore } from '@/features/playback/playback.store'
 import { usePlayerPanelsStore } from '@/features/playback/player-panels.store'
 import { formatPlaybackTime } from '@/features/playback/playback.utils'
 import { useQueueStore } from '@/features/queue/queue.store'
+import { notify } from '@/stores/toast.store'
 import './PlayerPanels.css'
 
 export function PlayerPanels() {
   const panel = usePlayerPanelsStore((state) => state.openPanel)
   const setPanel = usePlayerPanelsStore((state) => state.setPanel)
   const panelRef = useRef<HTMLElement>(null)
+  const reduced = useReducedMotion()
 
   useEffect(() => {
     if (!panel) return
@@ -51,15 +54,18 @@ export function PlayerPanels() {
     }
   }, [panel, setPanel])
 
-  if (!panel) return null
   return (
-    <div className="player-panels">
-      <button className="player-panels__scrim" type="button" tabIndex={-1}
-        aria-label="Close player panel" onClick={() => setPanel(null)} />
-      {panel === 'queue'
-        ? <QueuePanel refElement={panelRef} onClose={() => setPanel(null)} />
-        : <NowPlayingPanel refElement={panelRef} onClose={() => setPanel(null)} />}
-    </div>
+    <AnimatePresence>
+      {panel ? <div className="player-panels" key="panels">
+        <motion.button className="player-panels__scrim" type="button" tabIndex={-1}
+          aria-label="Close player panel" onClick={() => setPanel(null)}
+          initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+          transition={{duration:reduced?0:.16}}/>
+        {panel === 'queue'
+          ? <QueuePanel refElement={panelRef} onClose={() => setPanel(null)} />
+          : <NowPlayingPanel refElement={panelRef} onClose={() => setPanel(null)} />}
+      </div> : null}
+    </AnimatePresence>
   )
 }
 
@@ -80,8 +86,14 @@ function NowPlayingPanel({ refElement, onClose }: PanelProps) {
   if (!track) return null
   const liked = favorites.includes(track.source.path)
 
+  const reduce = useReducedMotion()
   return (
-    <section className="now-playing-panel" role="dialog" aria-modal="true"
+    <motion.section
+      initial={{opacity:0,scale:reduce?1:.975,y:reduce?0:12}}
+      animate={{opacity:1,scale:1,y:0}}
+      exit={{opacity:0,scale:.99}}
+      transition={reduce?{duration:0}:{type:'spring',stiffness:390,damping:35}}
+      className="now-playing-panel" role="dialog" aria-modal="true"
       aria-label="Now playing" tabIndex={-1} ref={refElement}>
       {track.artwork ? <img className="now-playing-panel__backdrop"
         src={track.artwork.uri} alt="" aria-hidden="true" /> : null}
@@ -125,7 +137,7 @@ function NowPlayingPanel({ refElement, onClose }: PanelProps) {
             alt={track.artwork?.alt ?? 'Current album artwork'} />
         </div>
       </div>
-    </section>
+    </motion.section>
   )
 }
 
@@ -136,6 +148,7 @@ function QueuePanel({ refElement, onClose }: PanelProps) {
   const move = useQueueStore((state) => state.move)
   const remove = useQueueStore((state) => state.remove)
   const [dragging, setDragging] = useState<number | null>(null)
+  const reduce = useReducedMotion()
   const loadTrack = usePlaybackStore((state) => state.loadTrack)
   const play = usePlaybackStore((state) => state.play)
   const playAt = (index: number) => {
@@ -146,7 +159,11 @@ function QueuePanel({ refElement, onClose }: PanelProps) {
   }
 
   return (
-    <section className="queue-panel" role="dialog" aria-modal="true"
+    <motion.section
+      initial={{opacity:0,x:reduce?0:35}} animate={{opacity:1,x:0}}
+      exit={{opacity:0,x:reduce?0:35}}
+      transition={reduce?{duration:0}:{type:'spring',stiffness:420,damping:40}}
+      className="queue-panel" role="dialog" aria-modal="true"
       aria-label="Playback queue" tabIndex={-1} ref={refElement}>
       <div className="player-panels__heading">
         <div><p className="eyebrow">UP NEXT</p>
@@ -160,7 +177,8 @@ function QueuePanel({ refElement, onClose }: PanelProps) {
             <span>Play a song from your library to begin.</span>
           </div>
         ) : items.map((track, index) => (
-          <div className="queue-panel__row" key={track.id + ':' + index}
+          <motion.div layout={!reduce} transition={{layout:{type:'spring',stiffness:410,damping:38}}}
+            className="queue-panel__row" key={track.id + ':' + index}
             data-active={currentIndex === index} data-dragging={dragging === index}
             draggable
             onDragStart={(event) => {
@@ -190,14 +208,14 @@ function QueuePanel({ refElement, onClose }: PanelProps) {
                 onClick={() => move(index,index+1)}><ArrowDown size={14}/></IconButton>
               <IconButton label={'Remove ' + track.title} size="sm"
                 disabled={index===currentIndex}
-                onClick={() => remove(index)}><X size={14}/></IconButton>
+                onClick={() => {remove(index);notify('Removed from queue','info')}}><X size={14}/></IconButton>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
       {items.length > 0 ? <footer className="queue-panel__footer">
         Drag to reorder, or use the arrow buttons.
       </footer> : null}
-    </section>
+    </motion.section>
   )
 }
