@@ -1,4 +1,5 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ReactNode } from 'react'
+import type { HTMLMotionProps } from 'motion/react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useUiStore } from '@/stores/ui.store'
 
@@ -7,7 +8,7 @@ import './Button.css'
 type ButtonVariant = 'primary' | 'secondary' | 'ghost'
 type ButtonSize = 'sm' | 'md'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends HTMLMotionProps<'button'> {
   variant?: ButtonVariant
   size?: ButtonSize
   children: ReactNode
