@@ -415,11 +415,11 @@ fn scan_music_directory(
                 fresh
             };
 
-            if let Some(override_path) = database::assigned_artwork(connection, &path_string) {
-                if Path::new(&override_path).is_file() &&
-                    app.asset_protocol_scope().allow_file(&override_path).is_ok() {
-                    track.artwork_path = Some(override_path);
-                }
+            if let Some(override_path) = database::assigned_artwork(connection, &path_string)
+                && Path::new(&override_path).is_file()
+                && app.asset_protocol_scope().allow_file(&override_path).is_ok()
+            {
+                track.artwork_path = Some(override_path);
             }
 
             if seen_track_ids.insert(track.id.clone()) { tracks.push(track) }

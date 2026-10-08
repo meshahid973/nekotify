@@ -61,7 +61,7 @@ export function Sidebar() {
             to={to}
             end={end}
             className={({ isActive }) =>
-              isActive
+              isActive && (label !== 'Library' || !collectionView)
                 ? 'sidebar-link sidebar-link--active'
                 : 'sidebar-link'
             }

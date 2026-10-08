@@ -100,6 +100,9 @@ export const useQueueStore = create<QueueState>((set, get) => ({
           .map((_, index) => index)
           .filter((index) => index !== state.currentIndex)
       }
+      if (!candidates.length && repeatMode === 'all' && state.items.length === 1) {
+        candidates = [state.currentIndex]
+      }
       if (!candidates.length) return null
       nextIndex = candidates[Math.floor(Math.random() * candidates.length)]
     } else {

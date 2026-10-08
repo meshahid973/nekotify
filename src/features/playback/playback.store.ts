@@ -113,7 +113,8 @@ export const usePlaybackStore = create<PlaybackState>((set, get) => ({
   loadTrack: (track) => {
     const previousTrack = get().track
     if (previousTrack && previousTrack.id !== track.id) {
-      rememberPosition(previousTrack.source.path, get().currentTime)
+      const finished = get().duration > 0 && get().currentTime >= get().duration - 1
+      rememberPosition(previousTrack.source.path, finished ? 0 : get().currentTime)
     }
     set({ track, status: 'loading', duration: track.duration, currentTime: 0, bufferedEnd: 0, error: null })
     loggedTrackId = null

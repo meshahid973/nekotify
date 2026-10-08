@@ -28,3 +28,5 @@
 .queue-panel__row[data-dragging='true'] { opacity:.5; }
 .queue-panel__row[draggable='true'] { cursor:grab; }
 .queue-panel__row[draggable='true']:active { cursor:grabbing; }
+
+.now-playing-panel__seek { width:min(100%,440px); }

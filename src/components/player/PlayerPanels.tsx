@@ -4,6 +4,7 @@ import type { RefObject } from 'react'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { IconButton } from '@/components/primitives/IconButton'
+import { Slider } from '@/components/primitives/Slider'
 import { TransportControls } from '@/components/player/TransportControls'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 import { usePlayerPanelsStore } from '@/features/playback/player-panels.store'
@@ -59,6 +60,7 @@ function NowPlayingPanel({
   const track = usePlaybackStore((state) => state.track)
   const currentTime = usePlaybackStore((state) => state.currentTime)
   const duration = usePlaybackStore((state) => state.duration)
+  const seek = usePlaybackStore((state) => state.seek)
   if (!track) return null
 
   return (
@@ -72,6 +74,10 @@ function NowPlayingPanel({
         <h2>{track.title}</h2>
         <p>{track.artist}{track.album ? ' · ' + track.album : ''}</p>
         <TransportControls />
+        <Slider className="now-playing-panel__seek" label="Seek" min={0}
+          max={Math.max(duration, 1)} step={0.1}
+          value={Math.min(currentTime, Math.max(duration, 1))}
+          disabled={duration <= 0} onValueChange={seek}/>
         <span className="now-playing-panel__position">{formatPlaybackTime(currentTime)} / {formatPlaybackTime(duration)}</span>
       </div>
     </section>
