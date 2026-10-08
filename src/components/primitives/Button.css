@@ -21,3 +21,27 @@
 .button--ghost:hover:not(:disabled) { color:#fff; background:rgba(255,255,255,.08); }
 .button:active:not(:disabled) { transform:scale(.965); }
 .button:disabled { opacity:.38; cursor:not-allowed; }
+
+/* Hover/press affordances use paint and transforms, not a JS animation loop. */
+.button { position:relative; isolation:isolate; overflow:hidden; }
+.button::after {
+  content:""; position:absolute; inset:0; border-radius:inherit;
+  background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.27),transparent 72%);
+  pointer-events:none; opacity:0;
+  transition:opacity var(--motion-fast) var(--ease-out);
+}
+.button:hover:not(:disabled)::after { opacity:.26; }
+.button:active:not(:disabled)::after { opacity:.7; }
+.button > svg { flex:0 0 auto; transition:transform var(--motion-fast) var(--ease-out); }
+.button:hover:not(:disabled) > svg { transform:translateX(1px) scale(1.06); }
+.button:active:not(:disabled) > svg { transform:scale(.88); }
+
+@media(prefers-reduced-motion:reduce) {
+  .button::after,.button > svg,.icon-button > svg,
+  .sidebar__brand-mark > svg,.sidebar-action > svg { transition:none; animation:none; }
+}
+:root[data-motion='reduced'] .button::after,
+:root[data-motion='reduced'] .button > svg,
+:root[data-motion='reduced'] .icon-button > svg,
+:root[data-motion='reduced'] .sidebar__brand-mark > svg,
+:root[data-motion='reduced'] .sidebar-action > svg { transition:none; animation:none; }

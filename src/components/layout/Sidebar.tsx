@@ -63,7 +63,8 @@ export function Sidebar() {
                   ? 'sidebar-link sidebar-link--active' : 'sidebar-link'
               }
             >
-              <AnimatedIcon icon={Icon} size={19} variant="lift" />
+              <AnimatedIcon icon={Icon} size={19}
+                variant={to === '/search' ? 'sway' : 'lift'} />
               <span>{label}</span>
               {to === '/library' && tracks.length > 0 ? <small>{tracks.length}</small> : null}
             </NavLink>
@@ -77,13 +78,13 @@ export function Sidebar() {
           <NavLink to="/library?view=favorites" title="Favorites"
             data-indicator-active={activeKey === 'favorites'}
             className={view === 'favorites' ? 'sidebar-link sidebar-link--active' : 'sidebar-link'}>
-            <Heart size={18} aria-hidden="true" /><span>Liked songs</span>
+            <AnimatedIcon icon={Heart} size={18} variant="pulse" /><span>Liked songs</span>
             {favorites.length > 0 ? <small>{favorites.length}</small> : null}
           </NavLink>
           <NavLink to="/library?view=playlists" title="Playlists"
             data-indicator-active={activeKey === 'playlists'}
             className={view === 'playlists' ? 'sidebar-link sidebar-link--active' : 'sidebar-link'}>
-            <ListMusic size={18} aria-hidden="true" /><span>Playlists</span>
+            <AnimatedIcon icon={ListMusic} size={18} variant="sway" /><span>Playlists</span>
             {playlists.length > 0 ? <small>{playlists.length}</small> : null}
           </NavLink>
         </nav>
@@ -120,7 +121,7 @@ export function Sidebar() {
           className={({ isActive }) => isActive
             ? 'sidebar-link sidebar-link--active'
             : 'sidebar-link'}>
-          <Settings size={19} aria-hidden="true"/><span>Settings</span>
+          <AnimatedIcon icon={Settings} size={19} variant="tilt" /><span>Settings</span>
         </NavLink>
         <span className="sidebar__footer-version">NEKOTIFY • LOCAL PLAYER</span>
       </div>

@@ -25,3 +25,7 @@
 }
 @media(prefers-reduced-motion:reduce) { .transport-controls__active svg { animation:none; } }
 :root[data-motion='reduced'] .transport-controls__active svg { animation:none; }
+
+.transport-controls .transport-controls__play > svg { transition:transform var(--motion-fast) var(--ease-out); }
+.transport-controls .transport-controls__play:hover:not(:disabled) > svg { transform:scale(1.12); }
+.transport-controls .transport-controls__play:active:not(:disabled) > svg { transform:scale(.84); }

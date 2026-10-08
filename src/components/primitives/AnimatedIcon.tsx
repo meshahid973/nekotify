@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import './AnimatedIcon.css'
 
-type IconMotion = 'lift' | 'left' | 'right' | 'tilt'
+type IconMotion = 'lift' | 'left' | 'right' | 'tilt' | 'pulse' | 'sway'
 
 interface AnimatedIconProps {
   icon: LucideIcon
