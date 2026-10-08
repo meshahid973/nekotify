@@ -1,20 +1,27 @@
-.transport-controls { display: flex; align-items: center; justify-content: center; gap: 5px; }
-.transport-controls .icon-button { transition: background-color 160ms ease, color 160ms ease, transform 160ms ease; }
-.transport-controls .icon-button:not(:disabled):active { transform: scale(.91); }
-.transport-controls .icon-button:not(:disabled):hover svg { transform: translateY(-1px); }
-.transport-controls .icon-button svg { transition: transform 160ms ease; }
-.transport-controls__active { color: #c7f574 !important; }
+.transport-controls { display:flex; align-items:center; justify-content:center; gap:clamp(5px,.95vw,14px); }
+.transport-controls .icon-button { width:35px; height:35px; color:#b5b5bc; }
+.transport-controls .icon-button svg { transition:transform var(--motion-fast) var(--ease-out); }
+.transport-controls .icon-button:not(:disabled):hover svg { transform:scale(1.12); }
+.transport-controls .icon-button:not(:disabled):active { transform:scale(.89); }
 .transport-controls .transport-controls__play {
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 50%;
-  color: #080808;
-  background: #fff;
+  width:44px; height:44px; border:0; border-radius:50%;
+  color:#0d1309; background:var(--color-accent);
+  box-shadow:0 6px 20px rgba(0,0,0,.23);
 }
-.transport-controls__play:not(:disabled):hover { background: #ededed; }
-:root[data-motion='reduced'] .transport-controls .icon-button,
-:root[data-motion='reduced'] .transport-controls .icon-button svg { transition: none; }
-
-@keyframes transport-toggle { 0% { transform:scale(.85) rotate(-8deg); } 65% { transform:scale(1.12) rotate(3deg); } 100% { transform:scale(1) rotate(0); } }
-.transport-controls__active svg { animation:transport-toggle 240ms var(--ease-out) both; }
+.transport-controls .transport-controls__play:hover:not(:disabled) {
+  color:#0d1309; background:#cef6ad; transform:scale(1.065);
+}
+.transport-controls__active, .transport-controls .transport-controls__active { color:var(--color-accent); }
+@keyframes transport-toggle {
+  0% { transform:scale(.84) rotate(-7deg); }
+  65% { transform:scale(1.13) rotate(4deg); }
+  100% { transform:scale(1) rotate(0); }
+}
+.transport-controls__active svg { animation:transport-toggle var(--motion-panel) var(--ease-out) both; }
+@media(max-width:700px) {
+  .transport-controls { gap:1px; }
+  .transport-controls .icon-button { width:28px; height:30px; }
+  .transport-controls .transport-controls__play { width:36px; height:36px; }
+}
 @media(prefers-reduced-motion:reduce) { .transport-controls__active svg { animation:none; } }
 :root[data-motion='reduced'] .transport-controls__active svg { animation:none; }
