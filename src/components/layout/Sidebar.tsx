@@ -6,6 +6,7 @@ import type { ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 
 import { AnimatedIcon } from '@/components/primitives/AnimatedIcon'
+import { useActiveIndicator } from '@/components/primitives/useActiveIndicator'
 import { useCollectionsStore } from '@/features/collections/collections.store'
 import { useLibraryStore } from '@/features/library/library.store'
 
@@ -19,6 +20,14 @@ const mainLinks = [
 
 export function Sidebar() {
   const location = useLocation()
+  const activeKey = location.pathname === '/'
+    ? 'home'
+    : location.pathname === '/search'
+      ? 'search'
+      : location.pathname === '/library'
+        ? new URLSearchParams(location.search).get('view') ?? 'library'
+        : 'settings'
+  const { containerRef, indicatorRef } = useActiveIndicator<HTMLDivElement>(activeKey)
   const view = location.pathname === '/library'
     ? new URLSearchParams(location.search).get('view')
     : null
@@ -40,11 +49,15 @@ export function Sidebar() {
         <span className="sidebar__brand-copy"><strong>nekotify</strong><small>YOUR MUSIC, YOUR WAY</small></span>
       </NavLink>
 
-      <div className="sidebar__scroll">
+      <div className="sidebar__scroll" ref={containerRef}>
+        <span className="sidebar__selection" ref={indicatorRef} aria-hidden="true"/>
         <nav className="sidebar__nav" aria-label="Main pages">
           {mainLinks.map(({ to, label, icon: Icon, end }) => (
             <NavLink key={to} to={to} end={end}
               title={label}
+              data-indicator-active={
+                activeKey === (to === '/' ? 'home' : to === '/search' ? 'search' : 'library')
+              }
               className={({ isActive }) =>
                 isActive && (to !== '/library' || !view)
                   ? 'sidebar-link sidebar-link--active' : 'sidebar-link'
@@ -62,11 +75,13 @@ export function Sidebar() {
         <div className="sidebar__section-title"><span>COLLECTION</span><Disc3 size={14} aria-hidden="true"/></div>
         <nav className="sidebar__nav" aria-label="Your collection">
           <NavLink to="/library?view=favorites" title="Favorites"
+            data-indicator-active={activeKey === 'favorites'}
             className={view === 'favorites' ? 'sidebar-link sidebar-link--active' : 'sidebar-link'}>
             <Heart size={18} aria-hidden="true" /><span>Liked songs</span>
             {favorites.length > 0 ? <small>{favorites.length}</small> : null}
           </NavLink>
           <NavLink to="/library?view=playlists" title="Playlists"
+            data-indicator-active={activeKey === 'playlists'}
             className={view === 'playlists' ? 'sidebar-link sidebar-link--active' : 'sidebar-link'}>
             <ListMusic size={18} aria-hidden="true" /><span>Playlists</span>
             {playlists.length > 0 ? <small>{playlists.length}</small> : null}

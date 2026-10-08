@@ -91,3 +91,28 @@
   .sidebar__scroll, .sidebar__footer { padding-inline:6px; }
   .sidebar-link, .sidebar-action { min-height:42px; }
 }
+
+/* A single compositor-animated selection follows the active route. */
+.sidebar__scroll { position:relative; }
+.sidebar__selection {
+  position:absolute; top:0; left:0; z-index:0;
+  border-radius:11px; background:rgba(255,255,255,.09);
+  opacity:0; pointer-events:none;
+  transition:transform var(--motion-panel) var(--ease-out),
+    width var(--motion-panel) var(--ease-out),
+    height var(--motion-panel) var(--ease-out),opacity var(--motion-fast);
+}
+.sidebar__selection::before {
+  content:""; position:absolute; top:26%; left:0;
+  width:3px; height:48%; border-radius:0 4px 4px 0;
+  background:var(--color-accent);
+}
+.sidebar__scroll .sidebar-link { position:relative; z-index:1; }
+.sidebar__scroll .sidebar-link--active { background:transparent; }
+.sidebar__scroll .sidebar-link--active:hover { background:rgba(255,255,255,.035); }
+.sidebar__scroll .sidebar-link--active::before { display:none; }
+.sidebar-action:hover:not(:disabled) > svg { transform:rotate(-6deg) scale(1.08); }
+.sidebar-action > svg { transition:transform var(--motion-fast) var(--ease-out); }
+@media(prefers-reduced-motion:reduce) { .sidebar__selection,.sidebar-action > svg { transition:none; } }
+:root[data-motion='reduced'] .sidebar__selection,
+:root[data-motion='reduced'] .sidebar-action > svg { transition:none; }

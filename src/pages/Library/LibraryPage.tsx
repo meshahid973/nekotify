@@ -11,11 +11,13 @@ import {
   X,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { PageHeader } from '@/components/layout/PageHeader'
+import { useActiveIndicator } from '@/components/primitives/useActiveIndicator'
 import { Button } from '@/components/primitives/Button'
 import { playLibraryTrack } from '@/features/library/playLibraryTrack'
 import { PlaylistView } from '@/features/collections/PlaylistView'
@@ -45,6 +47,21 @@ export function LibraryPage() {
     view === 'playlists' ? view : 'songs'
   const setActiveTab = (tab: LibraryTab) => setParams(tab === 'songs' ? {} : { view: tab })
   const [query, setQuery] = useState('')
+  const { containerRef: tabsRef, indicatorRef: tabIndicatorRef } =
+    useActiveIndicator<HTMLDivElement>(activeTab)
+
+  const onTabKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
+    const tabs = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
+    const index = tabs.indexOf(document.activeElement as HTMLButtonElement)
+    if (index < 0) return
+    event.preventDefault()
+    const nextIndex = event.key === 'Home' ? 0
+      : event.key === 'End' ? tabs.length - 1
+        : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length
+    tabs[nextIndex]?.focus()
+    tabs[nextIndex]?.click()
+  }
   const tracks = useLibraryStore((state) => state.tracks)
   const favorites = useCollectionsStore((state) => state.favorites)
   const folders = useLibraryStore((state) => state.folders)
@@ -152,7 +169,9 @@ export function LibraryPage() {
         </button>
       </div>
 
-      <div className="library-tabs" role="tablist" aria-label="Library views">
+      <div className="library-tabs" role="tablist" aria-label="Library views"
+        ref={tabsRef} onKeyDown={onTabKeyDown}>
+        <span className="library-tabs__selection" ref={tabIndicatorRef} aria-hidden="true"/>
         <LibraryTabButton
           active={activeTab === 'songs'}
           icon={<Music size={14} />}
@@ -248,6 +267,8 @@ function LibraryTabButton({
       type="button"
       role="tab"
       aria-selected={active}
+      data-indicator-active={active}
+      tabIndex={active ? 0 : -1}
       className={active ? 'library-tab library-tab--active' : 'library-tab'}
       onClick={onClick}
     >
