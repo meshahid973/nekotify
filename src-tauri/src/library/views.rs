@@ -7,7 +7,7 @@ use std::path::Path;
 use tauri::{AppHandle, Manager};
 
 fn view_tracks(app:&AppHandle,mode:&str,playlist_id:Option<i64>,
-    label:Option<&str>,artist:Option<&str>,
+    label:Option<&str>,artist:Option<&str>,query:Option<&str>,
     offset:u32,limit:u32)->Result<TrackPage,String>{
     let conn=database::open(app)?;
     let offset=offset.min(1_000_000);
@@ -36,6 +36,18 @@ fn view_tracks(app:&AppHandle,mode:&str,playlist_id:Option<i64>,
              Value::Text(artist.ok_or("Missing album artist")?.to_string())]),
       _=>return Err("Unsupported library view".into()),
     };
+    let mut filter=filter.to_string();
+    let mut args=args;
+    if let Some(q)=query.filter(|q|!q.trim().is_empty()){
+      if q.chars().count()>160{return Err("Filter is too long".into())}
+      filter.push_str(if filter.is_empty(){" WHERE "}else{" AND "});
+      filter.push_str("(t.title LIKE ? ESCAPE '\\'
+        OR t.artist LIKE ? ESCAPE '\\'
+        OR COALESCE(t.album,'') LIKE ? ESCAPE '\\')");
+      let needle=format!("%{}%",q.trim().replace('\\',"\\\\")
+        .replace('%',"\\%").replace('_',"\\_"));
+      for _ in 0..3 {args.push(Value::Text(needle.clone()));}
+    }
     let count_sql=format!("SELECT COUNT(*) {from} {filter}");
     let total:i64=conn.query_row(&count_sql,params_from_iter(args.iter()),|r|r.get(0))
         .map_err(|e|format!("Cannot count library view: {e}"))?;
@@ -60,10 +72,10 @@ fn view_tracks(app:&AppHandle,mode:&str,playlist_id:Option<i64>,
 
 #[tauri::command]
 pub async fn query_library_view(app:AppHandle,mode:String,playlist_id:Option<i64>,
-    label:Option<String>,artist:Option<String>,offset:u32,limit:u32)
+    label:Option<String>,artist:Option<String>,query:Option<String>,offset:u32,limit:u32)
     ->Result<TrackPage,String>{
     tauri::async_runtime::spawn_blocking(move||view_tracks(&app,&mode,playlist_id,
-      label.as_deref(),artist.as_deref(),offset,limit))
+      label.as_deref(),artist.as_deref(),query.as_deref(),offset,limit))
       .await.map_err(|e|format!("Library view worker failed: {e}"))?
 }
 
