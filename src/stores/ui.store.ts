@@ -46,7 +46,7 @@ export const useUiStore = create<UiState>()(
     }),
     {
       name: 'nekotify-ui',
-      version: 4,
+      version: 3,
       partialize: ({ density, motionPreference, theme, quickWheelEnabled,
         sidebarCollapsed, sidebarPercent, queuePercent, queueDocked }) => ({
         density,
