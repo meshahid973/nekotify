@@ -45,19 +45,30 @@ export function useNativeTracks(request:TracksRequest){
   useEffect(()=>{
     if(!enabled)return
     const gen=++generation.current
-    setLoading(true);setItems([]);setTotal(0);setFailed(false)
+    let canceled=false
+    queueMicrotask(()=>{
+      if(canceled||gen!==generation.current)return
+      setLoading(true);setItems([]);setTotal(0);setFailed(false)
+    })
     const req={mode,query,playlistId,label,artist}
     void getTracks(req,0).then(page=>{
       if(gen!==generation.current)return
       const lookup=new Map(useLibraryStore.getState().tracks.map(t=>[t.source.path,t]))
       setItems(page.items.map(item=>resolveNativeTrack(item,lookup)))
       setTotal(page.total)
+      if(mode==='songs'&&query.trim()&&page.total===0){
+        const needle=query.toLowerCase().trim()
+        if(useLibraryStore.getState().tracks.some(t=>
+          [t.title,t.artist,t.album].some(v=>v?.toLowerCase().includes(needle)))){
+          setFailed(true)
+        }
+      }
     }).catch(()=>{
       if(gen===generation.current)setFailed(true)
     }).finally(()=>{
       if(gen===generation.current)setLoading(false)
     })
-    return()=>{generation.current++}
+    return()=>{canceled=true}
   },[enabled,mode,query,playlistId,label,artist,refreshKey])
   const loadMore=async()=>{
     if(!enabled||failed||loading||moreLoading||items.length>=total)return
@@ -86,7 +97,11 @@ export function useNativeGroups(mode:GroupMode,query:string,refreshKey=0){
   useEffect(()=>{
     if(!enabled)return
     const gen=++generation.current
-    setItems([]);setTotal(0);setFailed(false);setLoading(true)
+    let canceled=false
+    queueMicrotask(()=>{
+      if(canceled||gen!==generation.current)return
+      setItems([]);setTotal(0);setFailed(false);setLoading(true)
+    })
     void groupFile(mode,query,0).then(page=>{
       if(gen!==generation.current)return
       setItems(page.items);setTotal(page.total)
