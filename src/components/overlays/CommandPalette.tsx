@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from 'motion/react'
+import { isTauri } from '@tauri-apps/api/core'
 import { Dialog } from '@base-ui/react/dialog'
 import { Heart, Library, ListMusic, Moon, Music2, Search, Settings } from 'lucide-react'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
@@ -6,6 +7,8 @@ import type { KeyboardEvent as ReactKeyEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { playLibraryTrack } from '@/features/library/playLibraryTrack'
 import { useLibraryStore } from '@/features/library/library.store'
+import { nativeTrackSearch, resolveNativeTrack } from '@/features/library/nativeQueries'
+import type { Track } from '@/types/media'
 import { usePlaybackStore } from '@/features/playback/playback.store'
 import { useQueueStore } from '@/features/queue/queue.store'
 import { useCollectionsStore } from '@/features/collections/collections.store'
@@ -24,6 +27,9 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const reduced = Boolean(systemReduced) || preference === 'reduced'
   const [query, setQuery] = useState('')
   const deferredQuery = useDeferredValue(query)
+  const [indexedMatches,setIndexedMatches] = useState<Track[]>([])
+  const [indexedFailed,setIndexedFailed] = useState(false)
+  const paths = useMemo(()=>new Map(tracks.map(t=>[t.source.path,t])),[tracks])
   const [selected, setSelected] = useState(0)
   const input = useRef<HTMLInputElement>(null)
   useEffect(() => { if(open) input.current?.focus() },[open])
@@ -46,13 +52,28 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     return [...navigation,...actions]
   }, [current,theme,navigate])
 
+  useEffect(()=>{
+    if(!open || !isTauri() || !deferredQuery.trim()) return
+    let current = true
+    const timer = window.setTimeout(()=>{
+      void nativeTrackSearch(deferredQuery.trim(),0,40).then(page=>{
+        if(!current)return
+        setIndexedMatches(page.items.map(t=>resolveNativeTrack(t,paths)))
+        setIndexedFailed(false)
+      }).catch(()=>{if(current)setIndexedFailed(true)})
+    },130)
+    return()=>{current=false;window.clearTimeout(timer)}
+  },[open,deferredQuery,paths])
+
   const filtered = useMemo(() => {
     const words = deferredQuery.toLocaleLowerCase().trim().split(/\s+/).filter(Boolean)
     const matches = (value:string) => words.every((word)=>value.toLocaleLowerCase().includes(word))
     const result = commands.filter(c=>matches(c.label+' '+c.keywords))
-    // Search every imported song, but stop after 50 matches; never truncate the
-    // searchable library to an arbitrary first-N subset.
-    for (const track of tracks) {
+    // Both search surfaces share the Rust index in the desktop application.
+    // Browser previews keep the existing in-memory fallback.
+    const candidates = isTauri() && words.length && !indexedFailed
+      ? indexedMatches : tracks
+    for (const track of candidates) {
       if (result.length>=50) break
       if (words.length && !matches([track.title,track.artist,track.album].filter(Boolean).join(' '))) continue
       result.push({
@@ -63,7 +84,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       if(!words.length && result.length>=12)break
     }
     return result.slice(0,50)
-  },[commands,tracks,deferredQuery])
+  },[commands,tracks,indexedMatches,indexedFailed,deferredQuery])
   const safeIndex = Math.min(selected,Math.max(0,filtered.length-1))
   const choose = (index:number) => {
     const item = filtered[index]
