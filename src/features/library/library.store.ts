@@ -164,14 +164,25 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       return
     }
 
-    set({ status: 'loading', error: null })
-
+    // Cached metadata is shown before the expensive disk traversal.
+    // Keep the previous visible library if a scan fails.
+    if (get().status === 'idle') set({ status: 'loading', error: null })
+    try {
+      const cached = snapshotState(await invoke<NativeLibrarySnapshot>('cached_library'))
+      if (get().tracks.length === 0) {
+        set(cached)
+        synchronizePlayingTrack(cached.tracks)
+      }
+    } catch {
+      // Older indices may be absent; a full scan can still recover the library.
+    }
     try {
       const snapshot = snapshotState(await invokeSnapshot('load_library'))
       set(snapshot)
       synchronizePlayingTrack(snapshot.tracks)
     } catch (error) {
-      set({ status: 'error', error: errorMessage(error) })
+      set({ status: get().tracks.length ? 'ready' : 'error',
+        error: errorMessage(error) })
     }
   },
 

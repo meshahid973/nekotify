@@ -63,6 +63,61 @@ struct StoredLibrary {
     art_files: Vec<String>,
 }
 
+/// Return the durable index immediately; a full reconciliation is a separate operation.
+/// This never traverses music folders or parses tags on the startup path.
+#[tauri::command]
+pub async fn cached_library(app: AppHandle) -> Result<LibrarySnapshot, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let stored = read_stored_library(&app)?;
+        let cache_dir = artwork_cache_dir(&app)?;
+        fs::create_dir_all(&cache_dir)
+            .map_err(|error| format!("Could not create artwork cache: {error}"))?;
+        app.asset_protocol_scope().allow_directory(&cache_dir, true)
+            .map_err(|error| format!("Could not expose artwork cache: {error}"))?;
+        let conn = database::open(&app)?;
+        let mut tracks = Vec::new();
+        let mut query = conn.prepare(
+            "SELECT t.path,t.title,t.artist,t.album,t.duration,
+             COALESCE(a.artwork_path,t.artwork_path)
+             FROM library_tracks t LEFT JOIN artwork_assignments a ON a.track_path=t.path
+             ORDER BY t.artist COLLATE NOCASE,t.album COLLATE NOCASE,t.title COLLATE NOCASE,t.path"
+        ).map_err(|error| error.to_string())?;
+        let rows = query.query_map([], |row| {
+            let path: String = row.get(0)?;
+            Ok(LibraryTrack {
+                id: format!("{:016x}", fnv1a(path.as_bytes())),
+                path,
+                title: row.get(1)?,
+                artist: row.get(2)?,
+                album: row.get(3)?,
+                duration: row.get(4)?,
+                artwork_path: row.get(5)?,
+            })
+        }).map_err(|error| error.to_string())?;
+        for item in rows {
+            let mut track = item.map_err(|error| error.to_string())?;
+            // Permissions are granted for known files only, never an entire disk.
+            let path = Path::new(&track.path);
+            if path.is_file() {
+                let _ = app.asset_protocol_scope().allow_file(path);
+            }
+            track.artwork_path = track.artwork_path.filter(|art| {
+                Path::new(art).is_file()
+                    && app.asset_protocol_scope().allow_file(art).is_ok()
+            });
+            tracks.push(track);
+        }
+        Ok(LibrarySnapshot {
+            folders: stored.folders.iter().map(|f| LibraryFolder {
+                path: f.clone(), name: folder_name(Path::new(f)),
+            }).collect(),
+            art_sources: Vec::new(),
+            artwork_pool: Vec::new(),
+            tracks,
+        })
+    }).await.map_err(|error| format!("Cached library task failed: {error}"))?
+}
+
 #[tauri::command]
 pub async fn load_library(app: AppHandle) -> Result<LibrarySnapshot, String> {
     tauri::async_runtime::spawn_blocking(move || build_snapshot(&app))
@@ -254,6 +309,9 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
     let mut tracks = Vec::new();
     let mut seen_track_ids = HashSet::new();
     let mut seen_paths = HashSet::new();
+    // Incomplete scans must NEVER delete cached music: removable drives,
+    // access-denied folders, transient I/O failures, and interrupted enumeration.
+    let mut scan_complete = true;
     let transaction = connection
         .transaction()
         .map_err(|error| error.to_string())?;
@@ -262,6 +320,7 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
         let path = PathBuf::from(folder);
 
         if !path.is_dir() {
+            scan_complete = false;
             continue;
         }
 
@@ -270,7 +329,7 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
             path: folder.clone(),
         });
 
-        scan_music_directory(
+        scan_complete &= scan_music_directory(
             app,
             &cache_dir,
             &path,
@@ -281,7 +340,38 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
         );
     }
 
-    database::prune(&transaction, &seen_paths)?;
+    if scan_complete {
+        database::prune(&transaction, &seen_paths)?;
+    } else {
+        // Keep cached tracks from unavailable roots in the visible snapshot.
+        // No destructive pruning is allowed from a partial scan.
+        let mut query = transaction.prepare(
+            "SELECT path,title,artist,album,duration,
+             COALESCE((SELECT artwork_path FROM artwork_assignments WHERE track_path=t.path),
+             artwork_path) FROM library_tracks t"
+        ).map_err(|error| error.to_string())?;
+        let cached = query.query_map([], |row| {
+            let path: String = row.get(0)?;
+            Ok(LibraryTrack {
+                id: format!("{:016x}", fnv1a(path.as_bytes())),
+                path, title: row.get(1)?, artist: row.get(2)?,
+                album: row.get(3)?, duration: row.get(4)?,
+                artwork_path: row.get(5)?,
+            })
+        }).map_err(|error| error.to_string())?;
+        for item in cached {
+            let mut track = item.map_err(|error| error.to_string())?;
+            if !seen_track_ids.insert(track.id.clone()) { continue; }
+            if Path::new(&track.path).is_file() {
+                let _ = app.asset_protocol_scope().allow_file(&track.path);
+            }
+            track.artwork_path = track.artwork_path.filter(|art| {
+                Path::new(art).is_file() &&
+                    app.asset_protocol_scope().allow_file(art).is_ok()
+            });
+            tracks.push(track);
+        }
+    }
     transaction.commit().map_err(|error| error.to_string())?;
 
     let (art_sources, artwork_pool) = build_artwork_pool(app, &stored);
@@ -359,16 +449,23 @@ fn scan_music_directory(
     tracks: &mut Vec<LibraryTrack>,
     seen_track_ids: &mut HashSet<String>,
     seen_paths: &mut HashSet<String>,
-) {
+) -> bool {
+    let mut complete = true;
     let mut pending = vec![root.to_path_buf()];
 
     while let Some(directory) = pending.pop() {
         let Ok(entries) = fs::read_dir(&directory) else {
+            complete = false;
             continue;
         };
 
-        for entry in entries.flatten() {
+        for result in entries {
+            let Ok(entry) = result else {
+                complete = false;
+                continue;
+            };
             let Ok(file_type) = entry.file_type() else {
+                complete = false;
                 continue;
             };
             if file_type.is_symlink() {
@@ -384,6 +481,7 @@ fn scan_music_directory(
                 continue;
             }
             if app.asset_protocol_scope().allow_file(&path).is_err() {
+                complete = false;
                 continue;
             }
 
@@ -397,6 +495,7 @@ fn scan_music_directory(
                 Some((modified.as_millis() as i64, meta.len() as i64))
             });
 
+            if file_info.is_none() { complete = false; }
             let cached = file_info.and_then(|(modified, size)| {
                 database::lookup(connection, &path_string, modified, size)
             });
@@ -418,7 +517,7 @@ fn scan_music_directory(
             } else {
                 let fresh = read_track(app, cache_dir, &path);
                 if let Some((modified, size)) = file_info {
-                    let _ = database::save(
+                    if database::save(
                         connection,
                         &path_string,
                         modified,
@@ -430,7 +529,9 @@ fn scan_music_directory(
                             duration: fresh.duration,
                             artwork_path: fresh.artwork_path.clone(),
                         },
-                    );
+                    ).is_err() {
+                        complete = false;
+                    }
                 }
                 fresh
             };
@@ -450,6 +551,7 @@ fn scan_music_directory(
             }
         }
     }
+    complete
 }
 
 fn scan_art_directory(
