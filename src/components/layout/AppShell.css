@@ -1,7 +1,7 @@
 .app-shell {
   position: relative;
   display: grid;
-  grid-template-columns: var(--sidebar-width) minmax(0,1fr);
+  grid-template-columns: minmax(0,1fr);
   grid-template-rows: minmax(0,1fr) var(--player-height);
   width: 100%; height: 100vh; height: 100dvh;
   min-width: 0; min-height:0; overflow:hidden;
@@ -9,7 +9,7 @@
 }
 .app-shell__content {
   position:relative; z-index:1;
-  grid-column:2; grid-row:1;
+  width:100%; height:100%;
   min-width:0; min-height:0;
   overflow:auto; overscroll-behavior:contain;
   background:transparent;
@@ -18,3 +18,19 @@
   content:""; position:sticky; top:0; z-index:-1; display:block;
   height:0; pointer-events:none;
 }
+
+.app-shell__workspace { grid-column:1;grid-row:1;min-width:0;min-height:0;position:relative;z-index:1; }
+.app-shell__workspace [data-panel] { min-width:0; min-height:0; }
+.workspace__separator {
+  width:6px; min-width:6px; outline:0; position:relative;
+  background:rgba(255,255,255,.035); cursor:col-resize;
+}
+.workspace__separator::after {
+  content:''; position:absolute; inset:0 2px; background:transparent;
+  transition:background-color var(--motion-fast);
+}
+.workspace__separator:hover::after,
+.workspace__separator:focus-visible::after { background:rgba(255,255,255,.32); }
+.workspace__separator:focus-visible {outline:2px solid #fff;outline-offset:-2px}
+.app-shell[data-theme='ambience'] .workspace__separator { background:rgba(0,0,0,.24); }
+@media(max-width:1000px) { .workspace__separator {width:4px;min-width:4px;} }

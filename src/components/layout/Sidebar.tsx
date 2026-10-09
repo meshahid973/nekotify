@@ -1,5 +1,5 @@
 import {
-  ChevronDown, Disc3, Folder, FolderPlus, Heart, Home, ImagePlus,
+  ChevronDown, ChevronLeft, ChevronRight, Disc3, Folder, FolderPlus, Heart, Home, ImagePlus,
   Images, Library, ListMusic, Music2, RefreshCw, Search, Settings,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -20,7 +20,9 @@ const mainLinks = [
   { to: '/library', label: 'Your library', icon: Library, end: false },
 ]
 
-export function Sidebar() {
+export function Sidebar({collapsed=false,onToggleCollapse,showCollapseButton=true}:{
+  collapsed?:boolean;onToggleCollapse?:()=>void;showCollapseButton?:boolean
+}) {
   const location = useLocation()
   const [expanded,setExpanded] = useState<Record<string,boolean>>({})
   const systemReduced = useReducedMotion()
@@ -47,11 +49,19 @@ export function Sidebar() {
   const playlists = useCollectionsStore((state) => state.playlists)
 
   return (
-    <aside className="sidebar" aria-label="Main navigation" ref={containerRef}>
+    <aside className="sidebar" data-collapsed={collapsed} aria-label="Main navigation" ref={containerRef}>
+      <div className="sidebar__brand-row">
       <NavLink to="/" className="sidebar__brand" aria-label="Nekotify Home">
         <span className="sidebar__brand-mark"><Music2 size={21} aria-hidden="true" /></span>
         <span className="sidebar__brand-copy"><strong>nekotify</strong></span>
       </NavLink>
+      {showCollapseButton && <button type="button" className="sidebar__collapse"
+        aria-label={collapsed ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'}
+        title={collapsed ? 'Expand sidebar (Ctrl+B)' : 'Collapse sidebar (Ctrl+B)'}
+        aria-expanded={!collapsed} onClick={onToggleCollapse}>
+        {collapsed ? <ChevronRight size={17}/> : <ChevronLeft size={17}/>}
+      </button>}
+      </div>
 
       <motion.span className="sidebar__selection" ref={indicatorRef}
         style={indicatorStyle} aria-hidden="true"/>

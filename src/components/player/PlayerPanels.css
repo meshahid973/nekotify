@@ -1,6 +1,6 @@
 .player-panels {
   position:absolute; z-index:30;
-  inset:0 0 var(--player-height) var(--sidebar-width);
+  inset:0 0 var(--player-height) 0;
   pointer-events:none;
 }
 .player-panels__scrim {
@@ -115,3 +115,10 @@
 }
 @media(prefers-reduced-motion:reduce) { .queue-panel,.now-playing-panel { animation:none; } }
 :root[data-motion='reduced'] .queue-panel,:root[data-motion='reduced'] .now-playing-panel { animation:none; }
+
+.queue-panel--docked {
+  position:relative; top:auto;right:auto;bottom:auto;left:auto;
+  width:100%; height:100%; border:0; border-radius:0;box-shadow:none;
+  background:rgba(6,6,6,.94);
+}
+.app-shell[data-theme='ambience'] .queue-panel--docked { background:rgba(0,0,0,.48); }

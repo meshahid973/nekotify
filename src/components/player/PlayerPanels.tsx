@@ -17,7 +17,7 @@ import { useQueueStore } from '@/features/queue/queue.store'
 import { notify } from '@/stores/toast.store'
 import './PlayerPanels.css'
 
-export function PlayerPanels() {
+export function PlayerPanels({dockedQueue=false}:{dockedQueue?:boolean}) {
   const panel = usePlayerPanelsStore((state) => state.openPanel)
   const setPanel = usePlayerPanelsStore((state) => state.setPanel)
   const panelRef = useRef<HTMLElement>(null)
@@ -55,14 +55,15 @@ export function PlayerPanels() {
     }
   }, [panel, setPanel])
 
+  const overlayPanel = panel === 'queue' && dockedQueue ? null : panel
   return (
     <AnimatePresence>
-      {panel ? <div className="player-panels" key="panels">
+      {overlayPanel ? <div className="player-panels" key="panels">
         <motion.button className="player-panels__scrim" type="button" tabIndex={-1}
           aria-label="Close player panel" onClick={() => setPanel(null)}
           initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
           transition={{duration:reduced?0:.16}}/>
-        {panel === 'queue'
+        {overlayPanel === 'queue'
           ? <QueuePanel refElement={panelRef} onClose={() => setPanel(null)} />
           : <NowPlayingPanel refElement={panelRef} onClose={() => setPanel(null)} />}
       </div> : null}
@@ -141,7 +142,13 @@ function NowPlayingPanel({ refElement, onClose }: PanelProps) {
   )
 }
 
-function QueuePanel({ refElement, onClose }: PanelProps) {
+export function DockedQueue() {
+  const close=usePlayerPanelsStore((s)=>s.setPanel)
+  const ref=useRef<HTMLElement>(null)
+  return <QueuePanel refElement={ref} docked onClose={()=>close(null)}/>
+}
+
+function QueuePanel({ refElement, onClose, docked=false }: PanelProps & {docked?:boolean}) {
   const items = useQueueStore((state) => state.items)
   const currentIndex = useQueueStore((state) => state.currentIndex)
   const select = useQueueStore((state) => state.select)
@@ -160,10 +167,11 @@ function QueuePanel({ refElement, onClose }: PanelProps) {
 
   return (
     <motion.section
-      initial={{opacity:0,x:reduce?0:35}} animate={{opacity:1,x:0}}
-      exit={{opacity:0,x:reduce?0:35}}
+      initial={{opacity:0,x:reduce||docked?0:35}} animate={{opacity:1,x:0}}
+      exit={{opacity:0,x:reduce||docked?0:35}}
       transition={reduce?{duration:0}:{type:'spring',stiffness:420,damping:40}}
-      className="queue-panel" role="dialog" aria-modal="true"
+      className={docked ? 'queue-panel queue-panel--docked' : 'queue-panel'}
+      role={docked ? 'region' : 'dialog'} aria-modal={docked ? undefined : true}
       aria-label="Playback queue" tabIndex={-1} ref={refElement}>
       <div className="player-panels__heading">
         <div><p className="eyebrow">UP NEXT</p>
