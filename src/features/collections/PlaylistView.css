@@ -21,3 +21,5 @@
   .playlists-view { grid-template-columns:1fr; gap:24px; }
   .playlists-view__sidebar { border-right:0; border-bottom:1px solid var(--color-border); padding:0 0 18px; }
 }
+
+.playlists-view__choice[data-drop='true']{outline:2px dashed #ddd;outline-offset:-2px;background:rgba(255,255,255,.14);color:#fff}

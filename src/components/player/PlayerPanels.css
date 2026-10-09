@@ -122,3 +122,6 @@
   background:rgba(6,6,6,.94);
 }
 .app-shell[data-theme='ambience'] .queue-panel--docked { background:rgba(0,0,0,.48); }
+
+.queue-panel__row[data-drop='true']{border-top:2px solid #fff;background:rgba(255,255,255,.08)}
+.queue-panel__row[data-dragging='true']{opacity:.42}

@@ -12,7 +12,9 @@ function getScrollElement() {
   return document.querySelector<HTMLElement>('.app-shell__content')
 }
 
-export function VirtualTrackList({ tracks }: { tracks: Track[] }) {
+export function VirtualTrackList({tracks,onRemoveFromPlaylist}:{
+  tracks:Track[];onRemoveFromPlaylist?:(track:Track)=>void
+}) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [scrollMargin, setScrollMargin] = useState(0)
   const currentId = usePlaybackStore((state) => state.track?.id)
@@ -65,6 +67,7 @@ export function VirtualTrackList({ tracks }: { tracks: Track[] }) {
           >
             <TrackRow
               track={track}
+              onRemoveFromPlaylist={onRemoveFromPlaylist?()=>onRemoveFromPlaylist(track):undefined}
               active={currentId === track.id}
               playing={currentId === track.id &&
                 (playbackStatus === 'playing' || playbackStatus === 'loading')}

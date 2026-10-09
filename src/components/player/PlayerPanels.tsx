@@ -1,7 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { ArrowDown, ArrowUp, GripVertical, ListMusic, Music2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import type { RefObject } from 'react'
+import type { DragEvent, RefObject } from 'react'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { Button } from '@/components/primitives/Button'
@@ -14,6 +14,8 @@ import { usePlaybackStore } from '@/features/playback/playback.store'
 import { usePlayerPanelsStore } from '@/features/playback/player-panels.store'
 import { formatPlaybackTime } from '@/features/playback/playback.utils'
 import { useQueueStore } from '@/features/queue/queue.store'
+import { useLibraryStore } from '@/features/library/library.store'
+import { acceptsTrackDrag,readTrackDrag } from '@/features/library/trackDrag'
 import { notify } from '@/stores/toast.store'
 import './PlayerPanels.css'
 
@@ -154,10 +156,40 @@ function QueuePanel({ refElement, onClose, docked=false }: PanelProps & {docked?
   const select = useQueueStore((state) => state.select)
   const move = useQueueStore((state) => state.move)
   const remove = useQueueStore((state) => state.remove)
+  const [dropAt,setDropAt] = useState<number|null>(null)
   const [dragging, setDragging] = useState<number | null>(null)
   const reduce = useReducedMotion()
   const loadTrack = usePlaybackStore((state) => state.loadTrack)
   const play = usePlaybackStore((state) => state.play)
+  const acceptsDrop=(event:DragEvent<HTMLElement>)=>
+    acceptsTrackDrag(event.dataTransfer.types) ||
+      Array.from(event.dataTransfer.types).includes('application/x-nekotify-queue-index')
+  const receiveDrop=(event:DragEvent<HTMLElement>,at:number)=>{
+    if(!acceptsDrop(event))return
+    event.preventDefault();event.stopPropagation()
+    const path=readTrackDrag(event.dataTransfer)
+    if(path){
+      const track=useLibraryStore.getState().tracks.find(t=>t.source.path===path)
+      if(track){
+        useQueueStore.getState().insertAt(at,track)
+        notify('Added to queue','info',{
+          label:'Undo',
+          run:()=>{
+            const queue=useQueueStore.getState()
+            const index=queue.items.indexOf(track)
+            if(index!==-1 && index!==queue.currentIndex)queue.remove(index)
+          },
+        })
+      }
+    }else{
+      const from=Number(event.dataTransfer.getData('application/x-nekotify-queue-index'))
+      if(Number.isInteger(from)&&from>=0&&from<items.length){
+        const target=Math.min(items.length-1,from<at?at-1:at)
+        move(from,target)
+      }
+    }
+    setDragging(null);setDropAt(null)
+  }
   const playAt = (index: number) => {
     const chosen = select(index)
     if (!chosen) return
@@ -178,7 +210,15 @@ function QueuePanel({ refElement, onClose, docked=false }: PanelProps & {docked?
           <h2>Play queue <span>{items.length}</span></h2></div>
         <IconButton label="Close queue" size="sm" onClick={onClose}><X size={20}/></IconButton>
       </div>
-      <div className="queue-panel__list">
+      <div className="queue-panel__list"
+        onDragOver={event=>{
+          if(!acceptsDrop(event))return
+          event.preventDefault();setDropAt(items.length)
+        }}
+        onDrop={event=>receiveDrop(event,items.length)}
+        onDragLeave={event=>{
+          if(!event.currentTarget.contains(event.relatedTarget as Node))setDropAt(null)
+        }}>
         {items.length === 0 ? (
           <div className="queue-panel__empty">
             <ListMusic size={29}/><strong>Your queue is empty</strong>
@@ -189,20 +229,21 @@ function QueuePanel({ refElement, onClose, docked=false }: PanelProps & {docked?
             key={track.id + ':' + index}>
             <div className="queue-panel__row"
               data-active={currentIndex === index} data-dragging={dragging === index}
+              data-drop={dropAt===index?'true':'false'}
               draggable
             onDragStart={(event) => {
               setDragging(index)
               event.dataTransfer.effectAllowed = 'move'
-              event.dataTransfer.setData('text/plain', String(index))
+              event.dataTransfer.setData('application/x-nekotify-queue-index', String(index))
             }}
-            onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = 'move' }}
-            onDrop={(event) => {
-              event.preventDefault()
-              const from = Number(event.dataTransfer.getData('text/plain'))
-              if (Number.isInteger(from) && from >= 0 && from < items.length) move(from,index)
-              setDragging(null)
+            onDragOver={(event)=>{
+              if(!acceptsDrop(event))return
+              event.preventDefault();event.stopPropagation()
+              const rect=event.currentTarget.getBoundingClientRect()
+              setDropAt(index+(event.clientY>rect.top+rect.height/2?1:0))
             }}
-            onDragEnd={() => setDragging(null)}>
+            onDrop={(event)=>receiveDrop(event,dropAt??index)}
+            onDragEnd={()=>{setDragging(null);setDropAt(null)}}>
             <GripVertical className="queue-panel__grab" size={16} aria-hidden="true"/>
             <button className="queue-panel__track" type="button"
               aria-label={'Play ' + track.title} onClick={() => playAt(index)}>
@@ -217,7 +258,12 @@ function QueuePanel({ refElement, onClose, docked=false }: PanelProps & {docked?
                 onClick={() => move(index,index+1)}><ArrowDown size={14}/></IconButton>
               <IconButton label={'Remove ' + track.title} size="sm"
                 disabled={index===currentIndex}
-                onClick={() => {remove(index);notify('Removed from queue','info')}}><X size={14}/></IconButton>
+                onClick={()=>{
+                  remove(index)
+                  notify('Removed from queue','info',{
+                    label:'Undo',run:()=>useQueueStore.getState().insertAt(index,track),
+                  })
+                }}><X size={14}/></IconButton>
             </div>
             </div>
           </motion.div>
