@@ -121,3 +121,9 @@
 }
 :root[data-motion='reduced'] .library-tabs__selection,
 :root[data-motion='reduced'] .library-tab-panel{transition:none;}
+
+.library-page__results{min-width:0}
+.library-page__load-more{display:block;margin:18px auto;padding:11px 19px;border:1px solid rgba(255,255,255,.19);border-radius:10px;color:#f4f4f4;background:rgba(255,255,255,.07);cursor:pointer;font:inherit;font-size:.8rem}
+.library-page__load-more:hover:not(:disabled){background:rgba(255,255,255,.15)}
+.library-page__load-more:disabled{opacity:.5;cursor:wait}
+.library-page__result-state{padding:25px 10px;color:#9c9ca5;font-size:.85rem}
