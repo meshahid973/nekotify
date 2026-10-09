@@ -43,7 +43,8 @@ export function SearchPage() {
         if(!active)return
         setNativeResults(page.items.map(t=>resolveNativeTrack(t,trackIndex)))
         setNativeTotal(page.total)
-        setNativeError(false)
+        // Preserve legacy substring matches when token-based FTS has no hits.
+        setNativeError(page.total === 0)
       }).catch(()=>{
         if(active)setNativeError(true)
       }).finally(()=>{if(active)setLoading(false)})
