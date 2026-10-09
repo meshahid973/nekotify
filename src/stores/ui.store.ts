@@ -9,9 +9,11 @@ interface UiState {
   density: UiDensity
   motionPreference: MotionPreference
   theme: AppTheme
+  quickWheelEnabled: boolean
   setDensity: (density: UiDensity) => void
   setMotionPreference: (preference: MotionPreference) => void
   setTheme: (theme: AppTheme) => void
+  setQuickWheelEnabled: (enabled:boolean)=>void
 }
 
 export const useUiStore = create<UiState>()(
@@ -20,17 +22,20 @@ export const useUiStore = create<UiState>()(
       density: 'comfortable',
       motionPreference: 'system',
       theme: 'oled',
+      quickWheelEnabled: false,
       setDensity: (density) => set({ density }),
       setMotionPreference: (motionPreference) => set({ motionPreference }),
       setTheme: (theme) => set({ theme }),
+      setQuickWheelEnabled: (quickWheelEnabled) => set({quickWheelEnabled}),
     }),
     {
       name: 'nekotify-ui',
       version: 3,
-      partialize: ({ density, motionPreference, theme }) => ({
+      partialize: ({ density, motionPreference, theme, quickWheelEnabled }) => ({
         density,
         motionPreference,
         theme,
+        quickWheelEnabled,
       }),
     },
   ),

@@ -1,0 +1,3 @@
+.nk-elastic-volume { min-width:65px; width:clamp(65px,7vw,124px); display:flex; align-items:center; }
+.nk-elastic-volume__visual { width:100%; }
+@media(max-width:1120px){.nk-elastic-volume { display:none; }}

@@ -1,0 +1,12 @@
+.nk-chroma { position:relative; --chroma-x:50%; --chroma-y:50%; }
+.nk-chroma__album { position:relative; isolation:isolate; }
+.nk-chroma__album .artwork { transition:filter .24s ease-out,transform .24s ease-out; filter:saturate(.72); }
+.nk-chroma__album:hover .artwork,.nk-chroma__album:focus-visible .artwork { filter:saturate(1); }
+.nk-chroma__album .home-album__cover::after {
+  content:""; position:absolute; inset:0; z-index:1;
+  border:1px solid rgba(255,255,255,.09); border-radius:13px;
+  background:radial-gradient(130px circle at 50% 50%,rgba(255,255,255,.055),transparent);
+  pointer-events:none; opacity:0; transition:opacity .22s;
+}
+.nk-chroma__album:hover .home-album__cover::after { opacity:1; }
+@media(prefers-reduced-motion:reduce){.nk-chroma__album .artwork{transition:none}}

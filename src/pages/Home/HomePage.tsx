@@ -1,9 +1,14 @@
 import { ArrowRight, FolderPlus, Music2, Library, Pause, Play } from 'lucide-react'
 import { useMemo } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 import { useNavigate } from 'react-router-dom'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { TrackHero } from '@/components/media/TrackHero'
+import { QuickSpin } from '@/components/reactbits/QuickSpin'
+import { ChromaAlbumGrid } from '@/components/reactbits/ChromaAlbumGrid'
+import { FadeContent } from '@/components/reactbits/FadeContent'
+import { useUiStore } from '@/stores/ui.store'
 import { Button } from '@/components/primitives/Button'
 import { useHistoryStore } from '@/features/history/history.store'
 import { useLibraryStore } from '@/features/library/library.store'
@@ -42,6 +47,10 @@ function albumsFrom(tracks: Track[]): AlbumCollection[] {
 
 export function HomePage() {
   const navigate = useNavigate()
+  const reduceSystem=useReducedMotion()
+  const motionPref=useUiStore((s)=>s.motionPreference)
+  const reduced=Boolean(reduceSystem)||motionPref==='reduced'
+  const quickWheelEnabled = useUiStore((s)=>s.quickWheelEnabled)
   const tracks = useLibraryStore((state) => state.tracks)
   const libraryStatus = useLibraryStore((state) => state.status)
   const importFolder = useLibraryStore((state) => state.importFolder)
@@ -108,11 +117,14 @@ export function HomePage() {
         </div>
         {highlights.length > 0 ? (
           <div className="home-track-grid">
-            {highlights.map((track) => {
+            {highlights.map((track,index) => {
               const active = track.id === currentTrack?.id
               const playing = active && (playbackStatus === 'playing' || playbackStatus === 'loading')
               return (
-                <button type="button" className="home-track" key={track.id}
+                <motion.div key={track.id} className="nk-animated-list__item"
+                  initial={reduced?false:{opacity:0,y:10}} animate={{opacity:1,y:0}}
+                  transition={{duration:reduced?0:.25,delay:reduced?0:Math.min(.21,index*.028)}}>
+                <button type="button" className="home-track"
                   data-active={active}
                   aria-label={(playing ? 'Pause ' : 'Play ') + track.title}
                   onClick={() => void playLibraryTrack(track, tracks)}>
@@ -125,6 +137,7 @@ export function HomePage() {
                       <Play size={18} fill="currentColor"/>}
                   </span>
                 </button>
+                </motion.div>
               )
             })}
           </div>
@@ -135,8 +148,10 @@ export function HomePage() {
         )}
       </section>
 
+      {quickWheelEnabled ? <QuickSpin/> : null}
+
       {albums.length > 0 ? (
-        <section className="home-section" aria-labelledby="albums-title">
+        <FadeContent><section className="home-section" aria-labelledby="albums-title">
           <div className="section-heading">
             <div><h2 className="section-heading__title" id="albums-title">Albums</h2>
             </div>
@@ -145,21 +160,9 @@ export function HomePage() {
               Browse albums <ArrowRight size={15} aria-hidden="true"/>
             </button>
           </div>
-          <div className="home-albums">
-            {albums.slice(0, 6).map((album) => (
-              <button key={album.key} type="button" className="home-album"
-                aria-label={'Play album ' + album.title}
-                onClick={() => void playLibraryTrack(album.songs[0], album.songs)}>
-                <div className="home-album__cover">
-                  <Artwork size="lg" src={album.artwork?.uri} alt="" />
-                  <span className="home-album__play"><Play size={19} fill="currentColor"/></span>
-                </div>
-                <strong>{album.title}</strong>
-                <span>{album.artist}</span>
-              </button>
-            ))}
-          </div>
-        </section>
+          <ChromaAlbumGrid albums={albums.slice(0,6)}
+            onPlay={(songs)=>{if(songs[0])void playLibraryTrack(songs[0],songs)}}/>
+        </section></FadeContent>
       ) : null}
     </div>
   )

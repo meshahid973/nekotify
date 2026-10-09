@@ -34,7 +34,7 @@
 .track-row__icon--active { color:#fff; }
 .track-row__playlist { width:91px; height:33px; padding-inline:6px; border:1px solid var(--color-border); border-radius:8px; color:#d7d7dd; background:#1c1c1e; font-size:.69rem; }
 @keyframes liked-icon-enter { 0% { transform:scale(.7); } 60% { transform:scale(1.19); } 100% { transform:scale(1); } }
-.track-row__icon--active svg { animation:liked-icon-enter var(--motion-panel) var(--ease-out) both; }
+.track-row__icon--active svg { animation:none; }
 @media(max-width:1140px) {
   .track-row { grid-template-columns:36px 50px minmax(100px,1fr) 42px minmax(88px,auto); }
   .track-row__album { display:none; }
