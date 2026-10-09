@@ -31,7 +31,10 @@ export function Sidebar({collapsed=false,onToggleCollapse,showCollapseButton=tru
     : location.pathname === '/search'
       ? 'search'
       : location.pathname === '/library'
-        ? new URLSearchParams(location.search).get('view') ?? 'library'
+        ? (() => {
+          const tab = new URLSearchParams(location.search).get('view')
+          return tab === 'favorites' || tab === 'playlists' ? tab : 'library'
+        })()
         : 'settings'
   const { containerRef, indicatorRef, indicatorStyle } = useActiveIndicator<HTMLElement>(activeKey)
   const view = location.pathname === '/library'
