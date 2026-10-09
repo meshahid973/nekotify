@@ -12,7 +12,7 @@
   background:#121214; border:1px solid rgba(255,255,255,.12);
   box-shadow:0 30px 110px rgba(0,0,0,.6);
   pointer-events:auto; outline:none;
-  animation:player-panel-enter var(--motion-panel) var(--ease-out) both;
+  will-change:transform;
 }
 .player-panels__heading {
   position:relative; z-index:2; display:flex; align-items:center;

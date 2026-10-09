@@ -1,9 +1,10 @@
 import {
-  Disc3, Folder, FolderPlus, Heart, Home, ImagePlus,
+  ChevronDown, Disc3, Folder, FolderPlus, Heart, Home, ImagePlus,
   Images, Library, ListMusic, Music2, RefreshCw, Search, Settings,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { motion } from 'motion/react'
+import { useState } from 'react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { NavLink, useLocation } from 'react-router-dom'
 
 import { AnimatedIcon } from '@/components/primitives/AnimatedIcon'
@@ -21,6 +22,8 @@ const mainLinks = [
 
 export function Sidebar() {
   const location = useLocation()
+  const [expanded,setExpanded] = useState<Record<string,boolean>>({})
+  const systemReduced = useReducedMotion()
   const activeKey = location.pathname === '/'
     ? 'home'
     : location.pathname === '/search'
@@ -95,9 +98,25 @@ export function Sidebar() {
           <span>MUSIC FOLDERS</span><small>{folders.length || ''}</small>
         </div>
         <div className="sidebar__folders">
-          {folders.slice(0, 5).map((folder) => (
-            <div className="sidebar-folder" key={folder.path} title={folder.path}>
-              <Folder size={15} aria-hidden="true" /><span>{folder.name}</span>
+          {folders.map((folder) => (
+            <div key={folder.path} className="sidebar-folder-node">
+              <button type="button" className="sidebar-folder" title={folder.path}
+                aria-expanded={Boolean(expanded[folder.path])}
+                onClick={()=>setExpanded((old)=>({...old,[folder.path]:!old[folder.path]}))}>
+                <Folder size={15} aria-hidden="true" />
+                <span>{folder.name}</span>
+                <motion.span animate={{rotate:expanded[folder.path]?180:0}}
+                  transition={{duration:systemReduced?0:.18}}>
+                  <ChevronDown size={13} aria-hidden="true"/>
+                </motion.span>
+              </button>
+              <AnimatePresence initial={false}>
+                {expanded[folder.path] ? <motion.div className="sidebar-folder__path"
+                  initial={{height:0,opacity:0}} animate={{height:'auto',opacity:1}}
+                  exit={{height:0,opacity:0}} transition={{duration:systemReduced?0:.18}}>
+                  <span title={folder.path}>{folder.path}</span>
+                </motion.div>:null}
+              </AnimatePresence>
             </div>
           ))}
         </div>

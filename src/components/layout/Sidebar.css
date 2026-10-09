@@ -124,3 +124,10 @@
 .app-shell[data-theme='oled'] .sidebar { background:#000; }
 .app-shell[data-theme='ambience'] .sidebar__footer { background:rgba(0,0,0,.12); }
 .sidebar__brand-copy { gap:0; }
+
+.sidebar-folder-node { min-width:0; }
+.sidebar-folder { width:100%; background:transparent; border:0; font:inherit; text-align:left; cursor:pointer; }
+.sidebar-folder:hover { background:rgba(255,255,255,.04); color:white; }
+.sidebar-folder > span:last-child { margin-left:auto; flex-shrink:0; }
+.sidebar-folder__path { overflow:hidden; }
+.sidebar-folder__path > span { display:block; padding:5px 16px 9px 38px; color:#777; font-size:.65rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
