@@ -15,6 +15,8 @@ pub fn run() {
             database::remove_from_playlist,
             database::toggle_favorite,
             library::cached_library,
+            library::scan_status,
+            library::cancel_library_scan,
             library::query_tracks,
             library::search_library,
             library::load_library,
