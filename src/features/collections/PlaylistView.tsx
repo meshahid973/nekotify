@@ -1,5 +1,5 @@
 import { ListMusic, Plus, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { Button } from '@/components/primitives/Button'
 import { useCollectionsStore } from '@/features/collections/collections.store'
@@ -14,6 +14,8 @@ export function PlaylistView() {
   const playlists = useCollectionsStore((state) => state.playlists)
   const error = useCollectionsStore((state) => state.error)
   const busy = useCollectionsStore((state) => state.busy)
+  const revision=useCollectionsStore(s=>s.revision)
+  const metadataRevision=useLibraryStore(s=>s.metadataRevision)
   const createPlaylist = useCollectionsStore((state) => state.createPlaylist)
   const deletePlaylist = useCollectionsStore((state) => state.deletePlaylist)
   const addToPlaylist = useCollectionsStore((state) => state.addToPlaylist)
@@ -24,14 +26,14 @@ export function PlaylistView() {
   const [dragTarget,setDragTarget] = useState<number|null>(null)
   const selected = playlists.find((item) => item.id === selectedId) ?? playlists[0]
   const selectedPaths = selected?.trackPaths
-  const selectedTracks = useMemo(() => {
-    if (!selectedPaths) return []
-    const lookup = new Map(tracks.map((track) => [track.source.path, track]))
-    return selectedPaths.flatMap((path) => {
-      const track = lookup.get(path)
-      return track ? [track] : []
+  const selectedTracks=()=>{
+    if(!selectedPaths)return []
+    const lookup=new Map(tracks.map(track=>[track.source.path,track]))
+    return selectedPaths.flatMap(path=>{
+      const track=lookup.get(path)
+      return track?[track]:[]
     })
-  }, [selectedPaths, tracks])
+  }
 
   const create = () => {
     const clean = name.trim()
@@ -90,7 +92,7 @@ export function PlaylistView() {
               ><Trash2 size={17}/></button>
             </div>
             <PagedTrackList mode="playlist" playlistId={selected.id}
-              fallback={selectedTracks} refreshKey={selected.trackPaths.join('|')}
+              fallback={selectedTracks} refreshKey={revision+':'+metadataRevision}
               emptyTitle="Drag songs here, or use any track's Add to Playlist action."
               onRemoveFromPlaylist={track=>{
                 void removeFromPlaylist(selected.id,track.source.path)

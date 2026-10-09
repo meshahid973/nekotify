@@ -107,7 +107,6 @@ function NowPlayingPanel({ refElement, onClose }: PanelProps) {
       </div>
       <div className="now-playing-panel__body">
         <div className="now-playing-panel__details">
-          <p className="eyebrow">THE SOUNDTRACK IS YOURS</p>
           <h2>{track.title}</h2>
           <p className="now-playing-panel__artist">{track.artist}</p>
           {track.album ? <p className="now-playing-panel__album">{track.album}</p> : null}

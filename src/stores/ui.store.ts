@@ -14,6 +14,7 @@ interface UiState {
   sidebarPercent: number
   queuePercent: number
   queueDocked: boolean
+  shortcutsOpen:boolean
   setDensity: (density: UiDensity) => void
   setMotionPreference: (preference: MotionPreference) => void
   setTheme: (theme: AppTheme) => void
@@ -22,6 +23,7 @@ interface UiState {
   setSidebarPercent: (percent:number)=>void
   setQueuePercent: (percent:number)=>void
   setQueueDocked: (docked:boolean)=>void
+  setShortcutsOpen:(open:boolean)=>void
 }
 
 export const useUiStore = create<UiState>()(
@@ -35,6 +37,7 @@ export const useUiStore = create<UiState>()(
       sidebarPercent: 21,
       queuePercent: 27,
       queueDocked: true,
+      shortcutsOpen:false,
       setDensity: (density) => set({ density }),
       setMotionPreference: (motionPreference) => set({ motionPreference }),
       setTheme: (theme) => set({ theme }),
@@ -43,6 +46,7 @@ export const useUiStore = create<UiState>()(
       setSidebarPercent: (sidebarPercent) => set({sidebarPercent:Math.max(12,Math.min(35,sidebarPercent))}),
       setQueuePercent: (queuePercent) => set({queuePercent:Math.max(18,Math.min(38,queuePercent))}),
       setQueueDocked: (queueDocked) => set({queueDocked}),
+      setShortcutsOpen:(shortcutsOpen)=>set({shortcutsOpen}),
     }),
     {
       name: 'nekotify-ui',

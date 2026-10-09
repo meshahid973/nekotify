@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   insertTrackNext,
+  insertQueueItem,
   moveQueueCursor,
   moveQueueItem,
   normalizeQueueIndex,
@@ -36,4 +37,13 @@ test('moving queue entries preserves active item identity', () => {
   assert.equal(moveQueueCursor(0, 0, 2), 2)
   assert.equal(moveQueueCursor(2, 0, 2), 1)
   assert.equal(moveQueueCursor(1, 2, 0), 2)
+})
+
+test('undo and external drops preserve current queue playback identity', () => {
+  const result = insertQueueItem([a,b,c],0,{id:'new'},1,[1],[1])
+  assert.deepEqual(result.items.map(x=>x.id),['new','a','b','c'])
+  assert.equal(result.currentIndex,2)
+  assert.deepEqual(result.history,[2])
+  assert.deepEqual(result.visited,[2])
+  assert.deepEqual(insertQueueItem([a],99,b,0,[0],[0]).items,[a,b])
 })

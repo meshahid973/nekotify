@@ -10,7 +10,7 @@ import {
   Search,
   X,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Tabs } from '@base-ui/react/tabs'
 import { useSearchParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
@@ -45,6 +45,8 @@ export function LibraryPage() {
   const [query, setQuery] = useState('')
   const tracks = useLibraryStore((state) => state.tracks)
   const favorites = useCollectionsStore((state) => state.favorites)
+  const collectionsRevision=useCollectionsStore(s=>s.revision)
+  const metadataRevision=useLibraryStore(s=>s.metadataRevision)
   const folders = useLibraryStore((state) => state.folders)
   const status = useLibraryStore((state) => state.status)
   const scanning = useLibraryStore((state) => state.scanning)
@@ -58,31 +60,21 @@ export function LibraryPage() {
 
   const normalizedQuery = query.trim().toLowerCase()
 
-  const filteredTracks = useMemo(
-    () =>
-      normalizedQuery
-        ? tracks.filter((track) =>
-            [track.title, track.artist, track.album]
-              .filter(Boolean)
-              .some((value) => value!.toLowerCase().includes(normalizedQuery)),
-          )
-        : tracks,
-    [normalizedQuery, tracks],
-  )
-
-  const albums = useMemo(
-    () => groupTracks(filteredTracks, 'album'),
-    [filteredTracks],
-  )
-  const artists = useMemo(
-    () => groupTracks(filteredTracks, 'artist'),
-    [filteredTracks],
-  )
+  // The native views don't need full-library filtered/grouped copies.
+  // Build legacy fallback data only when native queries are unavailable.
+  const filteredTracks=()=>normalizedQuery
+    ? tracks.filter(track=>[track.title,track.artist,track.album]
+      .some(value=>value?.toLowerCase().includes(normalizedQuery)))
+    : tracks
+  const albums=()=>groupTracks(filteredTracks(),'album')
+  const artists=()=>groupTracks(filteredTracks(),'artist')
 
   const busy = status === 'loading' || scanning
-  const favoritePaths = new Set(favorites)
-  const favoriteTracks = filteredTracks.filter(track=>favoritePaths.has(track.source.path))
-  const refreshKey = status + ':' + String(scanning)
+  const favoriteTracks=()=>{
+    const favoritePaths=new Set(favorites)
+    return filteredTracks().filter(track=>favoritePaths.has(track.source.path))
+  }
+  const refreshKey = status+':'+String(scanning)+':'+metadataRevision
 
   return (
     <div className="page library-page">
@@ -174,7 +166,7 @@ export function LibraryPage() {
       <Tabs.Panel value="albums" className="library-tab-panel">
         {activeTab==='albums'&&<PagedGroupList mode="albums"
           query={normalizedQuery} fallback={albums}
-          refreshKey={scanning?1:0}/>}
+          refreshKey={metadataRevision+(scanning?1:0)}/>}
       </Tabs.Panel>
       <Tabs.Panel value="artists" className="library-tab-panel">
         {activeTab==='artists'&&<PagedGroupList mode="artists"
@@ -184,7 +176,7 @@ export function LibraryPage() {
       <Tabs.Panel value="favorites" className="library-tab-panel">
         {activeTab==='favorites'&&<PagedTrackList mode="favorites"
           query={normalizedQuery} fallback={favoriteTracks}
-          refreshKey={refreshKey+':'+favorites.join('|')}
+          refreshKey={refreshKey+':'+collectionsRevision}
           emptyTitle="No liked songs yet. Heart a track to see it here."/>}
       </Tabs.Panel>
       <Tabs.Panel value="playlists" className="library-tab-panel">

@@ -1,6 +1,7 @@
 import { convertFileSrc, invoke, isTauri } from '@tauri-apps/api/core'
 import { create } from 'zustand'
 import { usePlaybackStore } from '@/features/playback/playback.store'
+import { notify } from '@/stores/toast.store'
 
 import type {
   NativeArtworkSource,
@@ -20,6 +21,8 @@ interface LibraryState {
   tracks: Track[]
   status: LibraryStatus
   scanning: boolean
+  metadataRevision:number
+  updateMetadata:(path:string,values:{title:string;artist:string;album:string})=>Promise<boolean>
   cancelScan: () => Promise<void>
   error: string | null
   refresh: () => Promise<void>
@@ -159,6 +162,29 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   tracks: [],
   status: 'idle',
   scanning: false,
+  metadataRevision:0,
+  updateMetadata:async(path,values)=>{
+    if(!isTauri())return false
+    const before=get().tracks
+    const current=usePlaybackStore.getState().track
+    const update=(track:Track):Track=>track.source.path===path?{
+      ...track,title:values.title.trim(),artist:values.artist.trim(),
+      album:values.album.trim()||undefined,
+    }:track
+    set({tracks:before.map(update)})
+    if(current?.source.path===path)usePlaybackStore.setState({track:update(current)})
+    try{
+      await invoke('set_track_metadata',{path,...values})
+      set({metadataRevision:get().metadataRevision+1,error:null})
+      notify('Song details saved','success')
+      return true
+    }catch(error){
+      set({tracks:before,error:errorMessage(error)})
+      if(current?.source.path===path)usePlaybackStore.setState({track:current})
+      notify('Could not save song details; restored previous values','error')
+      return false
+    }
+  },
   cancelScan: async () => {
     if (isTauri()) await invoke('cancel_library_scan')
   },
