@@ -94,11 +94,13 @@ pub fn open(app: &AppHandle) -> Result<Connection, String> {
          END;
          INSERT INTO tracks_fts(path,title,artist,album)
            SELECT path,title,artist,COALESCE(album,'') FROM library_tracks
-           WHERE NOT EXISTS (SELECT 1 FROM tracks_fts LIMIT 1);"
-    ).map_err(|error| format!("Cannot initialize search index: {error}"))?;
+           WHERE NOT EXISTS (SELECT 1 FROM tracks_fts LIMIT 1);",
+    )
+    .map_err(|error| format!("Cannot initialize search index: {error}"))?;
     // The existing path keys stay stable so favorites, playlists and art assignments
     // survive the transition to a query-driven library. Never mutate song files.
-    let version: i64 = conn.pragma_query_value(None, "user_version", |row| row.get(0))
+    let version: i64 = conn
+        .pragma_query_value(None, "user_version", |row| row.get(0))
         .map_err(|error| format!("Cannot read library schema version: {error}"))?;
     if version == 0 {
         conn.pragma_update(None, "user_version", 1_i64)
