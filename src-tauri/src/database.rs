@@ -51,6 +51,7 @@ pub fn open(app: &AppHandle) -> Result<Connection, String> {
          );
          CREATE INDEX IF NOT EXISTS idx_tracks_artist ON library_tracks(artist);
          CREATE INDEX IF NOT EXISTS idx_tracks_album ON library_tracks(album);
+         CREATE INDEX IF NOT EXISTS idx_tracks_title ON library_tracks(title COLLATE NOCASE);
          CREATE TABLE IF NOT EXISTS favorites (
            track_path TEXT PRIMARY KEY
          );
@@ -72,6 +73,15 @@ pub fn open(app: &AppHandle) -> Result<Connection, String> {
          );",
     )
     .map_err(|error| format!("Cannot initialize library database: {error}"))?;
+    // The existing path keys stay stable so favorites, playlists and art assignments
+    // survive the transition to a query-driven library. Never mutate song files.
+    let version: i64 = conn
+        .pragma_query_value(None, "user_version", |row| row.get(0))
+        .map_err(|error| format!("Cannot read library schema version: {error}"))?;
+    if version == 0 {
+        conn.pragma_update(None, "user_version", 1_i64)
+            .map_err(|error| format!("Cannot record library schema version: {error}"))?;
+    }
     Ok(conn)
 }
 
@@ -130,6 +140,7 @@ pub fn save(
     Ok(())
 }
 
+/// Call only when EVERY configured root was enumerated without I/O errors.
 pub fn prune(conn: &Connection, scanned: &HashSet<String>) -> Result<(), String> {
     let paths = {
         let mut statement = conn
