@@ -18,12 +18,6 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - name: Resolve Base UI dependency lockfile (temporary)
-        run: |
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-          echo BEGIN_BASEUI_LOCK
-          base64 -w 0 package-lock.json | fold -w 4000
-          echo END_BASEUI_LOCK
       - run: npm ci
       - run: npm run test
       - run: npm run typecheck
