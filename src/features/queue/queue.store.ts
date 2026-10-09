@@ -23,6 +23,7 @@ interface QueueState {
   setQueue: (items: Track[], startIndex?: number) => void
   select: (index: number) => Track | null
   enqueue: (track: Track) => void
+  insertAt: (index:number,track:Track) => void
   playNext: (track: Track) => void
   remove: (index: number) => void
   move: (from: number, to: number) => void
@@ -55,6 +56,18 @@ export const useQueueStore = create<QueueState>((set, get) => ({
   },
 
   enqueue: (track) => set((state) => ({ items: [...state.items, track] })),
+  insertAt: (index,track) => set(state=>{
+    const at=Math.max(0,Math.min(state.items.length,Math.trunc(index)))
+    const items=[...state.items]
+    items.splice(at,0,track)
+    const shift=(i:number)=>i>=at?i+1:i
+    return {
+      items,
+      currentIndex:state.currentIndex<0?-1:shift(state.currentIndex),
+      history:state.history.map(shift),
+      visited:state.visited.map(shift),
+    }
+  }),
 
   playNext: (track) =>
     set((state) => ({
