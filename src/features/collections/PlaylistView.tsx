@@ -14,6 +14,8 @@ export function PlaylistView() {
   const playlists = useCollectionsStore((state) => state.playlists)
   const error = useCollectionsStore((state) => state.error)
   const busy = useCollectionsStore((state) => state.busy)
+  const revision=useCollectionsStore(s=>s.revision)
+  const metadataRevision=useLibraryStore(s=>s.metadataRevision)
   const createPlaylist = useCollectionsStore((state) => state.createPlaylist)
   const deletePlaylist = useCollectionsStore((state) => state.deletePlaylist)
   const addToPlaylist = useCollectionsStore((state) => state.addToPlaylist)
@@ -90,7 +92,7 @@ export function PlaylistView() {
               ><Trash2 size={17}/></button>
             </div>
             <PagedTrackList mode="playlist" playlistId={selected.id}
-              fallback={selectedTracks} refreshKey={selected.trackPaths.join('|')}
+              fallback={selectedTracks} refreshKey={revision+':'+metadataRevision}
               emptyTitle="Drag songs here, or use any track's Add to Playlist action."
               onRemoveFromPlaylist={track=>{
                 void removeFromPlaylist(selected.id,track.source.path)

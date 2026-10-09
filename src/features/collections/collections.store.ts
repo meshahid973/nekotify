@@ -5,7 +5,7 @@ import { notify } from '@/stores/toast.store'
 export interface Playlist { id:number;name:string;trackPaths:string[] }
 interface NativeCollections { favorites:string[];playlists:Playlist[] }
 interface CollectionsState extends NativeCollections {
-  busy:boolean;error:string|null
+  busy:boolean;error:string|null;revision:number
   refresh:()=>Promise<void>
   toggleFavorite:(path:string)=>Promise<void>
   createPlaylist:(name:string)=>Promise<void>
@@ -28,11 +28,12 @@ export const useCollectionsStore=create<CollectionsState>((set)=>{
   let committed:NativeCollections={favorites:[],playlists:[]}
   let pending:Pending[]=[]
   let serial=0
+  let revision=0
   let inFlight=0
   let chain:Promise<void>=Promise.resolve()
   const project=()=>pending.reduce((state,op)=>op.patch(state),committed)
   const publish=(error:string|null=null)=>{
-    set({...project(),busy:inFlight>0,error})
+    set({...project(),busy:inFlight>0,error,revision:++revision})
   }
   const perform=async(command:Command,args?:Record<string,string|number>,patch?:Patch)=>{
     if(!isTauri())return
@@ -56,7 +57,7 @@ export const useCollectionsStore=create<CollectionsState>((set)=>{
     }
   }
   return {
-    ...committed,busy:false,error:null,
+    ...committed,busy:false,error:null,revision:0,
     refresh:()=>perform('get_collections'),
     toggleFavorite:(path)=>perform('toggle_favorite',{path},state=>({
       ...state,

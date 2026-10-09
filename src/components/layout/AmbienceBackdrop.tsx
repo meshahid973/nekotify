@@ -4,7 +4,7 @@ import { useUiStore } from '@/stores/ui.store'
 import './AmbienceBackdrop.css'
 
 interface BackdropImage { url:string; shade:number }
-interface BackdropLayers { current:BackdropImage|null; previous:BackdropImage|null }
+interface BackdropLayers { visible:BackdropImage|null; previous:BackdropImage|null }
 
 function contrastShade(image:HTMLImageElement) {
   try {
@@ -24,7 +24,7 @@ function contrastShade(image:HTMLImageElement) {
 
 export function AmbienceBackdrop({artwork,active}:{artwork?:string;active:boolean}) {
   const preference=useUiStore(s=>s.motionPreference)
-  const [layers,setLayers]=useState<BackdropLayers>({current:null,previous:null})
+  const [layers,setLayers]=useState<BackdropLayers>({visible:null,previous:null})
   useEffect(()=>{
     if(!active||!artwork)return
     let canceled=false
@@ -33,8 +33,8 @@ export function AmbienceBackdrop({artwork,active}:{artwork?:string;active:boolea
     image.onload=()=>{
       if(canceled)return
       const next={url:artwork,shade:contrastShade(image)}
-      setLayers(old=>old.current?.url===next.url?old:
-        {current:next,previous:old.current})
+      setLayers(old=>old.visible?.url===next.url?old:
+        {visible:next,previous:old.visible})
     }
     image.onerror=()=>{ /* Keep previous artwork if the new file is missing. */ }
     image.src=artwork
@@ -44,18 +44,18 @@ export function AmbienceBackdrop({artwork,active}:{artwork?:string;active:boolea
     if(!layers.previous)return
     const id=window.setTimeout(()=>setLayers(old=>({...old,previous:null})),650)
     return()=>window.clearTimeout(id)
-  },[layers.current,layers.previous])
-  if(!active||(!layers.current&&!layers.previous))return null
-  const shade=layers.current?.shade??layers.previous?.shade??.75
+  },[layers.visible,layers.previous])
+  if(!active||(!layers.visible&&!layers.previous))return null
+  const shade=layers.visible?.shade??layers.previous?.shade??.75
   const style={'--ambience-opacity':shade} as CSSProperties
   return <div className="ambience-backdrop" style={style} aria-hidden="true"
     data-reduced={preference==='reduced'?'true':'false'}>
-    {layers.previous&&layers.previous.url!==layers.current?.url?
+    {layers.previous&&layers.previous.url!==layers.visible?.url?
       <div className="ambience-backdrop__image"
         style={{backgroundImage:`url("${layers.previous.url}")`}}/>:null}
-    {layers.current?<div key={layers.current.url}
+    {layers.visible?<div key={layers.visible.url}
       className="ambience-backdrop__image ambience-backdrop__image--incoming"
-      style={{backgroundImage:`url("${layers.current.url}")`}}/>:null}
+      style={{backgroundImage:`url("${layers.visible.url}")`}}/>:null}
     <div className="ambience-backdrop__shade"/>
   </div>
 }
