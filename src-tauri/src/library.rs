@@ -570,7 +570,7 @@ fn scan_music_directory(
                 continue;
             }
             let visited = SCAN_VISITED.fetch_add(1, Ordering::Relaxed) + 1;
-            if visited % 256 == 0 {
+            if visited.is_multiple_of(256) {
                 let _ = app.emit(
                     "library-scan-progress",
                     ScanStatus {
