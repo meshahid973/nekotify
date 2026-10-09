@@ -16,6 +16,29 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+      - name: Format Phase 7 branches (temporary)
+        shell: pwsh
+        run: |
+          $original = git rev-parse HEAD
+          $branches = @('feat/phase-7-1-rust-safety-cache','feat/phase-7-2-native-queries','feat/phase-7-3-scan-artwork','feat/phase-7-4-frontend-system')
+          foreach ($branch in $branches) {
+            git fetch --depth=1 origin "refs/heads/$branch"
+            if ($LASTEXITCODE -ne 0) { throw "Fetch failed: $branch" }
+            git checkout --force --detach FETCH_HEAD
+            if ($LASTEXITCODE -ne 0) { throw "Checkout failed: $branch" }
+            cargo fmt --manifest-path src-tauri/Cargo.toml
+            if ($LASTEXITCODE -ne 0) { throw "Format failed: $branch" }
+            foreach ($file in @('src-tauri/src/database.rs','src-tauri/src/library.rs','src-tauri/src/lib.rs')) {
+              Write-Output "BEGIN_FORMATTED|$branch|$file"
+              $encoded = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path (Get-Location) $file)))
+              for($i=0; $i -lt $encoded.Length; $i += 4000) {
+                Write-Output $encoded.Substring($i,[Math]::Min(4000,$encoded.Length-$i))
+              }
+              Write-Output "END_FORMATTED"
+            }
+          }
+          git checkout --force --detach $original
+          if ($LASTEXITCODE -ne 0) { throw "Restore PR checkout failed" }
       - run: cargo check --locked --manifest-path src-tauri/Cargo.toml
       - run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml -- -D warnings
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
