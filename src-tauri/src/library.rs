@@ -1,5 +1,6 @@
 use crate::database;
 pub(crate) mod queries;
+pub(crate) mod views;
 use lofty::{file::EXTENSIONS, picture::Picture, prelude::*};
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};

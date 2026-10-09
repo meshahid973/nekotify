@@ -7,10 +7,10 @@ use tauri::{AppHandle, Manager};
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TrackPage {
-    items: Vec<LibraryTrack>,
-    total: i64,
-    offset: u32,
-    limit: u32,
+    pub(super) items: Vec<LibraryTrack>,
+    pub(super) total: i64,
+    pub(super) offset: u32,
+    pub(super) limit: u32,
 }
 
 fn fts_prefix_terms(words: &str) -> String {
@@ -21,6 +21,24 @@ fn fts_prefix_terms(words: &str) -> String {
         .map(|word| format!("\"{}\"*", word.replace('"', "\"\"")))
         .collect::<Vec<_>>()
         .join(" ")
+}
+
+pub(super) fn track_from_row(row:&rusqlite::Row<'_>)->rusqlite::Result<LibraryTrack>{
+    let path:String=row.get(0)?;
+    Ok(LibraryTrack{
+        id:format!("{:016x}",fnv1a(path.as_bytes())),
+        path,title:row.get(1)?,artist:row.get(2)?,
+        album:row.get(3)?,duration:row.get(4)?,artwork_path:row.get(5)?,
+    })
+}
+pub(super) fn permit_track(app:&AppHandle,mut track:LibraryTrack)->LibraryTrack{
+    if Path::new(&track.path).is_file(){
+        let _=app.asset_protocol_scope().allow_file(&track.path);
+    }
+    track.artwork_path=track.artwork_path.filter(|art|{
+        Path::new(art).is_file()&&app.asset_protocol_scope().allow_file(art).is_ok()
+    });
+    track
 }
 
 fn indexed_tracks(
@@ -68,30 +86,12 @@ fn indexed_tracks(
     let rows = stmt
         .query_map(
             rusqlite::params![if search { phrase } else { String::new() }, limit, offset],
-            |row| {
-                let path: String = row.get(0)?;
-                Ok(LibraryTrack {
-                    id: format!("{:016x}", fnv1a(path.as_bytes())),
-                    path,
-                    title: row.get(1)?,
-                    artist: row.get(2)?,
-                    album: row.get(3)?,
-                    duration: row.get(4)?,
-                    artwork_path: row.get(5)?,
-                })
-            },
+            track_from_row,
         )
         .map_err(|error| format!("Cannot query indexed tracks: {error}"))?;
     let mut items = Vec::new();
     for value in rows {
-        let mut track = value.map_err(|error| error.to_string())?;
-        if Path::new(&track.path).is_file() {
-            let _ = app.asset_protocol_scope().allow_file(&track.path);
-        }
-        track.artwork_path = track.artwork_path.filter(|art| {
-            Path::new(art).is_file() && app.asset_protocol_scope().allow_file(art).is_ok()
-        });
-        items.push(track);
+        items.push(permit_track(app, value.map_err(|e| e.to_string())?));
     }
     Ok(TrackPage {
         items,
