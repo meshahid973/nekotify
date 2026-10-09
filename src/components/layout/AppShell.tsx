@@ -6,6 +6,7 @@ import { Outlet, useNavigate } from 'react-router-dom'
 import { PlayerBar } from '@/components/layout/PlayerBar'
 import { CommandPalette } from '@/components/overlays/CommandPalette'
 import { ToastViewport } from '@/components/overlays/ToastViewport'
+import { TrackDetailsDialog } from '@/components/overlays/TrackDetailsDialog'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { useMediaQuery } from '@/components/layout/useMediaQuery'
 import { AmbienceBackdrop } from '@/components/layout/AmbienceBackdrop'
@@ -24,7 +25,7 @@ import './AppShell.css'
 function isInteractiveTarget(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false
   return Boolean(target.closest(
-    'button, a, input, textarea, select, [contenteditable="true"], [role="slider"]',
+    'button, a, input, textarea, select, [contenteditable="true"], [role="slider"], [role="dialog"], [aria-modal="true"], [role="menu"]',
   ))
 }
 
@@ -142,6 +143,7 @@ export function AppShell() {
       </Group>
       <PlayerPanels dockedQueue={isDockedQueue} />
       <CoverPicker />
+      <TrackDetailsDialog />
       <CommandPalette open={commandOpen} onClose={()=>setCommandOpen(false)} />
       <ToastViewport />
       <MediaSessionBridge />
