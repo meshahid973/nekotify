@@ -8,6 +8,22 @@ concurrency:
   group: native-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  rustfmt-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Print formatted Rust sources (temporary)
+        run: |
+          cargo fmt --manifest-path src-tauri/Cargo.toml
+          for file in src-tauri/src/database.rs src-tauri/src/library.rs src-tauri/src/library/queries.rs src-tauri/src/lib.rs; do
+            echo "BEGIN_RUSTFMT_SOURCE|$file"
+            base64 -w 0 "$file" | fold -w 4000
+            echo "END_RUSTFMT_SOURCE"
+          done
   check:
     runs-on: windows-latest
     timeout-minutes: 25
@@ -19,3 +35,4 @@ jobs:
       - run: cargo check --locked --manifest-path src-tauri/Cargo.toml
       - run: cargo clippy --locked --manifest-path src-tauri/Cargo.toml -- -D warnings
       - run: cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+      - run: cargo test --locked --manifest-path src-tauri/Cargo.toml
