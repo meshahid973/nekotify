@@ -1,7 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 
 import { PlayerBar } from '@/components/layout/PlayerBar'
+import { CommandPalette } from '@/components/overlays/CommandPalette'
+import { ToastViewport } from '@/components/overlays/ToastViewport'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { AmbienceBackdrop } from '@/components/layout/AmbienceBackdrop'
 import { PlayerPanels } from '@/components/player/PlayerPanels'
@@ -24,6 +26,7 @@ function isInteractiveTarget(target: EventTarget | null) {
 
 export function AppShell() {
   const navigate = useNavigate()
+  const [commandOpen,setCommandOpen] = useState(false)
   const density = useUiStore((state) => state.density)
   const motionPreference = useUiStore((state) => state.motionPreference)
   const theme = useUiStore((state) => state.theme)
@@ -51,12 +54,10 @@ export function AppShell() {
       const modifier = event.ctrlKey || event.metaKey
       if (modifier && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        navigate('/search')
-        window.requestAnimationFrame(() => {
-          document.getElementById('nekotify-search-input')?.focus()
-        })
+        setCommandOpen((value)=>!value)
         return
       }
+      if (commandOpen || event.key === 'Escape') return
       if (modifier && event.key.toLowerCase() === 'l') {
         event.preventDefault()
         navigate('/library')
@@ -75,7 +76,7 @@ export function AppShell() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [navigate])
+  }, [navigate,commandOpen])
 
   return (
     <div className="app-shell" data-theme={theme} data-has-ambience={artwork ? 'true' : 'false'}>
@@ -84,6 +85,8 @@ export function AppShell() {
       <main className="app-shell__content"><Outlet /></main>
       <PlayerPanels />
       <CoverPicker />
+      <CommandPalette open={commandOpen} onClose={()=>setCommandOpen(false)} />
+      <ToastViewport />
       <MediaSessionBridge />
       <PlayerBar />
     </div>

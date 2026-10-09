@@ -1,6 +1,10 @@
-import { Heart, ListPlus, Paintbrush, Pause, Play } from 'lucide-react'
+import { Heart, ListPlus, Paintbrush, Pause, Play, Music2 } from 'lucide-react'
 
 import { Artwork } from '@/components/artwork/Artwork'
+import { ContextMenu } from '@/components/overlays/ContextMenu'
+import { PlaylistCombobox } from '@/components/overlays/PlaylistCombobox'
+import { notify } from '@/stores/toast.store'
+import { useState } from 'react'
 import { useCollectionsStore } from '@/features/collections/collections.store'
 import { formatPlaybackTime } from '@/features/playback/playback.utils'
 import { useQueueStore } from '@/features/queue/queue.store'
@@ -24,9 +28,12 @@ export function TrackRow({
   const toggleFavorite = useCollectionsStore((state) => state.toggleFavorite)
   const addToPlaylist = useCollectionsStore((state) => state.addToPlaylist)
   const favorite = favorites.includes(track.source.path)
+  const [menu,setMenu] = useState<{x:number;y:number}|null>(null)
 
   return (
-    <div className="track-row" data-active={active ? 'true' : 'false'}>
+    <div className="track-row"
+      onContextMenu={(event)=>{event.preventDefault();setMenu({x:event.clientX,y:event.clientY})}}
+      data-active={active ? 'true' : 'false'}>
       <button type="button" className="track-row__play"
         aria-label={(playing ? 'Pause ' : 'Play ') + track.title} onClick={onPlay}>
         {playing ? <Pause size={15} fill="currentColor" /> :
@@ -43,11 +50,11 @@ export function TrackRow({
           className={favorite ? 'track-row__icon track-row__icon--active' : 'track-row__icon'}
           type="button" aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}
           aria-pressed={favorite}
-          onClick={() => void toggleFavorite(track.source.path)}
+          onClick={() => {void toggleFavorite(track.source.path);notify(favorite?'Removed from Liked songs':'Added to Liked songs','success')}}
         ><Heart size={16} fill={favorite ? 'currentColor' : 'none'}/></button>
         <button type="button" className="track-row__icon"
           title="Play next" aria-label={'Play ' + track.title + ' next'}
-          onClick={() => useQueueStore.getState().playNext(track)}
+          onClick={() => {useQueueStore.getState().playNext(track);notify('Playing next: '+track.title,'success')}}
         ><ListPlus size={16}/></button>
         <button type="button" className="track-row__icon"
           aria-label={'Choose artwork for ' + track.title}
@@ -55,22 +62,27 @@ export function TrackRow({
           onClick={() => useCoverPickerStore.getState().open(track.source.path)}
         ><Paintbrush size={15}/></button>
         {playlists.length > 0 ? (
-          <select
-            className="track-row__playlist"
-            aria-label={'Add ' + track.title + ' to playlist'}
-            value=""
-            onChange={(event) => {
-              const id = Number(event.currentTarget.value)
-              if (id) void addToPlaylist(id, track.source.path)
-            }}
-          >
-            <option value="">Playlist…</option>
-            {playlists.map((playlist) => (
-              <option key={playlist.id} value={playlist.id}>{playlist.name}</option>
-            ))}
-          </select>
+          <PlaylistCombobox label={'Add '+track.title+' to playlist'}
+            playlists={playlists} onChoose={(playlist)=>{
+              void addToPlaylist(playlist.id,track.source.path)
+              notify('Added to '+playlist.name,'success')
+            }}/>
         ) : null}
       </div>
+
+      <ContextMenu position={menu} onClose={()=>setMenu(null)} items={[
+        {id:'play',label:'Play',icon:<Music2 size={16}/>,onClick:onPlay},
+        {id:'next',label:'Play next',icon:<ListPlus size={16}/>,onClick:()=>{
+          useQueueStore.getState().playNext(track);notify('Added to queue','success')
+        }},
+        {id:'favorite',label:favorite?'Unlike song':'Like song',icon:<Heart size={16}/>,onClick:()=>{
+          void toggleFavorite(track.source.path);notify(favorite?'Removed favorite':'Added favorite','success')
+        }},
+        {id:'artwork',label:'Change artwork',icon:<Paintbrush size={16}/>,onClick:()=>useCoverPickerStore.getState().open(track.source.path)},
+        ...playlists.map((p)=>({id:'playlist-'+p.id,label:'Add to '+p.name,onClick:()=>{
+          void addToPlaylist(p.id,track.source.path);notify('Added to '+p.name,'success')
+        }})),
+      ]} />
     </div>
   )
 }
