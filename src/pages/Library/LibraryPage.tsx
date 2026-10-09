@@ -15,15 +15,12 @@ import { Tabs } from '@base-ui/react/tabs'
 import { useSearchParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
-import { Artwork } from '@/components/artwork/Artwork'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { Button } from '@/components/primitives/Button'
-import { playLibraryTrack } from '@/features/library/playLibraryTrack'
 import { PlaylistView } from '@/features/collections/PlaylistView'
 import { useCollectionsStore } from '@/features/collections/collections.store'
-import { VirtualTrackList } from '@/features/library/VirtualTrackList'
+import { PagedGroupList, PagedTrackList } from '@/features/library/PagedLibraryViews'
 import { useLibraryStore } from '@/features/library/library.store'
-import { usePlaybackStore } from '@/features/playback/playback.store'
 import { useUiStore } from '@/stores/ui.store'
 import type { Track } from '@/types/media'
 
@@ -56,7 +53,6 @@ export function LibraryPage() {
   const importFolder = useLibraryStore((state) => state.importFolder)
   const refresh = useLibraryStore((state) => state.refresh)
   const removeFolder = useLibraryStore((state) => state.removeFolder)
-  const currentTrack = usePlaybackStore((state) => state.track)
   const density = useUiStore((state) => state.density)
   const setDensity = useUiStore((state) => state.setDensity)
 
@@ -84,7 +80,9 @@ export function LibraryPage() {
   )
 
   const busy = status === 'loading' || scanning
-  const favoriteTracks = filteredTracks.filter((track) => favorites.includes(track.source.path))
+  const favoritePaths = new Set(favorites)
+  const favoriteTracks = filteredTracks.filter(track=>favoritePaths.has(track.source.path))
+  const refreshKey = status + ':' + String(scanning)
 
   return (
     <div className="page library-page">
@@ -166,28 +164,31 @@ export function LibraryPage() {
       {error ? <p className="library-error">{error}</p> : null}
 
       <Tabs.Panel value="songs" className="library-tab-panel">
-        {activeTab === 'songs' && (filteredTracks.length > 0
-          ? <VirtualTrackList tracks={filteredTracks} />
-          : <LibraryEmpty busy={busy} hasFolders={folders.length>0}
-              onImport={()=>void importFolder()}/>)}
+        {activeTab==='songs'&&(!folders.length&&!tracks.length?
+          <LibraryEmpty busy={busy} hasFolders={false}
+            onImport={()=>void importFolder()}/>:
+          <PagedTrackList mode="songs" query={normalizedQuery}
+            fallback={filteredTracks} refreshKey={refreshKey}
+            emptyTitle="No matching songs. Try another search or import more music."/>)}
       </Tabs.Panel>
       <Tabs.Panel value="albums" className="library-tab-panel">
-        {activeTab === 'albums' && <CollectionList groups={albums}
-          currentTrackId={currentTrack?.id} onPlay={group=>
-            void playLibraryTrack(group.tracks[0],group.tracks)}/>}
+        {activeTab==='albums'&&<PagedGroupList mode="albums"
+          query={normalizedQuery} fallback={albums}
+          refreshKey={scanning?1:0}/>}
       </Tabs.Panel>
       <Tabs.Panel value="artists" className="library-tab-panel">
-        {activeTab === 'artists' && <CollectionList groups={artists}
-          currentTrackId={currentTrack?.id} onPlay={group=>
-            void playLibraryTrack(group.tracks[0],group.tracks)}/>}
+        {activeTab==='artists'&&<PagedGroupList mode="artists"
+          query={normalizedQuery} fallback={artists}
+          refreshKey={scanning?1:0}/>}
       </Tabs.Panel>
       <Tabs.Panel value="favorites" className="library-tab-panel">
-        {activeTab === 'favorites' && (favoriteTracks.length
-          ? <VirtualTrackList tracks={favoriteTracks}/>
-          : <div className="library-empty"><strong>No favorite songs yet</strong></div>)}
+        {activeTab==='favorites'&&<PagedTrackList mode="favorites"
+          query={normalizedQuery} fallback={favoriteTracks}
+          refreshKey={refreshKey+':'+favorites.join('|')}
+          emptyTitle="No liked songs yet. Heart a track to see it here."/>}
       </Tabs.Panel>
       <Tabs.Panel value="playlists" className="library-tab-panel">
-        {activeTab === 'playlists' && <PlaylistView/>}
+        {activeTab==='playlists'&&<PlaylistView/>}
       </Tabs.Panel>
       </Tabs.Root>
     </div>
@@ -222,54 +223,6 @@ function LibraryEmpty({
           Add folder
         </Button>
       ) : null}
-    </div>
-  )
-}
-
-function CollectionList({
-  groups,
-  currentTrackId,
-  onPlay,
-}: {
-  groups: TrackGroup[]
-  currentTrackId?: string
-  onPlay: (group: TrackGroup) => void
-}) {
-  if (groups.length === 0) {
-    return (
-      <div className="library-empty">
-        <strong>Nothing here</strong>
-      </div>
-    )
-  }
-
-  return (
-    <div className="library-collection-list" role="tabpanel">
-      {groups.map((group) => {
-        const artwork = group.tracks.find((track) => track.artwork)?.artwork
-        const active = group.tracks.some((track) => track.id === currentTrackId)
-
-        return (
-          <button
-            type="button"
-            className="library-collection-row"
-            data-active={active ? 'true' : 'false'}
-            key={group.key}
-            onClick={() => onPlay(group)}
-          >
-            <Artwork
-              size="sm"
-              src={artwork?.uri}
-              alt={artwork?.alt ?? ''}
-            />
-            <span className="library-collection-row__copy">
-              <strong>{group.title}</strong>
-              <small>{group.subtitle}</small>
-            </span>
-            <span>{group.tracks.length} songs</span>
-          </button>
-        )
-      })}
     </div>
   )
 }
