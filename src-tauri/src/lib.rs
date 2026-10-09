@@ -18,6 +18,8 @@ pub fn run() {
             library::scan_status,
             library::cancel_library_scan,
             library::queries::query_tracks,
+            library::views::query_library_view,
+            library::views::query_library_groups,
             library::queries::search_library,
             library::load_library,
             library::set_track_artwork,
