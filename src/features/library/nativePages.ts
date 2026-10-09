@@ -27,7 +27,7 @@ async function getTracks(request:TracksRequest,offset:number):Promise<NativeTrac
     return invoke<NativeTrackPage>('query_tracks',{offset,limit:PAGE_SIZE})
   }
   return invoke<NativeTrackPage>('query_library_view',{
-    mode,playlistId,label,artist,offset,limit:PAGE_SIZE,
+    mode,playlistId,label,artist,query,offset,limit:PAGE_SIZE,
   })
 }
 
