@@ -21,10 +21,12 @@ export function SettingsPage() {
   const motionPreference = useUiStore((state) => state.motionPreference)
   const theme = useUiStore((state) => state.theme)
   const quickWheelEnabled = useUiStore((state) => state.quickWheelEnabled)
+  const queueDocked = useUiStore((state) => state.queueDocked)
   const setDensity = useUiStore((state) => state.setDensity)
   const setMotionPreference = useUiStore((state) => state.setMotionPreference)
   const setTheme = useUiStore((state) => state.setTheme)
   const setQuickWheelEnabled = useUiStore((state) => state.setQuickWheelEnabled)
+  const setQueueDocked = useUiStore((state) => state.setQueueDocked)
 
   const artSources = useLibraryStore((state) => state.artSources)
   const artworkPool = useLibraryStore((state) => state.artworkPool)
@@ -66,6 +68,16 @@ export function SettingsPage() {
                 ['reduced', 'Reduced'],
               ]}
             />
+          </SettingRow>
+        </div>
+      </section>
+
+      <section className="settings-section">
+        <h2>Workspace</h2>
+        <div className="settings-section__rows">
+          <SettingRow title="Dock queue on wide windows">
+            <SquishSwitch checked={queueDocked} onChange={setQueueDocked}
+              label="Dock playback queue beside the library when there is space" />
           </SettingRow>
         </div>
       </section>

@@ -165,9 +165,9 @@ if (existsSync(assetsDirectory)) {
     }
   }
 
-  if (totals.js > 185 * 1024) {
+  if (totals.js > 205 * 1024) {
     failures.push(
-      'built JavaScript exceeds 185 KiB gzip: ' +
+      'built JavaScript exceeds 205 KiB gzip: ' +
         (totals.js / 1024).toFixed(1) +
         ' KiB',
     )

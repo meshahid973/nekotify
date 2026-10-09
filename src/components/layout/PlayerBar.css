@@ -1,5 +1,5 @@
 .player-bar {
-  position:relative; z-index:20; grid-column:1/-1; grid-row:2;
+  position:relative; z-index:20; grid-column:1; grid-row:2;
   display:grid; grid-template-columns:minmax(180px,1fr) minmax(310px,1.35fr) minmax(160px,1fr);
   gap:18px; align-items:center; min-width:0;
   padding:12px clamp(18px,2vw,34px);
