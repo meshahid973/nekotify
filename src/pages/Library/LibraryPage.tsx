@@ -11,14 +11,12 @@ import {
   X,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { motion } from 'motion/react'
-import type { KeyboardEvent } from 'react'
+import { Tabs } from '@base-ui/react/tabs'
 import { useSearchParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
 
 import { Artwork } from '@/components/artwork/Artwork'
 import { PageHeader } from '@/components/layout/PageHeader'
-import { useActiveIndicator } from '@/components/primitives/useActiveIndicator'
 import { Button } from '@/components/primitives/Button'
 import { playLibraryTrack } from '@/features/library/playLibraryTrack'
 import { PlaylistView } from '@/features/collections/PlaylistView'
@@ -48,21 +46,6 @@ export function LibraryPage() {
     view === 'playlists' ? view : 'songs'
   const setActiveTab = (tab: LibraryTab) => setParams(tab === 'songs' ? {} : { view: tab })
   const [query, setQuery] = useState('')
-  const { containerRef: tabsRef, indicatorRef: tabIndicatorRef, indicatorStyle: tabIndicatorStyle } =
-    useActiveIndicator<HTMLDivElement>(activeTab)
-
-  const onTabKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return
-    const tabs = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
-    const index = tabs.indexOf(document.activeElement as HTMLButtonElement)
-    if (index < 0) return
-    event.preventDefault()
-    const nextIndex = event.key === 'Home' ? 0
-      : event.key === 'End' ? tabs.length - 1
-        : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length
-    tabs[nextIndex]?.focus()
-    tabs[nextIndex]?.click()
-  }
   const tracks = useLibraryStore((state) => state.tracks)
   const favorites = useCollectionsStore((state) => state.favorites)
   const folders = useLibraryStore((state) => state.folders)
@@ -169,114 +152,53 @@ export function LibraryPage() {
         </button>
       </div>
 
-      <div className="library-tabs" role="tablist" aria-label="Library views"
-        ref={tabsRef} onKeyDown={onTabKeyDown}>
-        <motion.span className="library-tabs__selection" ref={tabIndicatorRef}
-          style={tabIndicatorStyle} aria-hidden="true"/>
-        <LibraryTabButton
-          active={activeTab === 'songs'}
-          icon={<Music size={14} />}
-          label="Songs"
-          onClick={() => setActiveTab('songs')}
-        />
-        <LibraryTabButton
-          active={activeTab === 'albums'}
-          icon={<Disc3 size={14} />}
-          label="Albums"
-          onClick={() => setActiveTab('albums')}
-        />
-        <LibraryTabButton
-          active={activeTab === 'artists'}
-          icon={<Mic2 size={14} />}
-          label="Artists"
-          onClick={() => setActiveTab('artists')}
-        />
-        <LibraryTabButton
-          active={activeTab === 'favorites'}
-          icon={<Heart size={14} />}
-          label="Favorites"
-          onClick={() => setActiveTab('favorites')}
-        />
-        <LibraryTabButton
-          active={activeTab === 'playlists'}
-          icon={<ListMusic size={14} />}
-          label="Playlists"
-          onClick={() => setActiveTab('playlists')}
-        />
-      </div>
-
+      <Tabs.Root value={activeTab} onValueChange={(value)=>setActiveTab(value as LibraryTab)}
+        className="library-tabs-root">
+        <Tabs.List className="library-tabs" aria-label="Library views" activateOnFocus>
+          <LibraryTabButton value="songs" icon={<Music size={14}/>} label="Songs"/>
+          <LibraryTabButton value="albums" icon={<Disc3 size={14}/>} label="Albums"/>
+          <LibraryTabButton value="artists" icon={<Mic2 size={14}/>} label="Artists"/>
+          <LibraryTabButton value="favorites" icon={<Heart size={14}/>} label="Favorites"/>
+          <LibraryTabButton value="playlists" icon={<ListMusic size={14}/>} label="Playlists"/>
+          <Tabs.Indicator className="library-tabs__selection" />
+        </Tabs.List>
       {error ? <p className="library-error">{error}</p> : null}
 
-      {activeTab === 'songs' ? (
-        <div className="library-track-list" role="tabpanel">
-          {filteredTracks.length > 0 ? (
-            <VirtualTrackList tracks={filteredTracks} />
-          ) : (
-            <LibraryEmpty
-              busy={busy}
-              hasFolders={folders.length > 0}
-              onImport={() => void importFolder()}
-            />
-          )}
-        </div>
-      ) : null}
-
-      {activeTab === 'albums' ? (
-        <CollectionList
-          groups={albums}
-          currentTrackId={currentTrack?.id}
-          onPlay={(group) =>
-            void playLibraryTrack(group.tracks[0], group.tracks)
-          }
-        />
-      ) : null}
-
-      {activeTab === 'artists' ? (
-        <CollectionList
-          groups={artists}
-          currentTrackId={currentTrack?.id}
-          onPlay={(group) =>
-            void playLibraryTrack(group.tracks[0], group.tracks)
-          }
-        />
-      ) : null}
-      {activeTab === 'favorites' ? (
-        <div className="library-track-list" role="tabpanel">
-          {favoriteTracks.length ? <VirtualTrackList tracks={favoriteTracks} /> :
-            <div className="library-empty"><strong>No favorite songs yet</strong></div>}
-        </div>
-      ) : null}
-
-      {activeTab === 'playlists' ? <PlaylistView /> : null}
+      <Tabs.Panel value="songs" className="library-tab-panel">
+        {activeTab === 'songs' && (filteredTracks.length > 0
+          ? <VirtualTrackList tracks={filteredTracks} />
+          : <LibraryEmpty busy={busy} hasFolders={folders.length>0}
+              onImport={()=>void importFolder()}/>)}
+      </Tabs.Panel>
+      <Tabs.Panel value="albums" className="library-tab-panel">
+        {activeTab === 'albums' && <CollectionList groups={albums}
+          currentTrackId={currentTrack?.id} onPlay={group=>
+            void playLibraryTrack(group.tracks[0],group.tracks)}/>}
+      </Tabs.Panel>
+      <Tabs.Panel value="artists" className="library-tab-panel">
+        {activeTab === 'artists' && <CollectionList groups={artists}
+          currentTrackId={currentTrack?.id} onPlay={group=>
+            void playLibraryTrack(group.tracks[0],group.tracks)}/>}
+      </Tabs.Panel>
+      <Tabs.Panel value="favorites" className="library-tab-panel">
+        {activeTab === 'favorites' && (favoriteTracks.length
+          ? <VirtualTrackList tracks={favoriteTracks}/>
+          : <div className="library-empty"><strong>No favorite songs yet</strong></div>)}
+      </Tabs.Panel>
+      <Tabs.Panel value="playlists" className="library-tab-panel">
+        {activeTab === 'playlists' && <PlaylistView/>}
+      </Tabs.Panel>
+      </Tabs.Root>
     </div>
   )
 }
 
-function LibraryTabButton({
-  active,
-  icon,
-  label,
-  onClick,
-}: {
-  active: boolean
-  icon: ReactNode
-  label: string
-  onClick: () => void
+function LibraryTabButton({value,icon,label}:{
+  value:LibraryTab;icon:ReactNode;label:string
 }) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={active}
-      data-indicator-active={active}
-      tabIndex={active ? 0 : -1}
-      className={active ? 'library-tab library-tab--active' : 'library-tab'}
-      onClick={onClick}
-    >
-      {icon}
-      {label}
-    </button>
-  )
+  return <Tabs.Tab value={value} className="library-tab">
+    {icon}{label}
+  </Tabs.Tab>
 }
 
 function LibraryEmpty({
