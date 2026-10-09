@@ -1,14 +1,26 @@
-use super::{LibraryTrack};
 use super::queries::{TrackPage, track_from_row, permit_track};
 use crate::database;
 use rusqlite::{params_from_iter, types::Value};
-use serde::Serialize;
+use serde::{Deserialize,Serialize};
 use std::path::Path;
 use tauri::{AppHandle, Manager};
 
-fn view_tracks(app:&AppHandle,mode:&str,playlist_id:Option<i64>,
-    label:Option<&str>,artist:Option<&str>,query:Option<&str>,
+#[derive(Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct ViewRequest{
+    mode:String,
+    playlist_id:Option<i64>,
+    label:Option<String>,
+    artist:Option<String>,
+    query:Option<String>,
+}
+fn view_tracks(app:&AppHandle,request:&ViewRequest,
     offset:u32,limit:u32)->Result<TrackPage,String>{
+    let mode=request.mode.as_str();
+    let playlist_id=request.playlist_id;
+    let label=request.label.as_deref();
+    let artist=request.artist.as_deref();
+    let query=request.query.as_deref();
     let conn=database::open(app)?;
     let offset=offset.min(1_000_000);
     let limit=limit.clamp(1,100);
@@ -71,11 +83,9 @@ fn view_tracks(app:&AppHandle,mode:&str,playlist_id:Option<i64>,
 }
 
 #[tauri::command]
-pub async fn query_library_view(app:AppHandle,mode:String,playlist_id:Option<i64>,
-    label:Option<String>,artist:Option<String>,query:Option<String>,offset:u32,limit:u32)
-    ->Result<TrackPage,String>{
-    tauri::async_runtime::spawn_blocking(move||view_tracks(&app,&mode,playlist_id,
-      label.as_deref(),artist.as_deref(),query.as_deref(),offset,limit))
+pub async fn query_library_view(app:AppHandle,request:ViewRequest,
+    offset:u32,limit:u32)->Result<TrackPage,String>{
+    tauri::async_runtime::spawn_blocking(move||view_tracks(&app,&request,offset,limit))
       .await.map_err(|e|format!("Library view worker failed: {e}"))?
 }
 
