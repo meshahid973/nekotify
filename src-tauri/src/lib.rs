@@ -15,6 +15,8 @@ pub fn run() {
             database::remove_from_playlist,
             database::toggle_favorite,
             library::cached_library,
+            library::query_tracks,
+            library::search_library,
             library::load_library,
             library::set_track_artwork,
             library::import_music_folder,

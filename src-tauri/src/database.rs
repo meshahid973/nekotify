@@ -73,6 +73,29 @@ pub fn open(app: &AppHandle) -> Result<Connection, String> {
          );",
     )
     .map_err(|error| format!("Cannot initialize library database: {error}"))?;
+    // Maintain the native full-text index with the metadata cache. The index is
+    // generated from existing tracks once and subsequently updated by triggers.
+    conn.execute_batch(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
+             path UNINDEXED, title, artist, album,
+             tokenize='unicode61 remove_diacritics 2'
+         );
+         CREATE TRIGGER IF NOT EXISTS idx_fts_insert AFTER INSERT ON library_tracks BEGIN
+           INSERT INTO tracks_fts(path,title,artist,album)
+           VALUES(new.path,new.title,new.artist,COALESCE(new.album,''));
+         END;
+         CREATE TRIGGER IF NOT EXISTS idx_fts_delete AFTER DELETE ON library_tracks BEGIN
+           DELETE FROM tracks_fts WHERE path=old.path;
+         END;
+         CREATE TRIGGER IF NOT EXISTS idx_fts_update AFTER UPDATE ON library_tracks BEGIN
+           DELETE FROM tracks_fts WHERE path=old.path;
+           INSERT INTO tracks_fts(path,title,artist,album)
+           VALUES(new.path,new.title,new.artist,COALESCE(new.album,''));
+         END;
+         INSERT INTO tracks_fts(path,title,artist,album)
+           SELECT path,title,artist,COALESCE(album,'') FROM library_tracks
+           WHERE NOT EXISTS (SELECT 1 FROM tracks_fts LIMIT 1);"
+    ).map_err(|error| format!("Cannot initialize search index: {error}"))?;
     // The existing path keys stay stable so favorites, playlists and art assignments
     // survive the transition to a query-driven library. Never mutate song files.
     let version: i64 = conn.pragma_query_value(None, "user_version", |row| row.get(0))
