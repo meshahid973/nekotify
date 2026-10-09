@@ -27,6 +27,7 @@ export function SettingsPage() {
   const setTheme = useUiStore((state) => state.setTheme)
   const setQuickWheelEnabled = useUiStore((state) => state.setQuickWheelEnabled)
   const setQueueDocked = useUiStore((state) => state.setQueueDocked)
+  const setShortcutsOpen=useUiStore(s=>s.setShortcutsOpen)
 
   const artSources = useLibraryStore((state) => state.artSources)
   const artworkPool = useLibraryStore((state) => state.artworkPool)
@@ -75,6 +76,10 @@ export function SettingsPage() {
       <section className="settings-section">
         <h2>Workspace</h2>
         <div className="settings-section__rows">
+          <SettingRow title="Keyboard shortcuts">
+            <Button variant="secondary" size="sm"
+              onClick={()=>setShortcutsOpen(true)}>View shortcuts</Button>
+          </SettingRow>
           <SettingRow title="Dock queue on wide windows">
             <SquishSwitch checked={queueDocked} onChange={setQueueDocked}
               label="Dock playback queue beside the library when there is space" />

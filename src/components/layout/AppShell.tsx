@@ -7,6 +7,7 @@ import { PlayerBar } from '@/components/layout/PlayerBar'
 import { CommandPalette } from '@/components/overlays/CommandPalette'
 import { ToastViewport } from '@/components/overlays/ToastViewport'
 import { TrackDetailsDialog } from '@/components/overlays/TrackDetailsDialog'
+import { ShortcutHelp } from '@/components/overlays/ShortcutHelp'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { useMediaQuery } from '@/components/layout/useMediaQuery'
 import { AmbienceBackdrop } from '@/components/layout/AmbienceBackdrop'
@@ -41,6 +42,8 @@ export function AppShell() {
   const queuePercent = useUiStore((state) => state.queuePercent)
   const queueDocked = useUiStore((state) => state.queueDocked)
   const setSidebarCollapsed = useUiStore((state) => state.setSidebarCollapsed)
+  const setShortcutsOpen=useUiStore(s=>s.setShortcutsOpen)
+  const shortcutsOpen=useUiStore(s=>s.shortcutsOpen)
   const isNarrow = useMediaQuery('(max-width: 1000px)')
   const canDockQueue = useMediaQuery('(min-width: 1350px)')
   const activePanel = usePlayerPanelsStore((state) => state.openPanel)
@@ -78,7 +81,12 @@ export function AppShell() {
         setCommandOpen((value)=>!value)
         return
       }
-      if (commandOpen || event.key === 'Escape') return
+      if(modifier&&(event.code==='Slash'||event.key==='/')){
+        event.preventDefault()
+        setShortcutsOpen(!useUiStore.getState().shortcutsOpen)
+        return
+      }
+      if (commandOpen || shortcutsOpen || event.key === 'Escape') return
       if (modifier && event.key.toLowerCase() === 'b') {
         event.preventDefault()
         setSidebarCollapsed(!useUiStore.getState().sidebarCollapsed)
@@ -102,7 +110,7 @@ export function AppShell() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [navigate,commandOpen,setSidebarCollapsed])
+  }, [navigate,commandOpen,shortcutsOpen,setSidebarCollapsed,setShortcutsOpen])
 
   return (
     <Tooltip.Provider delay={520}><div className="app-shell" data-theme={theme} data-has-ambience={artwork ? 'true' : 'false'}>
@@ -144,6 +152,7 @@ export function AppShell() {
       <PlayerPanels dockedQueue={isDockedQueue} />
       <CoverPicker />
       <TrackDetailsDialog />
+      <ShortcutHelp />
       <CommandPalette open={commandOpen} onClose={()=>setCommandOpen(false)} />
       <ToastViewport />
       <MediaSessionBridge />
