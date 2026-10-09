@@ -92,3 +92,21 @@ export function moveQueueCursor(
 
   return currentIndex
 }
+
+/** Insert into the active queue without changing the currently playing track.
+ * Previous navigation indices continue pointing at their original songs. */
+export function insertQueueItem<T>(
+  items:T[],index:number,item:T,currentIndex:number,
+  history:number[],visited:number[],
+){
+  const at=Math.max(0,Math.min(items.length,Math.trunc(index)))
+  const next=[...items]
+  next.splice(at,0,item)
+  const shift=(i:number)=>i>=at?i+1:i
+  return {
+    items:next,
+    currentIndex:currentIndex<0?-1:shift(currentIndex),
+    history:history.map(shift),
+    visited:visited.map(shift),
+  }
+}

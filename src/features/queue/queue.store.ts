@@ -2,6 +2,7 @@ import { create } from 'zustand'
 
 import {
   insertTrackNext,
+  insertQueueItem,
   moveQueueCursor,
   moveQueueItem,
   normalizeQueueIndex,
@@ -56,18 +57,9 @@ export const useQueueStore = create<QueueState>((set, get) => ({
   },
 
   enqueue: (track) => set((state) => ({ items: [...state.items, track] })),
-  insertAt: (index,track) => set(state=>{
-    const at=Math.max(0,Math.min(state.items.length,Math.trunc(index)))
-    const items=[...state.items]
-    items.splice(at,0,track)
-    const shift=(i:number)=>i>=at?i+1:i
-    return {
-      items,
-      currentIndex:state.currentIndex<0?-1:shift(state.currentIndex),
-      history:state.history.map(shift),
-      visited:state.visited.map(shift),
-    }
-  }),
+  insertAt:(index,track)=>set(state=>insertQueueItem(
+    state.items,index,track,state.currentIndex,state.history,state.visited,
+  )),
 
   playNext: (track) =>
     set((state) => ({
