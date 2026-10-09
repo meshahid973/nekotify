@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Tooltip } from '@base-ui/react/tooltip'
 import { Group, Panel, Separator, usePanelRef } from 'react-resizable-panels'
 import { Outlet, useNavigate } from 'react-router-dom'
 
@@ -103,7 +104,7 @@ export function AppShell() {
   }, [navigate,commandOpen,setSidebarCollapsed])
 
   return (
-    <div className="app-shell" data-theme={theme} data-has-ambience={artwork ? 'true' : 'false'}>
+    <Tooltip.Provider delay={520}><div className="app-shell" data-theme={theme} data-has-ambience={artwork ? 'true' : 'false'}>
       <AmbienceBackdrop artwork={artwork} active={theme === 'ambience'} />
       <Group className="app-shell__workspace" orientation="horizontal" id="nekotify-workspace"
         onLayoutChanged={(layout, details) => {
@@ -145,6 +146,6 @@ export function AppShell() {
       <ToastViewport />
       <MediaSessionBridge />
       <PlayerBar />
-    </div>
+    </div></Tooltip.Provider>
   )
 }

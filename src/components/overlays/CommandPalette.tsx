@@ -1,8 +1,8 @@
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
+import { Dialog } from '@base-ui/react/dialog'
 import { Heart, Library, ListMusic, Moon, Music2, Search, Settings } from 'lucide-react'
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent as ReactKeyEvent } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { playLibraryTrack } from '@/features/library/playLibraryTrack'
 import { useLibraryStore } from '@/features/library/library.store'
@@ -26,15 +26,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
   const deferredQuery = useDeferredValue(query)
   const [selected, setSelected] = useState(0)
   const input = useRef<HTMLInputElement>(null)
-  const panel = useRef<HTMLDivElement>(null)
-  const lastFocus = useRef<HTMLElement | null>(null)
-
-  useEffect(() => {
-    if (!open) return
-    lastFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
-    input.current?.focus()
-    return () => lastFocus.current?.focus()
-  }, [open])
+  useEffect(() => { if(open) input.current?.focus() },[open])
 
   const commands = useMemo(() => {
     const navigateTo = (path: string) => () => navigate(path)
@@ -80,29 +72,17 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
     onClose()
   }
   const onKeyDown = (event: ReactKeyEvent<HTMLDivElement>) => {
-    if (event.key==='Escape') {event.preventDefault();onClose();return}
     if (event.key==='ArrowDown') {event.preventDefault();setSelected((v)=>Math.min(filtered.length-1,v+1));return}
     if (event.key==='ArrowUp') {event.preventDefault();setSelected((v)=>Math.max(0,v-1));return}
     if (event.key==='Enter') {event.preventDefault();choose(safeIndex);return}
-    if (event.key==='Tab' && panel.current) {
-      // Palette has one interactive field and optional command buttons.
-      const els=Array.from(panel.current.querySelectorAll<HTMLElement>('input, button:not(:disabled)'))
-      const index=els.indexOf(document.activeElement as HTMLElement)
-      if ((event.shiftKey && index===0)||(!event.shiftKey && index===els.length-1)) {
-        event.preventDefault();(event.shiftKey?els[els.length-1]:els[0])?.focus()
-      }
-    }
+
   }
-  return createPortal(
-    <AnimatePresence>
-      {open ? <div className="nk-overlay" onKeyDown={onKeyDown}>
-        <motion.button className="nk-overlay__shade" type="button"
-          aria-label="Close command search" onClick={onClose}
-          initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} />
-        <motion.div ref={panel} role="dialog" aria-modal="true" aria-label="Search and commands"
-          className="nk-command" initial={{opacity:0,y:reduced?0:-9,scale:reduced?1:.97}}
-          animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:reduced?0:-7,scale:reduced?1:.98}}
-          transition={reduced?{duration:.09}:{type:'spring',stiffness:560,damping:40}}>
+  return <Dialog.Root open={open} onOpenChange={(next)=>{if(!next)onClose()}}>
+    <Dialog.Portal>
+      <div className="nk-overlay" onKeyDown={onKeyDown}>
+        <Dialog.Backdrop className="nk-overlay__shade"/>
+        <Dialog.Popup className="nk-command">
+          <Dialog.Title className="nk-command__accessible-title">Search and commands</Dialog.Title>
           <div className="nk-command__input"><Search size={18}/>
             <input ref={input} aria-label="Search commands and songs"
               role="combobox" aria-expanded="true" aria-controls="nk-command-results"
@@ -124,7 +104,8 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
                 <span>{item.label}</span><small>{item.id.startsWith('track:')?'Song':''}</small>
               </button>)}
           </div>
-        </motion.div>
-      </div>:null}
-    </AnimatePresence>,document.body)
+        </Dialog.Popup>
+      </div>
+    </Dialog.Portal>
+  </Dialog.Root>
 }

@@ -14,3 +14,13 @@
 .cover-picker__tile { position:relative; min-width:0; }
 .cover-picker__tile > button:first-child { width:100%; }
 .cover-picker__tile .cover-picker__preview { position:absolute; right:5px; bottom:5px; display:grid; place-items:center; width:30px; height:30px; background:#252525e8; color:white; border:1px solid #777; border-radius:7px; }
+
+.nk-viewer { pointer-events:none; }
+.nk-viewer__backdrop {pointer-events:auto;}
+.nk-viewer__panel {pointer-events:auto;outline:none;}
+.nk-viewer__panel[data-starting-style],
+.nk-viewer__panel[data-ending-style] {opacity:0;transform:scale(.98);}
+.nk-viewer__panel {transition:opacity .16s ease,transform .16s ease;}
+@media(prefers-reduced-motion:reduce){
+  .nk-viewer__panel {transition:none;}
+}

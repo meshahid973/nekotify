@@ -40,3 +40,12 @@
 }
 @keyframes nk-tip-in { from { opacity:0; translate:0 3px; } to { opacity:1; translate:0 0; } }
 @media(prefers-reduced-motion:reduce){.icon-button[data-tooltip]::before{animation:none}}
+
+/* Base UI tooltips replace CSS-generated hover labels. */
+.icon-button[data-tooltip]:hover::before,.icon-button[data-tooltip]:focus-visible::before{content:none;display:none;}
+.nk-tooltip-positioner { z-index:170; pointer-events:none;}
+.nk-tooltip {padding:6px 9px;border-radius:7px;border:1px solid #444;
+  background:#262626;color:#fff;font-size:.71rem;font-weight:550;
+  line-height:1.2;max-width:240px;box-shadow:0 5px 18px #0009;
+  transform-origin:var(--transform-origin);}
+.nk-tooltip[data-starting-style],.nk-tooltip[data-ending-style]{opacity:0;transform:scale(.96);}
