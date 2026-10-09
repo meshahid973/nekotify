@@ -72,28 +72,33 @@ pub async fn cached_library(app: AppHandle) -> Result<LibrarySnapshot, String> {
         let cache_dir = artwork_cache_dir(&app)?;
         fs::create_dir_all(&cache_dir)
             .map_err(|error| format!("Could not create artwork cache: {error}"))?;
-        app.asset_protocol_scope().allow_directory(&cache_dir, true)
+        app.asset_protocol_scope()
+            .allow_directory(&cache_dir, true)
             .map_err(|error| format!("Could not expose artwork cache: {error}"))?;
         let conn = database::open(&app)?;
         let mut tracks = Vec::new();
-        let mut query = conn.prepare(
-            "SELECT t.path,t.title,t.artist,t.album,t.duration,
+        let mut query = conn
+            .prepare(
+                "SELECT t.path,t.title,t.artist,t.album,t.duration,
              COALESCE(a.artwork_path,t.artwork_path)
              FROM library_tracks t LEFT JOIN artwork_assignments a ON a.track_path=t.path
-             ORDER BY t.artist COLLATE NOCASE,t.album COLLATE NOCASE,t.title COLLATE NOCASE,t.path"
-        ).map_err(|error| error.to_string())?;
-        let rows = query.query_map([], |row| {
-            let path: String = row.get(0)?;
-            Ok(LibraryTrack {
-                id: format!("{:016x}", fnv1a(path.as_bytes())),
-                path,
-                title: row.get(1)?,
-                artist: row.get(2)?,
-                album: row.get(3)?,
-                duration: row.get(4)?,
-                artwork_path: row.get(5)?,
+             ORDER BY t.artist COLLATE NOCASE,t.album COLLATE NOCASE,t.title COLLATE NOCASE,t.path",
+            )
+            .map_err(|error| error.to_string())?;
+        let rows = query
+            .query_map([], |row| {
+                let path: String = row.get(0)?;
+                Ok(LibraryTrack {
+                    id: format!("{:016x}", fnv1a(path.as_bytes())),
+                    path,
+                    title: row.get(1)?,
+                    artist: row.get(2)?,
+                    album: row.get(3)?,
+                    duration: row.get(4)?,
+                    artwork_path: row.get(5)?,
+                })
             })
-        }).map_err(|error| error.to_string())?;
+            .map_err(|error| error.to_string())?;
         for item in rows {
             let mut track = item.map_err(|error| error.to_string())?;
             // Permissions are granted for known files only, never an entire disk.
@@ -102,20 +107,26 @@ pub async fn cached_library(app: AppHandle) -> Result<LibrarySnapshot, String> {
                 let _ = app.asset_protocol_scope().allow_file(path);
             }
             track.artwork_path = track.artwork_path.filter(|art| {
-                Path::new(art).is_file()
-                    && app.asset_protocol_scope().allow_file(art).is_ok()
+                Path::new(art).is_file() && app.asset_protocol_scope().allow_file(art).is_ok()
             });
             tracks.push(track);
         }
         Ok(LibrarySnapshot {
-            folders: stored.folders.iter().map(|f| LibraryFolder {
-                path: f.clone(), name: folder_name(Path::new(f)),
-            }).collect(),
+            folders: stored
+                .folders
+                .iter()
+                .map(|f| LibraryFolder {
+                    path: f.clone(),
+                    name: folder_name(Path::new(f)),
+                })
+                .collect(),
             art_sources: Vec::new(),
             artwork_pool: Vec::new(),
             tracks,
         })
-    }).await.map_err(|error| format!("Cached library task failed: {error}"))?
+    })
+    .await
+    .map_err(|error| format!("Cached library task failed: {error}"))?
 }
 
 #[tauri::command]
@@ -345,29 +356,37 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
     } else {
         // Keep cached tracks from unavailable roots in the visible snapshot.
         // No destructive pruning is allowed from a partial scan.
-        let mut query = transaction.prepare(
-            "SELECT path,title,artist,album,duration,
+        let mut query = transaction
+            .prepare(
+                "SELECT path,title,artist,album,duration,
              COALESCE((SELECT artwork_path FROM artwork_assignments WHERE track_path=t.path),
-             artwork_path) FROM library_tracks t"
-        ).map_err(|error| error.to_string())?;
-        let cached = query.query_map([], |row| {
-            let path: String = row.get(0)?;
-            Ok(LibraryTrack {
-                id: format!("{:016x}", fnv1a(path.as_bytes())),
-                path, title: row.get(1)?, artist: row.get(2)?,
-                album: row.get(3)?, duration: row.get(4)?,
-                artwork_path: row.get(5)?,
+             artwork_path) FROM library_tracks t",
+            )
+            .map_err(|error| error.to_string())?;
+        let cached = query
+            .query_map([], |row| {
+                let path: String = row.get(0)?;
+                Ok(LibraryTrack {
+                    id: format!("{:016x}", fnv1a(path.as_bytes())),
+                    path,
+                    title: row.get(1)?,
+                    artist: row.get(2)?,
+                    album: row.get(3)?,
+                    duration: row.get(4)?,
+                    artwork_path: row.get(5)?,
+                })
             })
-        }).map_err(|error| error.to_string())?;
+            .map_err(|error| error.to_string())?;
         for item in cached {
             let mut track = item.map_err(|error| error.to_string())?;
-            if !seen_track_ids.insert(track.id.clone()) { continue; }
+            if !seen_track_ids.insert(track.id.clone()) {
+                continue;
+            }
             if Path::new(&track.path).is_file() {
                 let _ = app.asset_protocol_scope().allow_file(&track.path);
             }
             track.artwork_path = track.artwork_path.filter(|art| {
-                Path::new(art).is_file() &&
-                    app.asset_protocol_scope().allow_file(art).is_ok()
+                Path::new(art).is_file() && app.asset_protocol_scope().allow_file(art).is_ok()
             });
             tracks.push(track);
         }
@@ -495,7 +514,9 @@ fn scan_music_directory(
                 Some((modified.as_millis() as i64, meta.len() as i64))
             });
 
-            if file_info.is_none() { complete = false; }
+            if file_info.is_none() {
+                complete = false;
+            }
             let cached = file_info.and_then(|(modified, size)| {
                 database::lookup(connection, &path_string, modified, size)
             });
@@ -529,7 +550,8 @@ fn scan_music_directory(
                             duration: fresh.duration,
                             artwork_path: fresh.artwork_path.clone(),
                         },
-                    ).is_err()
+                    )
+                    .is_err()
                 {
                     complete = false;
                 }
