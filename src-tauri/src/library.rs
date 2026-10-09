@@ -516,8 +516,8 @@ fn scan_music_directory(
                 }
             } else {
                 let fresh = read_track(app, cache_dir, &path);
-                if let Some((modified, size)) = file_info {
-                    if database::save(
+                if let Some((modified, size)) = file_info
+                    && database::save(
                         connection,
                         &path_string,
                         modified,
@@ -529,9 +529,9 @@ fn scan_music_directory(
                             duration: fresh.duration,
                             artwork_path: fresh.artwork_path.clone(),
                         },
-                    ).is_err() {
-                        complete = false;
-                    }
+                    ).is_err()
+                {
+                    complete = false;
                 }
                 fresh
             };
