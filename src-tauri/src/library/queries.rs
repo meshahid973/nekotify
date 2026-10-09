@@ -23,20 +23,24 @@ fn fts_prefix_terms(words: &str) -> String {
         .join(" ")
 }
 
-pub(super) fn track_from_row(row:&rusqlite::Row<'_>)->rusqlite::Result<LibraryTrack>{
-    let path:String=row.get(0)?;
-    Ok(LibraryTrack{
-        id:format!("{:016x}",fnv1a(path.as_bytes())),
-        path,title:row.get(1)?,artist:row.get(2)?,
-        album:row.get(3)?,duration:row.get(4)?,artwork_path:row.get(5)?,
+pub(super) fn track_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<LibraryTrack> {
+    let path: String = row.get(0)?;
+    Ok(LibraryTrack {
+        id: format!("{:016x}", fnv1a(path.as_bytes())),
+        path,
+        title: row.get(1)?,
+        artist: row.get(2)?,
+        album: row.get(3)?,
+        duration: row.get(4)?,
+        artwork_path: row.get(5)?,
     })
 }
-pub(super) fn permit_track(app:&AppHandle,mut track:LibraryTrack)->LibraryTrack{
-    if Path::new(&track.path).is_file(){
-        let _=app.asset_protocol_scope().allow_file(&track.path);
+pub(super) fn permit_track(app: &AppHandle, mut track: LibraryTrack) -> LibraryTrack {
+    if Path::new(&track.path).is_file() {
+        let _ = app.asset_protocol_scope().allow_file(&track.path);
     }
-    track.artwork_path=track.artwork_path.filter(|art|{
-        Path::new(art).is_file()&&app.asset_protocol_scope().allow_file(art).is_ok()
+    track.artwork_path = track.artwork_path.filter(|art| {
+        Path::new(art).is_file() && app.asset_protocol_scope().allow_file(art).is_ok()
     });
     track
 }

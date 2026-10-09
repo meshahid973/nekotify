@@ -8,22 +8,6 @@ concurrency:
   group: native-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  rustfmt-phase8:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-      - name: Collect rustfmt output (temporary)
-        run: |
-          cargo fmt --manifest-path src-tauri/Cargo.toml
-          for file in src-tauri/src/database.rs src-tauri/src/lib.rs src-tauri/src/library/queries.rs src-tauri/src/library/views.rs; do
-            echo "BEGIN_PHASE8_FMT|$file"
-            base64 -w 0 "$file" | fold -w 4000
-            echo "END_PHASE8_FMT"
-          done
   check:
     runs-on: windows-latest
     timeout-minutes: 25
