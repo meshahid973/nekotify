@@ -1,6 +1,7 @@
 use rusqlite::{Connection, OptionalExtension, params};
+use lofty::prelude::*;
 use serde::Serialize;
-use std::{collections::HashSet, fs, path::PathBuf, sync::Mutex, time::Duration};
+use std::{collections::HashSet, fs, path::PathBuf, sync::Mutex, time::{Duration,UNIX_EPOCH}};
 use tauri::{AppHandle, Manager};
 
 // Schema DDL and FTS backfill run once per process instead of on every query.
@@ -70,6 +71,10 @@ pub fn open(app: &AppHandle) -> Result<Connection, String> {
                track_path TEXT NOT NULL, position INTEGER NOT NULL,
                PRIMARY KEY (playlist_id,track_path)
              );
+             CREATE TABLE IF NOT EXISTS metadata_overrides (
+               path TEXT PRIMARY KEY,
+               title TEXT NOT NULL, artist TEXT NOT NULL, album TEXT
+             );
              CREATE TABLE IF NOT EXISTS artwork_assignments (
                track_path TEXT PRIMARY KEY, artwork_path TEXT NOT NULL
              );
@@ -109,8 +114,8 @@ pub fn open(app: &AppHandle) -> Result<Connection, String> {
         let version: i64 = conn
             .pragma_query_value(None, "user_version", |row| row.get(0))
             .map_err(|error| format!("Cannot read library schema version: {error}"))?;
-        if version < 2 {
-            conn.pragma_update(None, "user_version", 2_i64)
+        if version < 3 {
+            conn.pragma_update(None, "user_version", 3_i64)
                 .map_err(|error| format!("Cannot record library schema version: {error}"))?;
         }
         *initialized = true;
@@ -150,6 +155,14 @@ pub fn save(
     size: i64,
     track: &CachedMetadata,
 ) -> Result<(), String> {
+    let corrected: Option<(String,String,Option<String>)> = conn.query_row(
+        "SELECT title,artist,album FROM metadata_overrides WHERE path=?1",
+        params![path],
+        |row| Ok((row.get(0)?,row.get(1)?,row.get(2)?)),
+    ).optional().map_err(|e|format!("Cannot read track overrides: {e}"))?;
+    let (title,artist,album)=corrected.unwrap_or_else(||(
+        track.title.clone(),track.artist.clone(),track.album.clone()
+    ));
     conn.execute(
         "INSERT INTO library_tracks
          (path, modified_ms, size, title, artist, album, duration, artwork_path)
@@ -162,9 +175,9 @@ pub fn save(
             path,
             modified_ms,
             size,
-            track.title,
-            track.artist,
-            track.album,
+            title,
+            artist,
+            album,
             track.duration,
             track.artwork_path,
         ],
@@ -383,4 +396,75 @@ pub async fn record_listen(app: AppHandle, path: String) -> Result<Vec<String>, 
     })
     .await
     .map_err(|error| error.to_string())?
+}
+
+
+#[derive(Serialize)]
+#[serde(rename_all="camelCase")]
+pub struct TrackFileInfo {
+    size_bytes:u64,
+    modified_ms:Option<u64>,
+    extension:String,
+    embedded_title:Option<String>,
+    embedded_artist:Option<String>,
+    embedded_album:Option<String>,
+}
+
+#[tauri::command]
+pub async fn get_track_file_info(app:AppHandle,path:String)->Result<TrackFileInfo,String>{
+    tauri::async_runtime::spawn_blocking(move||{
+        let conn=open(&app)?;
+        let exists:i64=conn.query_row(
+            "SELECT EXISTS(SELECT 1 FROM library_tracks WHERE path=?1)",
+            params![path],|row|row.get(0)).map_err(|e|e.to_string())?;
+        if exists==0{return Err("Track is not in your library".into())}
+        let file=std::path::Path::new(&path);
+        let info=std::fs::metadata(file).map_err(|e|format!("File is unavailable: {e}"))?;
+        let modified_ms=info.modified().ok().and_then(|time|
+            time.duration_since(UNIX_EPOCH).ok()).map(|v|v.as_millis() as u64);
+        let extension=file.extension().and_then(|v|v.to_str())
+            .unwrap_or("audio").to_ascii_uppercase();
+        let tagged=lofty::read_from_path(file).ok();
+        let tag=tagged.as_ref().and_then(|file|
+            file.primary_tag().or_else(||file.first_tag()));
+        Ok(TrackFileInfo{
+            size_bytes:info.len(),modified_ms,extension,
+            embedded_title:tag.and_then(|t|t.title()).map(|v|v.into_owned()),
+            embedded_artist:tag.and_then(|t|t.artist()).map(|v|v.into_owned()),
+            embedded_album:tag.and_then(|t|t.album()).map(|v|v.into_owned()),
+        })
+    }).await.map_err(|e|format!("Track details worker failed: {e}"))?
+}
+
+#[tauri::command]
+pub async fn set_track_metadata(app:AppHandle,path:String,
+    title:String,artist:String,album:String)->Result<(),String>{
+    let title=title.trim().to_string();
+    let artist=artist.trim().to_string();
+    let album=album.trim().to_string();
+    if title.is_empty()||artist.is_empty()||title.chars().count()>180||
+       artist.chars().count()>120||album.chars().count()>180 {
+        return Err("Enter a title and artist; title/album max 180, artist max 120".into())
+    }
+    tauri::async_runtime::spawn_blocking(move||{
+        let mut conn=open(&app)?;
+        let tx=conn.transaction().map_err(|e|e.to_string())?;
+        let has:i64=tx.query_row(
+            "SELECT EXISTS(SELECT 1 FROM library_tracks WHERE path=?1)",
+            params![path],|row|row.get(0)).map_err(|e|e.to_string())?;
+        if has==0{return Err("Track is not in your library".into())}
+        let album=if album.is_empty(){None}else{Some(album)};
+        tx.execute(
+            "INSERT INTO metadata_overrides(path,title,artist,album)
+             VALUES(?1,?2,?3,?4)
+             ON CONFLICT(path) DO UPDATE SET
+             title=excluded.title,artist=excluded.artist,album=excluded.album",
+            params![path,title,artist,album],
+        ).map_err(|e|e.to_string())?;
+        tx.execute(
+            "UPDATE library_tracks SET title=?2,artist=?3,album=?4 WHERE path=?1",
+            params![path,title,artist,album],
+        ).map_err(|e|e.to_string())?;
+        tx.commit().map_err(|e|e.to_string())
+    }).await.map_err(|e|format!("Metadata worker failed: {e}"))?
 }
