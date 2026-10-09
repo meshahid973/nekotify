@@ -5,10 +5,15 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::HashSet,
     fs,
+    io::Write,
     path::{Path, PathBuf},
+    sync::{
+        Mutex,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+    },
     time::UNIX_EPOCH,
 };
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_dialog::DialogExt;
 
 #[derive(Debug, Clone, Serialize)]
@@ -65,6 +70,40 @@ struct StoredLibrary {
 
 /// Return the durable index immediately; a full reconciliation is a separate operation.
 /// This never traverses music folders or parses tags on the startup path.
+// Only one disk reconciliation owns pruning decisions at any point in time.
+// Cached reads remain concurrent and never take this lock.
+static SCAN_LOCK: Mutex<()> = Mutex::new(());
+static SCAN_RUNNING: AtomicBool = AtomicBool::new(false);
+static SCAN_CANCEL: AtomicBool = AtomicBool::new(false);
+static SCAN_VISITED: AtomicUsize = AtomicUsize::new(0);
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ScanStatus {
+    running: bool,
+    visited: usize,
+}
+
+#[tauri::command]
+pub fn scan_status() -> ScanStatus {
+    ScanStatus {
+        running: SCAN_RUNNING.load(Ordering::Relaxed),
+        visited: SCAN_VISITED.load(Ordering::Relaxed),
+    }
+}
+
+#[tauri::command]
+pub fn cancel_library_scan() {
+    SCAN_CANCEL.store(true, Ordering::Relaxed);
+}
+
+struct ScanActivity;
+impl Drop for ScanActivity {
+    fn drop(&mut self) {
+        SCAN_RUNNING.store(false, Ordering::Relaxed);
+    }
+}
+
 #[tauri::command]
 pub async fn cached_library(app: AppHandle) -> Result<LibrarySnapshot, String> {
     tauri::async_runtime::spawn_blocking(move || {
@@ -305,6 +344,13 @@ pub async fn set_track_artwork(
 }
 
 fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
+    let _guard = SCAN_LOCK
+        .lock()
+        .map_err(|_| "Scan lock poisoned".to_string())?;
+    SCAN_CANCEL.store(false, Ordering::Relaxed);
+    SCAN_VISITED.store(0, Ordering::Relaxed);
+    SCAN_RUNNING.store(true, Ordering::Relaxed);
+    let _activity = ScanActivity;
     let stored = read_stored_library(app)?;
     let mut connection = database::open(app)?;
     let cache_dir = artwork_cache_dir(app)?;
@@ -328,6 +374,10 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
         .map_err(|error| error.to_string())?;
 
     for folder in &stored.folders {
+        if SCAN_CANCEL.load(Ordering::Relaxed) {
+            scan_complete = false;
+            break;
+        }
         let path = PathBuf::from(folder);
 
         if !path.is_dir() {
@@ -393,6 +443,13 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
     }
     transaction.commit().map_err(|error| error.to_string())?;
 
+    let _ = app.emit(
+        "library-scan-progress",
+        ScanStatus {
+            running: false,
+            visited: SCAN_VISITED.load(Ordering::Relaxed),
+        },
+    );
     let (art_sources, artwork_pool) = build_artwork_pool(app, &stored);
 
     tracks.sort_by(|left, right| {
@@ -479,6 +536,10 @@ fn scan_music_directory(
         };
 
         for result in entries {
+            if SCAN_CANCEL.load(Ordering::Relaxed) {
+                complete = false;
+                break;
+            }
             let Ok(entry) = result else {
                 complete = false;
                 continue;
@@ -507,6 +568,16 @@ fn scan_music_directory(
             let path_string = path.to_string_lossy().into_owned();
             if !seen_paths.insert(path_string.clone()) {
                 continue;
+            }
+            let visited = SCAN_VISITED.fetch_add(1, Ordering::Relaxed) + 1;
+            if visited.is_multiple_of(256) {
+                let _ = app.emit(
+                    "library-scan-progress",
+                    ScanStatus {
+                        running: true,
+                        visited,
+                    },
+                );
             }
 
             let file_info = fs::metadata(&path).ok().and_then(|meta| {
@@ -700,7 +771,9 @@ fn read_track(app: &AppHandle, cache_dir: &Path, path: &Path) -> LibraryTrack {
 }
 
 fn cache_picture(cache_dir: &Path, picture: &Picture) -> Option<String> {
-    if picture.data().is_empty() {
+    // An embedded image must not allocate unbounded cache space from a corrupt
+    // or malicious audio tag. The original audio file is never modified.
+    if picture.data().is_empty() || picture.data().len() > 20 * 1024 * 1024 {
         return None;
     }
 
@@ -712,8 +785,23 @@ fn cache_picture(cache_dir: &Path, picture: &Picture) -> Option<String> {
     let artwork_id = fnv1a(picture.data());
     let path = cache_dir.join(format!("{artwork_id:016x}.{extension}"));
 
-    if !path.exists() && fs::write(&path, picture.data()).is_err() {
-        return None;
+    if !path.exists() {
+        // Same-directory temporary file + rename prevents truncated covers
+        // after a crash or failed write; the scan lock serializes writers.
+        let temp = cache_dir.join(format!("{artwork_id:016x}.{}.partial", std::process::id()));
+        let write = (|| -> std::io::Result<()> {
+            let mut file = fs::File::create(&temp)?;
+            file.write_all(picture.data())?;
+            file.sync_data()?;
+            fs::rename(&temp, &path)?;
+            Ok(())
+        })();
+        if write.is_err() {
+            let _ = fs::remove_file(&temp);
+            if !path.exists() {
+                return None;
+            }
+        }
     }
 
     Some(path.to_string_lossy().into_owned())
