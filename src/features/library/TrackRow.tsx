@@ -5,7 +5,6 @@ import { ContextMenu } from '@/components/overlays/ContextMenu'
 import { PlaylistCombobox } from '@/components/overlays/PlaylistCombobox'
 import { PulseHeart } from '@/components/reactbits/PulseHeart'
 import { notify } from '@/stores/toast.store'
-import { useState } from 'react'
 import { useCollectionsStore } from '@/features/collections/collections.store'
 import { formatPlaybackTime } from '@/features/playback/playback.utils'
 import { useQueueStore } from '@/features/queue/queue.store'
@@ -29,12 +28,22 @@ export function TrackRow({
   const toggleFavorite = useCollectionsStore((state) => state.toggleFavorite)
   const addToPlaylist = useCollectionsStore((state) => state.addToPlaylist)
   const favorite = favorites.includes(track.source.path)
-  const [menu,setMenu] = useState<{x:number;y:number}|null>(null)
 
   return (
-    <div className="track-row"
-      onContextMenu={(event)=>{event.preventDefault();setMenu({x:event.clientX,y:event.clientY})}}
-      data-active={active ? 'true' : 'false'}>
+    <ContextMenu items={[
+      {id:'play',label:'Play',icon:<Music2 size={16}/>,onClick:onPlay},
+      {id:'next',label:'Play next',icon:<ListPlus size={16}/>,onClick:()=>{
+        useQueueStore.getState().playNext(track);notify('Added to queue','success')
+      }},
+      {id:'favorite',label:favorite?'Unlike song':'Like song',icon:<Heart size={16}/>,onClick:()=>{
+        void toggleFavorite(track.source.path);notify(favorite?'Removed favorite':'Added favorite','success')
+      }},
+      {id:'artwork',label:'Change artwork',icon:<Paintbrush size={16}/>,onClick:()=>useCoverPickerStore.getState().open(track.source.path)},
+      ...playlists.map(p=>({id:'playlist-'+p.id,label:'Add to '+p.name,onClick:()=>{
+        void addToPlaylist(p.id,track.source.path);notify('Added to '+p.name,'success')
+      }})),
+    ]}>
+    <div className="track-row" data-active={active ? 'true' : 'false'}>
       <button type="button" className="track-row__play"
         aria-label={(playing ? 'Pause ' : 'Play ') + track.title} onClick={onPlay}>
         {playing ? <Pause size={15} fill="currentColor" /> :
@@ -71,19 +80,7 @@ export function TrackRow({
         ) : null}
       </div>
 
-      <ContextMenu position={menu} onClose={()=>setMenu(null)} items={[
-        {id:'play',label:'Play',icon:<Music2 size={16}/>,onClick:onPlay},
-        {id:'next',label:'Play next',icon:<ListPlus size={16}/>,onClick:()=>{
-          useQueueStore.getState().playNext(track);notify('Added to queue','success')
-        }},
-        {id:'favorite',label:favorite?'Unlike song':'Like song',icon:<Heart size={16}/>,onClick:()=>{
-          void toggleFavorite(track.source.path);notify(favorite?'Removed favorite':'Added favorite','success')
-        }},
-        {id:'artwork',label:'Change artwork',icon:<Paintbrush size={16}/>,onClick:()=>useCoverPickerStore.getState().open(track.source.path)},
-        ...playlists.map((p)=>({id:'playlist-'+p.id,label:'Add to '+p.name,onClick:()=>{
-          void addToPlaylist(p.id,track.source.path);notify('Added to '+p.name,'success')
-        }})),
-      ]} />
     </div>
+    </ContextMenu>
   )
 }

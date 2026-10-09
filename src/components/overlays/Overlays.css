@@ -31,3 +31,17 @@
 .nk-combo__list button { width:100%; display:flex; justify-content:space-between; padding:9px; color:#ddd; background:transparent; border:0; border-radius:6px; cursor:pointer; font:inherit; font-size:.78rem; text-align:left; }
 .nk-combo__list button:hover,.nk-combo__list button[aria-selected='true'] { background:#373737; }
 .nk-combo__list p { margin:0; padding:12px; color:#aaa; font-size:.76rem; }
+
+/* Base UI owns anchored menu positioning and keyboard behavior. */
+.nk-context-positioner { z-index:145; outline:none; }
+.nk-context-positioner .nk-context {
+  position:relative;top:auto;left:auto; max-height:min(70vh,440px);
+  overflow-y:auto; width:230px;
+  transform-origin:var(--transform-origin);
+}
+.nk-context__item { display:flex;align-items:center;gap:10px;
+  min-height:38px;padding:9px 10px;color:#ddd;border-radius:7px;
+  font:inherit;font-size:.8rem;cursor:pointer;outline:none;
+}
+.nk-context__item[data-highlighted] { background:rgba(255,255,255,.11);color:#fff; }
+.nk-context__item[data-disabled] { opacity:.4;cursor:not-allowed; }
