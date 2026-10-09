@@ -45,7 +45,8 @@ pub fn open(app: &AppHandle) -> Result<Connection, String> {
         .map_err(|error| error.to_string())?;
     conn.pragma_update(None, "foreign_keys", "ON")
         .map_err(|error| error.to_string())?;
-    let mut initialized = SCHEMA_READY.lock()
+    let mut initialized = SCHEMA_READY
+        .lock()
         .map_err(|_| "SQLite schema initialization lock failed".to_string())?;
     if !*initialized {
         conn.execute_batch(

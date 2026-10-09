@@ -1,5 +1,5 @@
-use crate::database;
 use super::{LibraryTrack, fnv1a};
+use crate::database;
 use serde::Serialize;
 use std::path::Path;
 use tauri::{AppHandle, Manager};
@@ -14,7 +14,8 @@ pub struct TrackPage {
 }
 
 fn fts_prefix_terms(words: &str) -> String {
-    words.split_whitespace()
+    words
+        .split_whitespace()
         .filter(|word| word.chars().any(char::is_alphanumeric))
         .take(12)
         .map(|word| format!("\"{}\"*", word.replace('"', "\"\"")))
