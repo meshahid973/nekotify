@@ -1,7 +1,10 @@
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
-use std::{collections::HashSet, fs, path::PathBuf, time::Duration};
+use std::{collections::HashSet, fs, path::PathBuf, sync::Mutex, time::Duration};
 use tauri::{AppHandle, Manager};
+
+// Schema DDL and FTS backfill run once per process instead of on every query.
+static SCHEMA_READY: Mutex<bool> = Mutex::new(false);
 
 pub struct CachedMetadata {
     pub title: String,
@@ -42,69 +45,75 @@ pub fn open(app: &AppHandle) -> Result<Connection, String> {
         .map_err(|error| error.to_string())?;
     conn.pragma_update(None, "foreign_keys", "ON")
         .map_err(|error| error.to_string())?;
-    conn.execute_batch(
-        "PRAGMA journal_mode=WAL;
-         CREATE TABLE IF NOT EXISTS library_tracks (
-           path TEXT PRIMARY KEY, modified_ms INTEGER NOT NULL, size INTEGER NOT NULL,
-           title TEXT NOT NULL, artist TEXT NOT NULL, album TEXT,
-           duration REAL NOT NULL, artwork_path TEXT
-         );
-         CREATE INDEX IF NOT EXISTS idx_tracks_artist ON library_tracks(artist);
-         CREATE INDEX IF NOT EXISTS idx_tracks_album ON library_tracks(album);
-         CREATE INDEX IF NOT EXISTS idx_tracks_title ON library_tracks(title COLLATE NOCASE);
-         CREATE TABLE IF NOT EXISTS favorites (
-           track_path TEXT PRIMARY KEY
-         );
-         CREATE TABLE IF NOT EXISTS playlists (
-           id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL
-         );
-         CREATE TABLE IF NOT EXISTS playlist_tracks (
-           playlist_id INTEGER NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
-           track_path TEXT NOT NULL, position INTEGER NOT NULL,
-           PRIMARY KEY (playlist_id,track_path)
-         );
-         CREATE TABLE IF NOT EXISTS artwork_assignments (
-           track_path TEXT PRIMARY KEY, artwork_path TEXT NOT NULL
-         );
-         CREATE TABLE IF NOT EXISTS listening_history (
-           id INTEGER PRIMARY KEY AUTOINCREMENT,
-           track_path TEXT NOT NULL,
-           listened_at INTEGER NOT NULL DEFAULT (unixepoch())
-         );",
-    )
-    .map_err(|error| format!("Cannot initialize library database: {error}"))?;
-    // Maintain the native full-text index with the metadata cache. The index is
-    // generated from existing tracks once and subsequently updated by triggers.
-    conn.execute_batch(
-        "CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
-             path UNINDEXED, title, artist, album,
-             tokenize='unicode61 remove_diacritics 2'
-         );
-         CREATE TRIGGER IF NOT EXISTS idx_fts_insert AFTER INSERT ON library_tracks BEGIN
-           INSERT INTO tracks_fts(path,title,artist,album)
-           VALUES(new.path,new.title,new.artist,COALESCE(new.album,''));
-         END;
-         CREATE TRIGGER IF NOT EXISTS idx_fts_delete AFTER DELETE ON library_tracks BEGIN
-           DELETE FROM tracks_fts WHERE path=old.path;
-         END;
-         CREATE TRIGGER IF NOT EXISTS idx_fts_update AFTER UPDATE ON library_tracks BEGIN
-           DELETE FROM tracks_fts WHERE path=old.path;
-           INSERT INTO tracks_fts(path,title,artist,album)
-           VALUES(new.path,new.title,new.artist,COALESCE(new.album,''));
-         END;
-         INSERT INTO tracks_fts(path,title,artist,album)
-           SELECT path,title,artist,COALESCE(album,'') FROM library_tracks
-           WHERE NOT EXISTS (SELECT 1 FROM tracks_fts LIMIT 1);",
-    )
-    .map_err(|error| format!("Cannot initialize search index: {error}"))?;
-    // The existing path keys stay stable so favorites, playlists and art assignments
-    // survive the transition to a query-driven library. Never mutate song files.
-    let version: i64 = conn
-        .pragma_query_value(None, "user_version", |row| row.get(0))
-        .map_err(|error| format!("Cannot read library schema version: {error}"))?;
-    if version == 0 {
-        conn.pragma_update(None, "user_version", 1_i64)
-            .map_err(|error| format!("Cannot record library schema version: {error}"))?;
+    let mut initialized = SCHEMA_READY
+        .lock()
+        .map_err(|_| "SQLite schema initialization lock failed".to_string())?;
+    if !*initialized {
+        conn.execute_batch(
+            "PRAGMA journal_mode=WAL;
+             CREATE TABLE IF NOT EXISTS library_tracks (
+               path TEXT PRIMARY KEY, modified_ms INTEGER NOT NULL, size INTEGER NOT NULL,
+               title TEXT NOT NULL, artist TEXT NOT NULL, album TEXT,
+               duration REAL NOT NULL, artwork_path TEXT
+             );
+             CREATE INDEX IF NOT EXISTS idx_tracks_artist ON library_tracks(artist);
+             CREATE INDEX IF NOT EXISTS idx_tracks_album ON library_tracks(album);
+             CREATE INDEX IF NOT EXISTS idx_tracks_title ON library_tracks(title COLLATE NOCASE);
+             CREATE TABLE IF NOT EXISTS favorites (
+               track_path TEXT PRIMARY KEY
+             );
+             CREATE TABLE IF NOT EXISTS playlists (
+               id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL
+             );
+             CREATE TABLE IF NOT EXISTS playlist_tracks (
+               playlist_id INTEGER NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+               track_path TEXT NOT NULL, position INTEGER NOT NULL,
+               PRIMARY KEY (playlist_id,track_path)
+             );
+             CREATE TABLE IF NOT EXISTS artwork_assignments (
+               track_path TEXT PRIMARY KEY, artwork_path TEXT NOT NULL
+             );
+             CREATE TABLE IF NOT EXISTS listening_history (
+               id INTEGER PRIMARY KEY AUTOINCREMENT,
+               track_path TEXT NOT NULL,
+               listened_at INTEGER NOT NULL DEFAULT (unixepoch())
+             );",
+        )
+        .map_err(|error| format!("Cannot initialize library database: {error}"))?;
+        // Maintain the native full-text index with the metadata cache. The index is
+        // generated from existing tracks once and subsequently updated by triggers.
+        conn.execute_batch(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
+                 path UNINDEXED, title, artist, album,
+                 tokenize='unicode61 remove_diacritics 2'
+             );
+             CREATE TRIGGER IF NOT EXISTS idx_fts_insert AFTER INSERT ON library_tracks BEGIN
+               INSERT INTO tracks_fts(path,title,artist,album)
+               VALUES(new.path,new.title,new.artist,COALESCE(new.album,''));
+             END;
+             CREATE TRIGGER IF NOT EXISTS idx_fts_delete AFTER DELETE ON library_tracks BEGIN
+               DELETE FROM tracks_fts WHERE path=old.path;
+             END;
+             CREATE TRIGGER IF NOT EXISTS idx_fts_update AFTER UPDATE ON library_tracks BEGIN
+               DELETE FROM tracks_fts WHERE path=old.path;
+               INSERT INTO tracks_fts(path,title,artist,album)
+               VALUES(new.path,new.title,new.artist,COALESCE(new.album,''));
+             END;
+             INSERT INTO tracks_fts(path,title,artist,album)
+               SELECT path,title,artist,COALESCE(album,'') FROM library_tracks
+               WHERE NOT EXISTS (SELECT 1 FROM tracks_fts LIMIT 1);",
+        )
+        .map_err(|error| format!("Cannot initialize search index: {error}"))?;
+        // The existing path keys stay stable so favorites, playlists and art assignments
+        // survive the transition to a query-driven library. Never mutate song files.
+        let version: i64 = conn
+            .pragma_query_value(None, "user_version", |row| row.get(0))
+            .map_err(|error| format!("Cannot read library schema version: {error}"))?;
+        if version < 2 {
+            conn.pragma_update(None, "user_version", 2_i64)
+                .map_err(|error| format!("Cannot record library schema version: {error}"))?;
+        }
+        *initialized = true;
     }
     Ok(conn)
 }

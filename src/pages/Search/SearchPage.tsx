@@ -1,15 +1,25 @@
 import { ArrowUpRight, Music2, Search } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { isTauri } from '@tauri-apps/api/core'
 
 import { PageHeader } from '@/components/layout/PageHeader'
 import { VirtualTrackList } from '@/features/library/VirtualTrackList'
 import { useLibraryStore } from '@/features/library/library.store'
+import { nativeTrackSearch, resolveNativeTrack } from '@/features/library/nativeQueries'
+import type { Track } from '@/types/media'
 import './SearchPage.css'
 
 export function SearchPage() {
   const [query, setQuery] = useState('')
   const tracks = useLibraryStore((state) => state.tracks)
   const normalizedQuery = query.trim().toLocaleLowerCase()
+  const native = isTauri()
+  const [nativeResults,setNativeResults] = useState<Track[]>([])
+  const [nativeTotal,setNativeTotal] = useState(0)
+  const [loading,setLoading] = useState(false)
+  const [loadingMore,setLoadingMore] = useState(false)
+  const [nativeError,setNativeError] = useState(false)
+  const trackIndex = useMemo(()=>new Map(tracks.map(t=>[t.source.path,t])),[tracks])
 
   const results = useMemo(() =>
     normalizedQuery
@@ -21,6 +31,41 @@ export function SearchPage() {
       : [],
     [normalizedQuery, tracks],
   )
+
+  useEffect(()=>{
+    if(!native || !normalizedQuery){
+      return
+    }
+    let active=true
+    const timer=window.setTimeout(()=>{
+      setLoading(true)
+      void nativeTrackSearch(normalizedQuery,0,80).then(page=>{
+        if(!active)return
+        setNativeResults(page.items.map(t=>resolveNativeTrack(t,trackIndex)))
+        setNativeTotal(page.total)
+        // Preserve legacy substring matches when token-based FTS has no hits.
+        setNativeError(page.total === 0)
+      }).catch(()=>{
+        if(active)setNativeError(true)
+      }).finally(()=>{if(active)setLoading(false)})
+    },150)
+    return()=>{active=false;window.clearTimeout(timer)}
+  },[native,normalizedQuery,trackIndex])
+  const visibleResults = native&&!nativeError ? nativeResults : results
+  const resultTotal = native&&!nativeError ? nativeTotal : results.length
+  const loadMore = async ()=>{
+    if(loadingMore || loading || !native || !normalizedQuery) return
+    setLoadingMore(true)
+    try{
+      const page=await nativeTrackSearch(normalizedQuery,nativeResults.length,80)
+      setNativeResults(old=>{
+        const seen=new Set(old.map(t=>t.source.path))
+        return old.concat(page.items.filter(t=>!seen.has(t.path))
+          .map(t=>resolveNativeTrack(t,trackIndex)))
+      })
+      setNativeTotal(page.total)
+    }finally{setLoadingMore(false)}
+  }
 
   const artists = useMemo(() => {
     const names = new Set<string>()
@@ -55,10 +100,17 @@ export function SearchPage() {
         <section className="search-results" aria-live="polite">
           <div className="search-results__header">
             <span>SEARCH RESULTS</span>
-            <strong>{results.length} {results.length === 1 ? 'song' : 'songs'}</strong>
+            <strong>{loading ? 'Searching…' : `${resultTotal} ${resultTotal === 1 ? 'song' : 'songs'}`}</strong>
           </div>
-          {results.length > 0 ? (
-            <VirtualTrackList tracks={results} />
+          {visibleResults.length > 0 ? (
+            <>
+              <VirtualTrackList tracks={visibleResults} />
+              {native && !nativeError && visibleResults.length < nativeTotal &&
+                <button type="button" className="search-results__more"
+                  disabled={loadingMore} onClick={()=>void loadMore()}>
+                  {loadingMore?'Loading…':'Load more'}
+                </button>}
+            </>
           ) : (
             <div className="search-empty">
               <Search size={28} aria-hidden="true"/>
