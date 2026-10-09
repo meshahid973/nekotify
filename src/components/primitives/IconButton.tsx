@@ -1,32 +1,24 @@
+import { Tooltip } from '@base-ui/react/tooltip'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
-
 import './IconButton.css'
-
-type IconButtonSize = 'sm' | 'md'
 
 interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   label: string
-  size?: IconButtonSize
   children: ReactNode
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export function IconButton({
-  label,
-  size = 'md',
-  className = '',
-  children,
-  type = 'button',
-  ...props
-}: IconButtonProps) {
-  return (
-    <button
-      type={type}
-      className={`icon-button icon-button--${size} ${className}`.trim()}
-      aria-label={label}
-      data-tooltip={label}
-      {...props}
-    >
-      {children}
-    </button>
-  )
+  label,children,size='md',className='',...props
+}:IconButtonProps) {
+  return <Tooltip.Root>
+    <Tooltip.Trigger render={<button type="button" {...props}
+      className={['icon-button','icon-button--'+size,className].filter(Boolean).join(' ')}
+      aria-label={label}>{children}</button>}/>
+    <Tooltip.Portal>
+      <Tooltip.Positioner sideOffset={9} className="nk-tooltip-positioner">
+        <Tooltip.Popup className="nk-tooltip">{label}</Tooltip.Popup>
+      </Tooltip.Positioner>
+    </Tooltip.Portal>
+  </Tooltip.Root>
 }
