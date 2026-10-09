@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 
 import { Button } from '@/components/primitives/Button'
 import { useCollectionsStore } from '@/features/collections/collections.store'
-import { VirtualTrackList } from '@/features/library/VirtualTrackList'
+import { PagedTrackList } from '@/features/library/PagedLibraryViews'
 import { useLibraryStore } from '@/features/library/library.store'
 import { acceptsTrackDrag,readTrackDrag } from '@/features/library/trackDrag'
 import { notify } from '@/stores/toast.store'
@@ -89,7 +89,9 @@ export function PlaylistView() {
                 }}
               ><Trash2 size={17}/></button>
             </div>
-            {selectedTracks.length ? <VirtualTrackList tracks={selectedTracks}
+            <PagedTrackList mode="playlist" playlistId={selected.id}
+              fallback={selectedTracks} refreshKey={selected.trackPaths.join('|')}
+              emptyTitle="Drag songs here, or use any track's Add to Playlist action."
               onRemoveFromPlaylist={track=>{
                 void removeFromPlaylist(selected.id,track.source.path)
                 notify('Removed from '+selected.name,'info',{
@@ -97,10 +99,7 @@ export function PlaylistView() {
                     void useCollectionsStore.getState().addToPlaylist(selected.id,track.source.path)
                   },
                 })
-              }}/> :
-              <p className="playlists-view__empty">
-                Add songs using a track menu, or drop them onto this playlist.
-              </p>}
+              }}/>
           </>
         ) : <p className="playlists-view__empty">Create your first playlist.</p>}
       </div>
