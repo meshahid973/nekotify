@@ -59,7 +59,7 @@ export function CommandPalette({ open, onClose }: { open: boolean; onClose: () =
       void nativeTrackSearch(deferredQuery.trim(),0,40).then(page=>{
         if(!current)return
         setIndexedMatches(page.items.map(t=>resolveNativeTrack(t,paths)))
-        setIndexedFailed(false)
+        setIndexedFailed(page.total === 0)
       }).catch(()=>{if(current)setIndexedFailed(true)})
     },130)
     return()=>{current=false;window.clearTimeout(timer)}
