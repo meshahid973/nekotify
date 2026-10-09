@@ -7,7 +7,10 @@ use std::{
     fs,
     io::Write,
     path::{Path, PathBuf},
-    sync::{Mutex, atomic::{AtomicBool, AtomicUsize, Ordering}},
+    sync::{
+        Mutex,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
+    },
     time::UNIX_EPOCH,
 };
 use tauri::{AppHandle, Emitter, Manager};
@@ -74,7 +77,7 @@ static SCAN_RUNNING: AtomicBool = AtomicBool::new(false);
 static SCAN_CANCEL: AtomicBool = AtomicBool::new(false);
 static SCAN_VISITED: AtomicUsize = AtomicUsize::new(0);
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ScanStatus {
     running: bool,
@@ -96,7 +99,9 @@ pub fn cancel_library_scan() {
 
 struct ScanActivity;
 impl Drop for ScanActivity {
-    fn drop(&mut self) { SCAN_RUNNING.store(false, Ordering::Relaxed); }
+    fn drop(&mut self) {
+        SCAN_RUNNING.store(false, Ordering::Relaxed);
+    }
 }
 
 #[tauri::command]
@@ -106,28 +111,33 @@ pub async fn cached_library(app: AppHandle) -> Result<LibrarySnapshot, String> {
         let cache_dir = artwork_cache_dir(&app)?;
         fs::create_dir_all(&cache_dir)
             .map_err(|error| format!("Could not create artwork cache: {error}"))?;
-        app.asset_protocol_scope().allow_directory(&cache_dir, true)
+        app.asset_protocol_scope()
+            .allow_directory(&cache_dir, true)
             .map_err(|error| format!("Could not expose artwork cache: {error}"))?;
         let conn = database::open(&app)?;
         let mut tracks = Vec::new();
-        let mut query = conn.prepare(
-            "SELECT t.path,t.title,t.artist,t.album,t.duration,
+        let mut query = conn
+            .prepare(
+                "SELECT t.path,t.title,t.artist,t.album,t.duration,
              COALESCE(a.artwork_path,t.artwork_path)
              FROM library_tracks t LEFT JOIN artwork_assignments a ON a.track_path=t.path
-             ORDER BY t.artist COLLATE NOCASE,t.album COLLATE NOCASE,t.title COLLATE NOCASE,t.path"
-        ).map_err(|error| error.to_string())?;
-        let rows = query.query_map([], |row| {
-            let path: String = row.get(0)?;
-            Ok(LibraryTrack {
-                id: format!("{:016x}", fnv1a(path.as_bytes())),
-                path,
-                title: row.get(1)?,
-                artist: row.get(2)?,
-                album: row.get(3)?,
-                duration: row.get(4)?,
-                artwork_path: row.get(5)?,
+             ORDER BY t.artist COLLATE NOCASE,t.album COLLATE NOCASE,t.title COLLATE NOCASE,t.path",
+            )
+            .map_err(|error| error.to_string())?;
+        let rows = query
+            .query_map([], |row| {
+                let path: String = row.get(0)?;
+                Ok(LibraryTrack {
+                    id: format!("{:016x}", fnv1a(path.as_bytes())),
+                    path,
+                    title: row.get(1)?,
+                    artist: row.get(2)?,
+                    album: row.get(3)?,
+                    duration: row.get(4)?,
+                    artwork_path: row.get(5)?,
+                })
             })
-        }).map_err(|error| error.to_string())?;
+            .map_err(|error| error.to_string())?;
         for item in rows {
             let mut track = item.map_err(|error| error.to_string())?;
             // Permissions are granted for known files only, never an entire disk.
@@ -136,20 +146,26 @@ pub async fn cached_library(app: AppHandle) -> Result<LibrarySnapshot, String> {
                 let _ = app.asset_protocol_scope().allow_file(path);
             }
             track.artwork_path = track.artwork_path.filter(|art| {
-                Path::new(art).is_file()
-                    && app.asset_protocol_scope().allow_file(art).is_ok()
+                Path::new(art).is_file() && app.asset_protocol_scope().allow_file(art).is_ok()
             });
             tracks.push(track);
         }
         Ok(LibrarySnapshot {
-            folders: stored.folders.iter().map(|f| LibraryFolder {
-                path: f.clone(), name: folder_name(Path::new(f)),
-            }).collect(),
+            folders: stored
+                .folders
+                .iter()
+                .map(|f| LibraryFolder {
+                    path: f.clone(),
+                    name: folder_name(Path::new(f)),
+                })
+                .collect(),
             art_sources: Vec::new(),
             artwork_pool: Vec::new(),
             tracks,
         })
-    }).await.map_err(|error| format!("Cached library task failed: {error}"))?
+    })
+    .await
+    .map_err(|error| format!("Cached library task failed: {error}"))?
 }
 
 #[tauri::command]
@@ -328,7 +344,9 @@ pub async fn set_track_artwork(
 }
 
 fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
-    let _guard = SCAN_LOCK.lock().map_err(|_| "Scan lock poisoned".to_string())?;
+    let _guard = SCAN_LOCK
+        .lock()
+        .map_err(|_| "Scan lock poisoned".to_string())?;
     SCAN_CANCEL.store(false, Ordering::Relaxed);
     SCAN_VISITED.store(0, Ordering::Relaxed);
     SCAN_RUNNING.store(true, Ordering::Relaxed);
@@ -388,39 +406,50 @@ fn build_snapshot(app: &AppHandle) -> Result<LibrarySnapshot, String> {
     } else {
         // Keep cached tracks from unavailable roots in the visible snapshot.
         // No destructive pruning is allowed from a partial scan.
-        let mut query = transaction.prepare(
-            "SELECT path,title,artist,album,duration,
+        let mut query = transaction
+            .prepare(
+                "SELECT path,title,artist,album,duration,
              COALESCE((SELECT artwork_path FROM artwork_assignments WHERE track_path=t.path),
-             artwork_path) FROM library_tracks t"
-        ).map_err(|error| error.to_string())?;
-        let cached = query.query_map([], |row| {
-            let path: String = row.get(0)?;
-            Ok(LibraryTrack {
-                id: format!("{:016x}", fnv1a(path.as_bytes())),
-                path, title: row.get(1)?, artist: row.get(2)?,
-                album: row.get(3)?, duration: row.get(4)?,
-                artwork_path: row.get(5)?,
+             artwork_path) FROM library_tracks t",
+            )
+            .map_err(|error| error.to_string())?;
+        let cached = query
+            .query_map([], |row| {
+                let path: String = row.get(0)?;
+                Ok(LibraryTrack {
+                    id: format!("{:016x}", fnv1a(path.as_bytes())),
+                    path,
+                    title: row.get(1)?,
+                    artist: row.get(2)?,
+                    album: row.get(3)?,
+                    duration: row.get(4)?,
+                    artwork_path: row.get(5)?,
+                })
             })
-        }).map_err(|error| error.to_string())?;
+            .map_err(|error| error.to_string())?;
         for item in cached {
             let mut track = item.map_err(|error| error.to_string())?;
-            if !seen_track_ids.insert(track.id.clone()) { continue; }
+            if !seen_track_ids.insert(track.id.clone()) {
+                continue;
+            }
             if Path::new(&track.path).is_file() {
                 let _ = app.asset_protocol_scope().allow_file(&track.path);
             }
             track.artwork_path = track.artwork_path.filter(|art| {
-                Path::new(art).is_file() &&
-                    app.asset_protocol_scope().allow_file(art).is_ok()
+                Path::new(art).is_file() && app.asset_protocol_scope().allow_file(art).is_ok()
             });
             tracks.push(track);
         }
     }
     transaction.commit().map_err(|error| error.to_string())?;
 
-    let _ = app.emit("library-scan-progress", ScanStatus {
-        running: false,
-        visited: SCAN_VISITED.load(Ordering::Relaxed),
-    });
+    let _ = app.emit(
+        "library-scan-progress",
+        ScanStatus {
+            running: false,
+            visited: SCAN_VISITED.load(Ordering::Relaxed),
+        },
+    );
     let (art_sources, artwork_pool) = build_artwork_pool(app, &stored);
 
     tracks.sort_by(|left, right| {
@@ -542,9 +571,13 @@ fn scan_music_directory(
             }
             let visited = SCAN_VISITED.fetch_add(1, Ordering::Relaxed) + 1;
             if visited % 256 == 0 {
-                let _ = app.emit("library-scan-progress", ScanStatus {
-                    running: true, visited,
-                });
+                let _ = app.emit(
+                    "library-scan-progress",
+                    ScanStatus {
+                        running: true,
+                        visited,
+                    },
+                );
             }
 
             let file_info = fs::metadata(&path).ok().and_then(|meta| {
@@ -552,7 +585,9 @@ fn scan_music_directory(
                 Some((modified.as_millis() as i64, meta.len() as i64))
             });
 
-            if file_info.is_none() { complete = false; }
+            if file_info.is_none() {
+                complete = false;
+            }
             let cached = file_info.and_then(|(modified, size)| {
                 database::lookup(connection, &path_string, modified, size)
             });
@@ -586,7 +621,8 @@ fn scan_music_directory(
                             duration: fresh.duration,
                             artwork_path: fresh.artwork_path.clone(),
                         },
-                    ).is_err()
+                    )
+                    .is_err()
                 {
                     complete = false;
                 }
@@ -752,9 +788,7 @@ fn cache_picture(cache_dir: &Path, picture: &Picture) -> Option<String> {
     if !path.exists() {
         // Same-directory temporary file + rename prevents truncated covers
         // after a crash or failed write; the scan lock serializes writers.
-        let temp = cache_dir.join(format!(
-            "{artwork_id:016x}.{}.partial", std::process::id()
-        ));
+        let temp = cache_dir.join(format!("{artwork_id:016x}.{}.partial", std::process::id()));
         let write = (|| -> std::io::Result<()> {
             let mut file = fs::File::create(&temp)?;
             file.write_all(picture.data())?;
@@ -764,7 +798,9 @@ fn cache_picture(cache_dir: &Path, picture: &Picture) -> Option<String> {
         })();
         if write.is_err() {
             let _ = fs::remove_file(&temp);
-            if !path.exists() { return None; }
+            if !path.exists() {
+                return None;
+            }
         }
     }
 
@@ -960,13 +996,16 @@ fn indexed_tracks(
     let phrase = terms.join(" ");
     let filter = if search {
         "WHERE t.path IN (SELECT path FROM tracks_fts WHERE tracks_fts MATCH ?1)"
-    } else { "" };
+    } else {
+        ""
+    };
     let count_sql = format!("SELECT COUNT(*) FROM library_tracks t {filter}");
     let total: i64 = if search {
         conn.query_row(&count_sql, rusqlite::params![phrase], |row| row.get(0))
     } else {
         conn.query_row(&count_sql, [], |row| row.get(0))
-    }.map_err(|error| format!("Cannot count indexed tracks: {error}"))?;
+    }
+    .map_err(|error| format!("Cannot count indexed tracks: {error}"))?;
     let sql = format!(
         "SELECT t.path,t.title,t.artist,t.album,t.duration,
          COALESCE(a.artwork_path,t.artwork_path)
@@ -980,21 +1019,23 @@ fn indexed_tracks(
     let mut stmt = conn.prepare(&sql).map_err(|error| error.to_string())?;
     // Both variants bind three parameters: an optional FTS phrase, a bounded
     // limit and a bounded offset. The no-filter query uses ?2 and ?3 as well.
-    let rows = stmt.query_map(
-        rusqlite::params![if search { phrase } else { String::new() }, limit, offset],
-        |row| {
-            let path: String = row.get(0)?;
-            Ok(LibraryTrack {
-                id: format!("{:016x}", fnv1a(path.as_bytes())),
-                path,
-                title: row.get(1)?,
-                artist: row.get(2)?,
-                album: row.get(3)?,
-                duration: row.get(4)?,
-                artwork_path: row.get(5)?,
-            })
-        },
-    ).map_err(|error| format!("Cannot query indexed tracks: {error}"))?;
+    let rows = stmt
+        .query_map(
+            rusqlite::params![if search { phrase } else { String::new() }, limit, offset],
+            |row| {
+                let path: String = row.get(0)?;
+                Ok(LibraryTrack {
+                    id: format!("{:016x}", fnv1a(path.as_bytes())),
+                    path,
+                    title: row.get(1)?,
+                    artist: row.get(2)?,
+                    album: row.get(3)?,
+                    duration: row.get(4)?,
+                    artwork_path: row.get(5)?,
+                })
+            },
+        )
+        .map_err(|error| format!("Cannot query indexed tracks: {error}"))?;
     let mut items = Vec::new();
     for value in rows {
         let mut track = value.map_err(|error| error.to_string())?;
@@ -1002,28 +1043,33 @@ fn indexed_tracks(
             let _ = app.asset_protocol_scope().allow_file(&track.path);
         }
         track.artwork_path = track.artwork_path.filter(|art| {
-            Path::new(art).is_file()
-                && app.asset_protocol_scope().allow_file(art).is_ok()
+            Path::new(art).is_file() && app.asset_protocol_scope().allow_file(art).is_ok()
         });
         items.push(track);
     }
-    Ok(TrackPage { items, total, offset, limit })
+    Ok(TrackPage {
+        items,
+        total,
+        offset,
+        limit,
+    })
 }
 
 #[tauri::command]
-pub async fn query_tracks(
-    app: AppHandle, offset: u32, limit: u32
-) -> Result<TrackPage, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        indexed_tracks(&app, None, offset, limit)
-    }).await.map_err(|error| format!("Track query worker failed: {error}"))?
+pub async fn query_tracks(app: AppHandle, offset: u32, limit: u32) -> Result<TrackPage, String> {
+    tauri::async_runtime::spawn_blocking(move || indexed_tracks(&app, None, offset, limit))
+        .await
+        .map_err(|error| format!("Track query worker failed: {error}"))?
 }
 
 #[tauri::command]
 pub async fn search_library(
-    app: AppHandle, query: String, offset: u32, limit: u32
+    app: AppHandle,
+    query: String,
+    offset: u32,
+    limit: u32,
 ) -> Result<TrackPage, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        indexed_tracks(&app, Some(&query), offset, limit)
-    }).await.map_err(|error| format!("Search worker failed: {error}"))?
+    tauri::async_runtime::spawn_blocking(move || indexed_tracks(&app, Some(&query), offset, limit))
+        .await
+        .map_err(|error| format!("Search worker failed: {error}"))?
 }
