@@ -10,7 +10,7 @@ import {
   Search,
   X,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Tabs } from '@base-ui/react/tabs'
 import { useSearchParams } from 'react-router-dom'
 import type { ReactNode } from 'react'
@@ -60,30 +60,20 @@ export function LibraryPage() {
 
   const normalizedQuery = query.trim().toLowerCase()
 
-  const filteredTracks = useMemo(
-    () =>
-      normalizedQuery
-        ? tracks.filter((track) =>
-            [track.title, track.artist, track.album]
-              .filter(Boolean)
-              .some((value) => value!.toLowerCase().includes(normalizedQuery)),
-          )
-        : tracks,
-    [normalizedQuery, tracks],
-  )
-
-  const albums = useMemo(
-    () => groupTracks(filteredTracks, 'album'),
-    [filteredTracks],
-  )
-  const artists = useMemo(
-    () => groupTracks(filteredTracks, 'artist'),
-    [filteredTracks],
-  )
+  // The native views don't need full-library filtered/grouped copies.
+  // Build legacy fallback data only when native queries are unavailable.
+  const filteredTracks=()=>normalizedQuery
+    ? tracks.filter(track=>[track.title,track.artist,track.album]
+      .some(value=>value?.toLowerCase().includes(normalizedQuery)))
+    : tracks
+  const albums=()=>groupTracks(filteredTracks(),'album')
+  const artists=()=>groupTracks(filteredTracks(),'artist')
 
   const busy = status === 'loading' || scanning
-  const favoritePaths = new Set(favorites)
-  const favoriteTracks = filteredTracks.filter(track=>favoritePaths.has(track.source.path))
+  const favoriteTracks=()=>{
+    const favoritePaths=new Set(favorites)
+    return filteredTracks().filter(track=>favoritePaths.has(track.source.path))
+  }
   const refreshKey = status+':'+String(scanning)+':'+metadataRevision
 
   return (

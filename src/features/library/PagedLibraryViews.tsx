@@ -11,7 +11,7 @@ interface TrackPageProps {
   mode:'songs'|'favorites'|'playlist'
   query?:string
   playlistId?:number
-  fallback:Track[]
+  fallback:Track[]|(()=>Track[])
   refreshKey?:string|number
   emptyTitle?:string
   onRemoveFromPlaylist?:(track:Track)=>void
@@ -19,7 +19,7 @@ interface TrackPageProps {
 export function PagedTrackList({mode,query,playlistId,fallback,
   refreshKey=0,emptyTitle='No songs found',onRemoveFromPlaylist}:TrackPageProps){
   const page=useNativeTracks({mode,query,playlistId,refreshKey})
-  const items=page.enabled?page.items:fallback
+  const items=page.enabled?page.items:(typeof fallback==='function'?fallback():fallback)
   if(page.loading&&page.enabled&&!items.length){
     return <p className="library-page__result-state" role="status">Loading songs…</p>
   }
@@ -39,11 +39,12 @@ interface TrackGroup {
   key:string;title:string;subtitle:string;tracks:Track[]
 }
 export function PagedGroupList({mode,query,fallback,refreshKey=0}:{
-  mode:'albums'|'artists';query:string;fallback:TrackGroup[];refreshKey?:number
+  mode:'albums'|'artists';query:string;fallback:TrackGroup[]|(()=>TrackGroup[]);refreshKey?:number
 }){
   const page=useNativeGroups(mode,query,refreshKey)
   const [playing,setPlaying]=useState<string|null>(null)
-  const list=page.enabled?page.items:fallback.map(group=>{
+  const fallbackGroups=()=>typeof fallback==='function'?fallback():fallback
+  const list=page.enabled?page.items:fallbackGroups().map(group=>{
     const first=group.tracks.find(t=>t.artwork)
     return {
       title:group.title,artist:mode==='albums'?group.tracks[0]?.artist??'': '',
@@ -55,7 +56,7 @@ export function PagedGroupList({mode,query,fallback,refreshKey=0}:{
     const key=group.title+'\u001f'+group.artist
     setPlaying(key)
     try{
-      const matching=fallback.find(item=>
+      const matching=fallbackGroups().find(item=>
         item.title===group.title&&(mode==='artists' ||
           (item.tracks[0]?.artist??'')===group.artist))
       const tracks=matching?.tracks.length?matching.tracks:await playNativeGroup(mode,group)

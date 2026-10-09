@@ -1,5 +1,5 @@
 import { ListMusic, Plus, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 import { Button } from '@/components/primitives/Button'
 import { useCollectionsStore } from '@/features/collections/collections.store'
@@ -26,14 +26,14 @@ export function PlaylistView() {
   const [dragTarget,setDragTarget] = useState<number|null>(null)
   const selected = playlists.find((item) => item.id === selectedId) ?? playlists[0]
   const selectedPaths = selected?.trackPaths
-  const selectedTracks = useMemo(() => {
-    if (!selectedPaths) return []
-    const lookup = new Map(tracks.map((track) => [track.source.path, track]))
-    return selectedPaths.flatMap((path) => {
-      const track = lookup.get(path)
-      return track ? [track] : []
+  const selectedTracks=()=>{
+    if(!selectedPaths)return []
+    const lookup=new Map(tracks.map(track=>[track.source.path,track]))
+    return selectedPaths.flatMap(path=>{
+      const track=lookup.get(path)
+      return track?[track]:[]
     })
-  }, [selectedPaths, tracks])
+  }
 
   const create = () => {
     const clean = name.trim()
