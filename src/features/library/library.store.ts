@@ -19,6 +19,8 @@ interface LibraryState {
   artworkPool: ArtworkRef[]
   tracks: Track[]
   status: LibraryStatus
+  scanning: boolean
+  cancelScan: () => Promise<void>
   error: string | null
   refresh: () => Promise<void>
   importFolder: () => Promise<void>
@@ -156,14 +158,20 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
   artworkPool: [],
   tracks: [],
   status: 'idle',
+  scanning: false,
+  cancelScan: async () => {
+    if (isTauri()) await invoke('cancel_library_scan')
+  },
   error: null,
 
   refresh: async () => {
+    if (get().scanning) return
     if (!isTauri()) {
       set({ status: 'ready', error: null })
       return
     }
 
+    set({scanning:true})
     // Cached metadata is shown before the expensive disk traversal.
     // Keep the previous visible library if a scan fails.
     if (get().status === 'idle') set({ status: 'loading', error: null })
@@ -183,6 +191,8 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
     } catch (error) {
       set({ status: get().tracks.length ? 'ready' : 'error',
         error: errorMessage(error) })
+    } finally {
+      set({ scanning:false })
     }
   },
 

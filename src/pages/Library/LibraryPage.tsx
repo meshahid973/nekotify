@@ -50,6 +50,8 @@ export function LibraryPage() {
   const favorites = useCollectionsStore((state) => state.favorites)
   const folders = useLibraryStore((state) => state.folders)
   const status = useLibraryStore((state) => state.status)
+  const scanning = useLibraryStore((state) => state.scanning)
+  const cancelScan = useLibraryStore((state) => state.cancelScan)
   const error = useLibraryStore((state) => state.error)
   const importFolder = useLibraryStore((state) => state.importFolder)
   const refresh = useLibraryStore((state) => state.refresh)
@@ -81,7 +83,7 @@ export function LibraryPage() {
     [filteredTracks],
   )
 
-  const busy = status === 'loading'
+  const busy = status === 'loading' || scanning
   const favoriteTracks = filteredTracks.filter((track) => favorites.includes(track.source.path))
 
   return (
@@ -120,11 +122,10 @@ export function LibraryPage() {
           <button
             type="button"
             className="library-folders__rescan"
-            disabled={busy}
-            onClick={() => void refresh()}
+            onClick={() => { if(scanning) void cancelScan(); else void refresh() }}
           >
-            <RefreshCw size={13} />
-            Rescan
+            {scanning ? <X size={13}/> : <RefreshCw size={13}/>}
+            {scanning ? 'Cancel scan' : 'Rescan'}
           </button>
         </div>
       ) : null}
