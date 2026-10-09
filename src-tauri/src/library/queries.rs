@@ -13,6 +13,15 @@ pub struct TrackPage {
     limit: u32,
 }
 
+fn fts_prefix_terms(words: &str) -> String {
+    words.split_whitespace()
+        .filter(|word| word.chars().any(char::is_alphanumeric))
+        .take(12)
+        .map(|word| format!("\"{}\"*", word.replace('"', "\"\"")))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 fn indexed_tracks(
     app: &AppHandle,
     query: Option<&str>,
@@ -28,14 +37,8 @@ fn indexed_tracks(
     }
     // Quote literal tokens before handing them to the FTS5 grammar.
     // Prefix matching is quick for names and artists; no user-supplied SQL.
-    let terms: Vec<String> = words
-        .split_whitespace()
-        .filter(|word| word.chars().any(char::is_alphanumeric))
-        .take(12)
-        .map(|word| format!("\"{}\"*", word.replace('"', "\"\"")))
-        .collect();
-    let search = !terms.is_empty();
-    let phrase = terms.join(" ");
+    let phrase = fts_prefix_terms(words);
+    let search = !phrase.is_empty();
     let filter = if search {
         "WHERE t.path IN (SELECT path FROM tracks_fts WHERE tracks_fts MATCH ?1)"
     } else {
@@ -114,4 +117,20 @@ pub async fn search_library(
     tauri::async_runtime::spawn_blocking(move || indexed_tracks(&app, Some(&query), offset, limit))
         .await
         .map_err(|error| format!("Search worker failed: {error}"))?
+}
+
+#[cfg(test)]
+mod tests {
+    use super::fts_prefix_terms;
+
+    #[test]
+    fn fts_prefixes_whitespace_separated_terms() {
+        assert_eq!(fts_prefix_terms("Blue Box"), "\"Blue\"* \"Box\"*");
+    }
+
+    #[test]
+    fn fts_escapes_embedded_quotes_without_sql_commands() {
+        assert_eq!(fts_prefix_terms("hello\" OR"), "\"hello\"\"\"* \"OR\"*");
+        assert_eq!(fts_prefix_terms("  "), "");
+    }
 }
