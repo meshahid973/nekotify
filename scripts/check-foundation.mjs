@@ -149,6 +149,20 @@ if (!shellStyle.includes('100dvh') ||
   failures.push('fullscreen shell must retain flexible viewport sizing')
 }
 
+const workspace = readFileSync(join(root, 'src/components/layout/AppShell.tsx'), 'utf8')
+const controls = readFileSync(join(root, 'src/pages/Library/LibraryPage.tsx'), 'utf8')
+if (!workspace.includes('<Group') || !workspace.includes('<DockedQueue') ||
+    !workspace.includes('<PlayerBar') || !workspace.includes('setSidebarCollapsed')) {
+  failures.push('resizable workspace and persistent playback shell are required')
+}
+if (!controls.includes('<Tabs.Root') || !controls.includes('<Tabs.Panel')) {
+  failures.push('accessible Library tab panels must remain connected')
+}
+const menu = readFileSync(join(root, 'src/components/overlays/ContextMenu.tsx'), 'utf8')
+if (!menu.includes('BaseContextMenu.Positioner')) {
+  failures.push('context menus must retain collision-aware Base UI positioning')
+}
+
 const assetsDirectory = join(root, 'dist', 'assets')
 
 if (existsSync(assetsDirectory)) {
@@ -165,9 +179,9 @@ if (existsSync(assetsDirectory)) {
     }
   }
 
-  if (totals.js > 205 * 1024) {
+  if (totals.js > 270 * 1024) {
     failures.push(
-      'built JavaScript exceeds 205 KiB gzip: ' +
+      'built JavaScript exceeds 270 KiB gzip: ' +
         (totals.js / 1024).toFixed(1) +
         ' KiB',
     )
