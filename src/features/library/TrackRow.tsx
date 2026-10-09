@@ -4,6 +4,7 @@ import { Artwork } from '@/components/artwork/Artwork'
 import { ContextMenu } from '@/components/overlays/ContextMenu'
 import { PlaylistCombobox } from '@/components/overlays/PlaylistCombobox'
 import { PulseHeart } from '@/components/reactbits/PulseHeart'
+import { writeTrackDrag } from '@/features/library/trackDrag'
 import { notify } from '@/stores/toast.store'
 import { useCollectionsStore } from '@/features/collections/collections.store'
 import { formatPlaybackTime } from '@/features/playback/playback.utils'
@@ -18,10 +19,11 @@ interface TrackRowProps {
   active?: boolean
   playing?: boolean
   onPlay: () => void
+  onRemoveFromPlaylist?:()=>void
 }
 
 export function TrackRow({
-  track, active = false, playing = false, onPlay,
+  track, active = false, playing = false, onPlay,onRemoveFromPlaylist,
 }: TrackRowProps) {
   const favorites = useCollectionsStore((state) => state.favorites)
   const playlists = useCollectionsStore((state) => state.playlists)
@@ -39,11 +41,23 @@ export function TrackRow({
         void toggleFavorite(track.source.path);notify(favorite?'Removed favorite':'Added favorite','success')
       }},
       {id:'artwork',label:'Change artwork',icon:<Paintbrush size={16}/>,onClick:()=>useCoverPickerStore.getState().open(track.source.path)},
+      ...(onRemoveFromPlaylist?[{id:'remove-from-playlist',label:'Remove from this playlist',
+        onClick:onRemoveFromPlaylist}]:[]),
       ...playlists.map(p=>({id:'playlist-'+p.id,label:'Add to '+p.name,onClick:()=>{
         void addToPlaylist(p.id,track.source.path);notify('Added to '+p.name,'success')
       }})),
     ]}>
-    <div className="track-row" data-active={active ? 'true' : 'false'}>
+    <div className="track-row" data-active={active?'true':'false'}
+      tabIndex={0} role="group" aria-label={track.title+' by '+track.artist}
+      draggable onDragStart={(event)=>{
+        if((event.target as HTMLElement).closest('button')){event.preventDefault();return}
+        writeTrackDrag(event.dataTransfer,track.source.path)
+      }}
+      onKeyDown={event=>{
+        if(event.key==='Enter' && event.target===event.currentTarget){
+          event.preventDefault();onPlay()
+        }
+      }}>
       <button type="button" className="track-row__play"
         aria-label={(playing ? 'Pause ' : 'Play ') + track.title} onClick={onPlay}>
         {playing ? <Pause size={15} fill="currentColor" /> :
@@ -71,6 +85,9 @@ export function TrackRow({
           title="Choose artwork"
           onClick={() => useCoverPickerStore.getState().open(track.source.path)}
         ><Paintbrush size={15}/></button>
+        {onRemoveFromPlaylist?<button type="button" className="track-row__icon"
+          aria-label={'Remove '+track.title+' from this playlist'}
+          onClick={onRemoveFromPlaylist}><ListPlus size={16}/></button>:null}
         {playlists.length > 0 ? (
           <PlaylistCombobox label={'Add '+track.title+' to playlist'}
             playlists={playlists} onChoose={(playlist)=>{
