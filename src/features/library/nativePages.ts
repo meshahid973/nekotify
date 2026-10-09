@@ -27,7 +27,7 @@ async function getTracks(request:TracksRequest,offset:number):Promise<NativeTrac
     return invoke<NativeTrackPage>('query_tracks',{offset,limit:PAGE_SIZE})
   }
   return invoke<NativeTrackPage>('query_library_view',{
-    mode,playlistId,label,artist,query,offset,limit:PAGE_SIZE,
+    request:{mode,playlistId,label,artist,query},offset,limit:PAGE_SIZE,
   })
 }
 
@@ -107,7 +107,7 @@ export function useNativeGroups(mode:GroupMode,query:string,refreshKey=0){
       setItems(page.items);setTotal(page.total)
     }).catch(()=>{if(gen===generation.current)setFailed(true)})
       .finally(()=>{if(gen===generation.current)setLoading(false)})
-    return()=>{generation.current++}
+    return()=>{canceled=true}
   },[enabled,mode,query,refreshKey])
   const loadMore=async()=>{
     if(!enabled||failed||loading||moreLoading||items.length>=total)return
